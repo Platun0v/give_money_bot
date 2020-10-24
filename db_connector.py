@@ -42,6 +42,17 @@ class DB:
 
         self.db = db_object
 
+    def write_db(self):
+        db_object = {}
+        for user in self.db.keys():
+            db_object[user] = {}
+            for inner_user in self.db[user].keys():
+                db_object[user][inner_user] = []
+                for i in range(len(self.db[user][inner_user])):
+                    db_object[user][inner_user].append(self.db[user][inner_user][i].to_json())
+
+        write_json(db_object, self.path)
+
     def check_file(self) -> Dict[int, Dict[int, List]]:
         if not os.path.exists(self.path):
             write_json(self.create_db_object_frame(), self.path)
