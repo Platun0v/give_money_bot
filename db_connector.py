@@ -8,77 +8,6 @@ import config
 blocker: bool = False
 
 
-class Credit:
-    def __init__(self, amount: int, date: str, text_info: str, returned: bool, return_date: str):
-        wait_blocker()
-        block_file()
-
-        self.amount: int = amount
-        self.date: str = date
-        self.text_info: str = text_info
-        self.returned: bool = returned
-        self.return_date: str = return_date
-
-    @classmethod
-    def from_json(cls, _json) -> "Credit":
-        return Credit(_json["amount"], _json["date"], _json["text_info"], _json["returned"], _json["return_date"])
-
-    def to_json(self):
-        return {"amount": self.amount, "date": self.date, "text_info": self.text_info, "returned": self.returned, "return_date": self.return_date}
-
-
-class DB:
-    def __init__(self, path: str):
-        self.path: str = path
-        self.db: Optional[Dict[int, Dict[int, List[Credit]]]] = None
-
-    def read_file(self):
-        db_object = self.check_file()
-
-        for user in db_object.keys():
-            for inner_user in db_object[user].keys():
-                for i in range(len(db_object[user][inner_user])):
-                    db_object[user][inner_user][i] = Credit.from_json(db_object[user][inner_user][i])
-
-        self.db = db_object
-
-    def write_db(self):
-        db_object = {}
-        for user in self.db.keys():
-            db_object[user] = {}
-            for inner_user in self.db[user].keys():
-                db_object[user][inner_user] = []
-                for i in range(len(self.db[user][inner_user])):
-                    db_object[user][inner_user].append(self.db[user][inner_user][i].to_json())
-
-        write_json(db_object, self.path)
-
-    def check_file(self) -> Dict[int, Dict[int, List]]:
-        if not os.path.exists(self.path):
-            write_json(self.create_db_object_frame(), self.path)
-
-        db_object: Dict[int, Dict[int, List]] = read_json(self.path)
-
-        # TODO: Processing new users
-        # db_keys = set(db_object.keys())
-        # users = set(config.USERS.keys())
-        # if db_keys != users:
-        #     new_users = users - db_keys
-
-        return db_object
-
-    @staticmethod  # Изначально есть дикт диктов с пустым массивом
-    def create_db_object_frame() -> Dict[int, Dict[int, List]]:
-        ids = set(config.USERS.keys())
-        db_object = {}
-        for user in ids:
-            db_object[user] = {}
-            for inner_user in ids - user:
-                db_object[user][inner_user] = []
-
-        return db_object
-
-
 def read_json(path):
     with open(path, "r") as f:
         return json.load(f)
@@ -112,4 +41,85 @@ def block(fun):
         result = fun(*args, **kwargs)
         unblock_file()
         return result
+
     return wrapped
+
+
+# TODO: Work with date
+class Credit:
+    def __init__(self, amount: int, date: str = None, text_info: str = "", returned: bool = False,
+                 return_date: str = None):
+        if date is None:  # Date format: dd.mm.yyyy
+            date = "01.01.2000"
+
+        self.amount: int = amount
+        self.date: str = date
+        self.text_info: str = text_info
+        self.returned: bool = returned
+        self.return_date: str = return_date
+
+    @classmethod
+    def from_json(cls, _json) -> "Credit":
+        return Credit(_json["amount"], _json["date"], _json["text_info"], _json["returned"], _json["return_date"])
+
+    def to_json(self):
+        return {"amount": self.amount, "date": self.date, "text_info": self.text_info, "returned": self.returned,
+                "return_date": self.return_date}
+
+
+class DB:
+    def __init__(self, path: str):
+        self.path: str = path
+
+    def read_db(self) -> Dict[int, Dict[int, List[Credit]]]:
+        db_object = self.check_file()
+
+        for user in db_object.keys():
+            for inner_user in db_object[user].keys():
+                for i in range(len(db_object[user][inner_user])):
+                    db_object[user][inner_user][i] = Credit.from_json(db_object[user][inner_user][i])
+
+        return db_object
+
+    def write_db(self, db: Dict[int, Dict[int, List[Credit]]]):
+        db_object = {}
+        for user in db.keys():
+            db_object[user] = {}
+            for inner_user in db[user].keys():
+                db_object[user][inner_user] = []
+                for i in range(len(db[user][inner_user])):
+                    db_object[user][inner_user].append(db[user][inner_user][i].to_json())
+
+        write_json(db_object, self.path)
+
+    def check_file(self) -> Dict[int, Dict[int, List]]:
+        if not os.path.exists(self.path):
+            write_json(self.create_db_object_frame(), self.path)
+
+        db_object: Dict[int, Dict[int, List]] = read_json(self.path)
+
+        # TODO: Processing new users
+        # db_keys = set(db_object.keys())
+        # users = set(config.USERS.keys())
+        # if db_keys != users:
+        #     new_users = users - db_keys
+
+        return db_object
+
+    @block
+    def add_entry(self, to_user: int, from_users: List[int], entry: Credit):
+        db = self.read_db()
+        for user in from_users:
+            db[to_user][user].append(entry)
+        self.write_db(db)
+
+    @staticmethod  # Изначально есть дикт диктов с пустым массивом
+    def create_db_object_frame() -> Dict[int, Dict[int, List]]:
+        ids = set(config.USERS.keys())
+        db_object = {}
+        for user in ids:
+            db_object[user] = {}
+            for inner_user in ids - user:
+                db_object[user][inner_user] = []
+
+        return db_object
