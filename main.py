@@ -1,12 +1,20 @@
-import telebot
+from aiogram import Bot, Dispatcher, executor, types
 import config
+from loguru import logger
 
-bot = telebot.TeleBot(config.TOKEN)
-
-
-@bot.message_handler(func=lambda message: True)
-def echo_all(message: telebot.types.Message):
-    bot.send_message(message.chat.id, message.from_user.id)
+bot = Bot(token=config.TOKEN, proxy=config.PROXY)
+dp = Dispatcher(bot)
 
 
-bot.polling()
+@dp.message_handler()
+async def echo(message: types.Message):
+    await message.reply(message.text)
+
+
+@logger.catch()
+def main():
+    executor.start_polling(dp, skip_updates=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,2 +1,5 @@
 python-dotenv
-PyTelegramBotApi
+aiogram
+typing_extensions
+aiohttp_socks
+loguru
