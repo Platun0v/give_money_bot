@@ -116,7 +116,6 @@ class DB:
 
         return db_object
 
-    @block
     def add_entry(self, to_user: int, from_users: List[int], entry: Credit):
         db = self.read_db()
         for user in from_users:
