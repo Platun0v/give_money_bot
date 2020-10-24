@@ -1,16 +1,26 @@
 import json
 import time
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 import config
 
 blocker: bool = False
 
 
-def read_json(path):
+def read_json(path) -> Dict[str, Dict[str, List]]:
     with open(path, "r") as f:
         return json.load(f)
+
+
+def read_json_int_keys(path) -> Dict[int, Dict[int, List]]:
+    obj = read_json(path)
+    new_obj = {}
+    for key1 in obj.keys():
+        new_obj[int(key1)] = {}
+        for key2 in obj[key1].keys():
+            new_obj[int(key1)][int(key2)] = obj[key1][key2]
+    return new_obj
 
 
 def write_json(obj, path):
@@ -68,7 +78,7 @@ class Credit:
 
 
 class DB:
-    def __init__(self, path: str):
+    def __init__(self, path: str = "db.json"):
         self.path: str = path
 
     def read_db(self) -> Dict[int, Dict[int, List[Credit]]]:
@@ -96,7 +106,7 @@ class DB:
         if not os.path.exists(self.path):
             write_json(self.create_db_object_frame(), self.path)
 
-        db_object: Dict[int, Dict[int, List]] = read_json(self.path)
+        db_object: Dict[int, Dict[int, List]] = read_json_int_keys(self.path)
 
         # TODO: Processing new users
         # db_keys = set(db_object.keys())
@@ -115,11 +125,11 @@ class DB:
 
     @staticmethod  # Изначально есть дикт диктов с пустым массивом
     def create_db_object_frame() -> Dict[int, Dict[int, List]]:
-        ids = set(config.USERS.keys())
+        ids: Set[int] = set(config.USERS.keys())
         db_object = {}
         for user in ids:
             db_object[user] = {}
-            for inner_user in ids - user:
+            for inner_user in ids - {user}:
                 db_object[user][inner_user] = []
 
         return db_object
