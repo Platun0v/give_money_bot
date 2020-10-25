@@ -3,3 +3,4 @@ aiogram
 typing_extensions
 aiohttp_socks
 loguru
+sqlalchemy
