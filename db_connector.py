@@ -1,6 +1,3 @@
-import json
-import time
-import os
 from typing import Dict, List, Optional, Set
 import datetime
 
@@ -26,13 +23,13 @@ class Credit(Base):
     returned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     return_date = sqlalchemy.Column(sqlalchemy.DateTime)
 
-    # def __repr__(self):
-    #     return f"<ShortUrl(name='{self.name}', url='{self.url}')>"
+    def __repr__(self):
+        return f"<Credit('{config.USERS[self.from_id]}' -> '{config.USERS[self.to_id]}', amount='{self.amount}')>"
 
 
 class DB:
     def __init__(self, db_path: str = "db.sqlite"):
-        self.engine = sqlalchemy.create_engine(f'sqlite:///{db_path}', echo=True)
+        self.engine = sqlalchemy.create_engine(f'sqlite:///{db_path}', echo=True, connect_args={'check_same_thread': False})
         Base.metadata.create_all(self.engine)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
@@ -47,3 +44,17 @@ class DB:
 
     def credits_to_user(self, user: int) -> List[Credit]:
         return self.session.query(Credit).filter(Credit.to_id == user).filter(Credit.returned == False).all()
+
+    def return_credit(self, credit_ids: List[int]):
+        for credit_id in credit_ids:
+            credit: Credit = self.session.query(Credit).filter(Credit.id == credit_id).first()
+            credit.returned = True
+            credit.return_date = datetime.datetime.utcnow()
+        self.session.commit()
+
+    def reject_return_credit(self, credit_ids: List[int]):
+        for credit_id in credit_ids:
+            credit: Credit = self.session.query(Credit).filter(Credit.id == credit_id).first()
+            credit.returned = False
+            credit.return_date = None
+        self.session.commit()
