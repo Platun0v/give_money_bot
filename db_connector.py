@@ -10,16 +10,15 @@ from sqlalchemy.orm import sessionmaker
 
 import config
 
-
 Base = declarative_base()
 
 
-class NewCredit(Base):
+class Credit(Base):
     __tablename__ = 'credits'
 
     id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True, autoincrement=True)
-    to_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-    from_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    to_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кому должны
+    from_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кто должен
     amount = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
 
     date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.utcnow)
@@ -40,5 +39,11 @@ class DB:
 
     def add_entry(self, to_user: int, from_users: List[int], amount: int, additional_info: str = ""):
         for from_user in from_users:
-            self.session.add(NewCredit(to_id=to_user, from_id=from_user, amount=amount, text_info=additional_info))
+            self.session.add(Credit(to_id=to_user, from_id=from_user, amount=amount, text_info=additional_info))
         self.session.commit()
+
+    def user_credits(self, user: int) -> List[Credit]:
+        return self.session.query(Credit).filter(Credit.from_id == user).filter(Credit.returned == False).all()
+
+    def credits_to_user(self, user: int) -> List[Credit]:
+        return self.session.query(Credit).filter(Credit.to_id == user).filter(Credit.returned == False).all()
