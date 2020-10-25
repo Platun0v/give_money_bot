@@ -7,7 +7,7 @@ from aiogram.utils.callback_data import CallbackData
 save_data = CallbackData("save", "value")
 user_data = CallbackData("user", "id", "has_mark")
 credit_data = CallbackData("credit_chose", "index", "has_mark")
-check_data = CallbackData("false", "credit_id", "value")
+check_data = CallbackData("check", "credit_id", "value")
 
 button_plus = KeyboardButton("+")
 button_info = KeyboardButton("info")
@@ -29,20 +29,20 @@ murkup_credits.add(inline_user_credits)
 def get_check_markup(credit_id: int, value: bool):
     markup = InlineKeyboardMarkup()
     if value:
-        markup.add(InlineKeyboardButton(f"Все верно{USERS['true']}", callback_data="true"))
-        markup.add(InlineKeyboardButton(f"Это не так{USERS['false']}", callback_data="false"))
-        markup.add(InlineKeyboardButton("Сохранить", callback_data=check_data.new(credit_id, "true")))
+        markup.add(InlineKeyboardButton(f"Все верно{EMOJI['true']}", callback_data="true"))
+        markup.add(InlineKeyboardButton(f"Это не так{EMOJI['false']}", callback_data="false"))
+        markup.add(InlineKeyboardButton("Сохранить", callback_data=check_data.new(credit_id, "1")))
     else:
-        markup.add(InlineKeyboardButton(f"Все верно{USERS['false']}", callback_data="true"))
-        markup.add(InlineKeyboardButton(f"Это не так{USERS['true']}", callback_data="false"))
-        markup.add(InlineKeyboardButton("Сохранить", callback_data=check_data.new(credit_id, "false")))
+        markup.add(InlineKeyboardButton(f"Все верно{EMOJI['false']}", callback_data="true"))
+        markup.add(InlineKeyboardButton(f"Это не так{EMOJI['true']}", callback_data="false"))
+        markup.add(InlineKeyboardButton("Сохранить", callback_data=check_data.new(credit_id, "0")))
     return markup
 
 
 def get_data_from_check(markup: InlineKeyboardMarkup):
     data = markup["inline_keyboard"][2][0].callback_data
     parsed_data = check_data.parse(data)
-    return parsed_data.get("credit_it"), parsed_data.get("value")
+    return parsed_data.get("credit_id"), parsed_data.get("value")
 
 
 def get_credits_markup(value: int, marked_credits: set):
