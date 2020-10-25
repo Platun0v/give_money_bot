@@ -1,5 +1,3 @@
-from typing import List
-
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -39,7 +37,7 @@ async def process_callback_user_credits(call: types.CallbackQuery):
         for credit in credits:
             text += f"\n{index}){credit.amount} руб. ему:{config.USERS[credit.to_id]}"
             if len(credit.text_info) != 0:
-                text += f" за {credit.text_info}"
+                text += f"\n{credit.text_info}"
             text += f"\nДолг был добавлен {credit.date}"
             index += 1
         text += "\nТы можешь выбрать долги, которые ты уже вернул:"
@@ -73,54 +71,73 @@ async def process_callback_return_credit(call: types.CallbackQuery):
     if len(marked_credits) == 0:
         text = "Ты ничего не отметил"
     else:
+
+        returned_credits = []
+
         text = "Ты вернул:"
         for index in marked_credits:
             credit = credits[index]
+            returned_credits.append(credit.id)
             text += f"\n{credit.amount} руб. ему: {config.USERS[credit.to_id]}"
             if len(credit.text_info) != 0:
-                text += f"\nза {credit.text_info}"
+                text += f"\n{credit.text_info}"
             text += f"\nДолг был добавлен {credit.date}"
 
-
-
+        db.return_credit(returned_credits)
         await call.message.edit_text(text)
 
     await bot.answer_callback_query(call.id, text=text, show_alert=True)
 
     for index in marked_credits:
         credit = credits[index]
-        markup = kb.get_check_markup(credit.id)
+        markup = kb.get_check_markup(credit.id, True)
         message = f"Тебе {config.USERS[credit.from_id]} вернул {credit.amount} руб."
         if len(credit.text_info) != 0:
-            message += f"\nза {credit.text_info}"
+            message += f"\n{credit.text_info}"
         message += f"\nДолг был добавлен {credit.date}"
         message += f"\nДолг был возвращен {credit.return_date}"
-        await bot.send_message(credit.to_id, message, reply_markup=markup)
+        try:
+            await bot.send_message(credit.to_id, message, reply_markup=markup)
+        except Exception:
+            pass
 
 
 @dp.callback_query_handler(text_contains="true")
 async def process_callback_check_true(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
-    await call.message.edit_reply_markup(kb.get_check_markup(credit_id, True))
+    if value == "0":
+        await call.message.edit_reply_markup(kb.get_check_markup(credit_id, True))
     await bot.answer_callback_query(call.id)
 
 
 @dp.callback_query_handler(text_contains="false")
 async def process_callback_check_false(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
-    await call.message.edit_reply_markup(kb.get_check_markup(credit_id, False))
+    if value == "1":
+        await call.message.edit_reply_markup(kb.get_check_markup(credit_id, False))
     await bot.answer_callback_query(call.id)
 
 
 @dp.callback_query_handler(text_contains="check")
 async def process_callback_check(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
+
     await bot.answer_callback_query(call.id)
-    if value == "true":
+
+    if value == "1":
+        print("hello")
         await call.message.delete_reply_markup()
     else:
+        db.reject_return_credit(credit_id)
         text = call.message.text
         await call.message.edit_text(text + "\nОтмена")
+        credit = db.get_credit(credit_id)
+        message = f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.amount} руб."
+        if len(credit.text_info) != 0:
+            message += f"\n{credit.text_info}"
+        message += f"\nДолг был добавлен {credit.date}"
+
+        await bot.send_message(credit.from_id, message)
 
 
 @dp.callback_query_handler(text_contains="credit_cancel")
@@ -145,7 +162,7 @@ async def process_callback_credits_to_user(call: types.CallbackQuery):
         for credit in credits:
             text += f"\n{index}){config.USERS[credit.from_id]}: {credit.amount} руб."
             if len(credit.text_info) != 0:
-                text += f" за {credit.text_info}"
+                text += f"\n{credit.text_info}"
             text += f"\nДолг был добавлен {credit.date}"
             index += 1
     await call.message.edit_text(text)
@@ -165,7 +182,7 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
 
     text = f"Кто тебе должен {value} руб?"
     if len(message_text) > 1:
-        text += "\n|"
+        text += "\n"
         for i in range(1, len(message_text)):
             text += f"{message_text[i]} "
 
@@ -185,13 +202,16 @@ async def process_callback_save(call: types.CallbackQuery):
             text += f"{config.USERS[user_id]}, "
         text = text[:-2]
         info = get_info(call.message)
-        text += "\n|" + info
+        text += "\n" + info
         text += "\nСохранено"
         user_id = call.from_user.id
         db.add_entry(user_id, users, value, info)
         await call.message.edit_text(text)
         for user in users:
-            await bot.send_message(user, f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" + info)
+            try:
+                await bot.send_message(user, f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" + info)
+            except Exception:
+                pass
     await bot.answer_callback_query(call.id, text=text, show_alert=True)
 
 
@@ -235,11 +255,7 @@ def main():
 
 
 def get_info(message: types.Message):
-    message_text = message.text.split("|")
-    text = ""
-    if len(message_text) > 1:
-        text += f"{message_text[1]}"
-    return text
+    return message.text.split("\n")[1]
 
 
 if __name__ == "__main__":

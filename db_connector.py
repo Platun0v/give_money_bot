@@ -1,3 +1,4 @@
+import typing
 from typing import Dict, List, Optional, Set
 import datetime
 
@@ -45,16 +46,23 @@ class DB:
     def credits_to_user(self, user: int) -> List[Credit]:
         return self.session.query(Credit).filter(Credit.to_id == user).filter(Credit.returned == False).all()
 
-    def return_credit(self, credit_ids: List[int]):
+    def return_credit(self, credit_ids:  typing.Union[List[int], int]):
+        if isinstance(credit_ids, int):
+            credit_ids = [credit_ids]
         for credit_id in credit_ids:
             credit: Credit = self.session.query(Credit).filter(Credit.id == credit_id).first()
             credit.returned = True
             credit.return_date = datetime.datetime.utcnow()
         self.session.commit()
 
-    def reject_return_credit(self, credit_ids: List[int]):
+    def reject_return_credit(self, credit_ids: typing.Union[List[int], int]):
+        if isinstance(credit_ids, int):
+            credit_ids = [credit_ids]
         for credit_id in credit_ids:
             credit: Credit = self.session.query(Credit).filter(Credit.id == credit_id).first()
             credit.returned = False
             credit.return_date = None
         self.session.commit()
+
+    def get_credit(self, credit_id: int) -> Credit:
+        return self.session.query(Credit).filter(Credit.id == credit_id).first()
