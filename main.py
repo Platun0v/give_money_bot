@@ -202,14 +202,18 @@ async def process_callback_save(call: types.CallbackQuery):
             text += f"{config.USERS[user_id]}, "
         text = text[:-2]
         info = get_info(call.message)
-        text += "\n" + info
+        if len(info) != 0:
+            text += "\n" + info
         text += "\nСохранено"
         user_id = call.from_user.id
         db.add_entry(user_id, users, value, info)
         await call.message.edit_text(text)
         for user in users:
             try:
-                await bot.send_message(user, f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" + info)
+                message = f"Ты должен {value} руб. ему: {config.USERS[user_id]}"
+                if len(info) != 0:
+                    message += "\n" + info
+                await bot.send_message(user, message)
             except Exception:
                 pass
     await bot.answer_callback_query(call.id, text=text, show_alert=True)
@@ -255,7 +259,11 @@ def main():
 
 
 def get_info(message: types.Message):
-    return message.text.split("\n")[1]
+    msg = message.text.split("\n")
+    if len(msg) == 1:
+        return ""
+    else:
+        return msg[1]
 
 
 if __name__ == "__main__":
