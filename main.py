@@ -5,22 +5,151 @@ from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import keyboards as kb
 import config
+from db_connector import DB
 from my_state import AddState
 from loguru import logger
 
 bot = Bot(token=config.TOKEN, proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
+db = DB()
 
 
 @dp.message_handler(text="+", state=None)
 async def process_callback_plus(message: types.Message):
-    await message.answer("Введите сумму(по желанию инфу по долгу через пробел)")
-    await AddState.read_num.set()
+    if message.from_user.id in config.USERS:
+        await message.answer("Введите сумму(по желанию инфу по долгу через пробел)")
+        await AddState.read_num.set()
 
 
-@dp.message_handler(text="info")
+@dp.message_handler(text="info", state=None)
 async def process_callback_info(message: types.Message):
-    await message.answer("plus!")
+    if message.from_user.id in config.USERS:
+        await message.answer("Что интересует?", reply_markup=kb.murkup_credits)
+
+
+@dp.callback_query_handler(text_contains="user_credits")
+async def process_callback_user_credits(call: types.CallbackQuery):
+    credits = db.user_credits(call.from_user.id)
+    if len(credits) == 0:
+        text = "Ты никому не должен. Свободен"
+        await call.message.edit_text(text)
+    else:
+        text = "Ты должен:"
+        index = 1
+        for credit in credits:
+            text += f"\n{index}){credit.amount} руб. ему:{config.USERS[credit.to_id]}"
+            if len(credit.text_info) != 0:
+                text += f" за {credit.text_info}"
+            text += f"\nДолг был добавлен {credit.date}"
+            index += 1
+        text += "\nТы можешь выбрать долги, которые ты уже вернул:"
+        await call.message.edit_text(text, reply_markup=kb.get_credits_markup(len(credits), set()))
+    await bot.answer_callback_query(call.id)
+
+
+@dp.callback_query_handler(text_contains="credit_chose")
+async def process_callback_credit_chose(call: types.CallbackQuery):
+    marked_credits = kb.get_marked_credits(call.message.reply_markup)
+    credit_id = kb.get_credit_index(call.data)
+    user_id = int(call.from_user.id)
+
+    if credit_id in marked_credits:
+        marked_credits.remove(credit_id)
+    else:
+        marked_credits.add(credit_id)
+
+    await call.message.edit_reply_markup(
+        reply_markup=kb.get_credits_markup(len(db.user_credits(user_id)), marked_credits))
+    await bot.answer_callback_query(call.id)
+
+
+@dp.callback_query_handler(text_contains="return_credit")
+async def process_callback_return_credit(call: types.CallbackQuery):
+    marked_credits = kb.get_marked_credits(call.message.reply_markup)
+    user_id = int(call.from_user.id)
+    credits = db.user_credits(user_id)
+
+    text = ""
+    if len(marked_credits) == 0:
+        text = "Ты ничего не отметил"
+    else:
+        text = "Ты вернул:"
+        for index in marked_credits:
+            credit = credits[index]
+            text += f"\n{credit.amount} руб. ему: {config.USERS[credit.to_id]}"
+            if len(credit.text_info) != 0:
+                text += f"\nза {credit.text_info}"
+            text += f"\nДолг был добавлен {credit.date}"
+
+
+
+        await call.message.edit_text(text)
+
+    await bot.answer_callback_query(call.id, text=text, show_alert=True)
+
+    for index in marked_credits:
+        credit = credits[index]
+        markup = kb.get_check_markup(credit.id)
+        message = f"Тебе {config.USERS[credit.from_id]} вернул {credit.amount} руб."
+        if len(credit.text_info) != 0:
+            message += f"\nза {credit.text_info}"
+        message += f"\nДолг был добавлен {credit.date}"
+        message += f"\nДолг был возвращен {credit.return_date}"
+        await bot.send_message(credit.to_id, message, reply_markup=markup)
+
+
+@dp.callback_query_handler(text_contains="true")
+async def process_callback_check_true(call: types.CallbackQuery):
+    credit_id, value = kb.get_data_from_check(call.message.reply_markup)
+    await call.message.edit_reply_markup(kb.get_check_markup(credit_id, True))
+    await bot.answer_callback_query(call.id)
+
+
+@dp.callback_query_handler(text_contains="false")
+async def process_callback_check_false(call: types.CallbackQuery):
+    credit_id, value = kb.get_data_from_check(call.message.reply_markup)
+    await call.message.edit_reply_markup(kb.get_check_markup(credit_id, False))
+    await bot.answer_callback_query(call.id)
+
+
+@dp.callback_query_handler(text_contains="check")
+async def process_callback_check(call: types.CallbackQuery):
+    credit_id, value = kb.get_data_from_check(call.message.reply_markup)
+    await bot.answer_callback_query(call.id)
+    if value == "true":
+        await call.message.delete_reply_markup()
+    else:
+        text = call.message.text
+        await call.message.edit_text(text + "\nОтмена")
+
+
+@dp.callback_query_handler(text_contains="credit_cancel")
+async def process_callback_credit_cancel(call: types.CallbackQuery):
+    text = call.message.text.split("\n")
+    message = ""
+    for i in range(0, len(text) - 1):
+        message += text[i] + "\n"
+
+    await call.message.edit_text(message)
+    await bot.answer_callback_query(call.id)
+
+
+@dp.callback_query_handler(text_contains="credits_to_user")
+async def process_callback_credits_to_user(call: types.CallbackQuery):
+    text = "Тебе должны:"
+    credits = db.credits_to_user(call.from_user.id)
+    if len(credits) == 0:
+        text = "Тебе никто не должен. Можешь спать спокойно"
+    else:
+        index = 1
+        for credit in credits:
+            text += f"\n{index}){config.USERS[credit.from_id]}: {credit.amount} руб."
+            if len(credit.text_info) != 0:
+                text += f" за {credit.text_info}"
+            text += f"\nДолг был добавлен {credit.date}"
+            index += 1
+    await call.message.edit_text(text)
+    await bot.answer_callback_query(call.id)
 
 
 @dp.message_handler(state=AddState.read_num)
@@ -52,16 +181,17 @@ async def process_callback_save(call: types.CallbackQuery):
         text = "Ты забыл указать должников"
     else:
         text = f"Тебе {value} руб должен "
-        for id in users:
-            text += f"{config.USERS[int(id)]}, "
+        for user_id in users:
+            text += f"{config.USERS[user_id]}, "
         text = text[:-2]
         info = get_info(call.message)
-        text += info
+        text += "\n|" + info
         text += "\nСохранено"
+        user_id = call.from_user.id
+        db.add_entry(user_id, users, value, info)
         await call.message.edit_text(text)
-        for user_id in users:
-            await bot.send_message(int(user_id), f"Ты должен {value} руб. ему: "
-                                                 f"{config.USERS[call.from_user.id] + info}")
+        for user in users:
+            await bot.send_message(user, f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" + info)
     await bot.answer_callback_query(call.id, text=text, show_alert=True)
 
 
@@ -82,20 +212,16 @@ async def process_callback(call: types.CallbackQuery):
     else:
         users.add(user_id)
 
-    text = f"Тебе {value} руб должен "
-    for id in users:
-        text += f"{config.USERS[int(id)]}, "
-    text += "..."
-
-    text += get_info(call.message)
-
-    await call.message.edit_text(text=text, reply_markup=kb.get_inline_markup(call.from_user.id, value, users))
+    await call.message.edit_reply_markup(reply_markup=kb.get_inline_markup(call.from_user.id, value, users))
     await bot.answer_callback_query(call.id)
 
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
-    await message.answer("Привет!", reply_markup=kb.markup_main)
+    if message.from_user.id in config.USERS:
+        await message.answer("Привет!", reply_markup=kb.markup_main)
+    else:
+        await message.answer("Этот бот не для тебя, сорян")
 
 
 @dp.message_handler(commands=['id'])
@@ -108,11 +234,11 @@ def main():
     executor.start_polling(dp, skip_updates=True)
 
 
-def get_info(message):
+def get_info(message: types.Message):
     message_text = message.text.split("|")
     text = ""
     if len(message_text) > 1:
-        text += f"\n|{message_text[1]}"
+        text += f"{message_text[1]}"
     return text
 
 
