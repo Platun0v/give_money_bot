@@ -2,6 +2,7 @@ import json
 import time
 import os
 from typing import Dict, List, Optional, Set
+import datetime
 
 import config
 
@@ -28,53 +29,42 @@ def write_json(obj, path):
         json.dump(obj, f)
 
 
-def block_file():
-    global blocker
-    blocker = True
+def date_to_string(date: datetime.date) -> Optional[str]:
+    if date is None:
+        return None
+    return f'{date.day}:{date.month}:{date.year}'
 
 
-def unblock_file():
-    global blocker
-    blocker = False
+def date_from_string(date: str) -> datetime.date:
+    date = date.split(':')
+    return datetime.date(year=int(date[2]), month=int(date[1]), day=int(date[0]))
 
 
-def wait_blocker():
-    global blocker
-    while blocker:
-        time.sleep(0.05)
-
-
-def block(fun):
-    def wrapped(*args, **kwargs):
-        wait_blocker()
-        block_file()
-        result = fun(*args, **kwargs)
-        unblock_file()
-        return result
-
-    return wrapped
-
-
-# TODO: Work with date
 class Credit:
     def __init__(self, amount: int, date: str = None, text_info: str = "", returned: bool = False,
                  return_date: str = None):
-        if date is None:  # Date format: dd.mm.yyyy
-            date = "01.01.2000"
-
         self.amount: int = amount
-        self.date: str = date
+
+        if date is None:  # Date format: dd.mm.yyyy
+            self.date: datetime.date = datetime.date.today()
+        else:
+            self.date: datetime.date = date_from_string(date)
+
         self.text_info: str = text_info
         self.returned: bool = returned
-        self.return_date: str = return_date
+
+        if return_date is None:  # Date format: dd.mm.yyyy
+            self.return_date: Optional[datetime.date] = None
+        else:
+            self.return_date: datetime.date = date_from_string(return_date)
 
     @classmethod
     def from_json(cls, _json) -> "Credit":
         return Credit(_json["amount"], _json["date"], _json["text_info"], _json["returned"], _json["return_date"])
 
     def to_json(self):
-        return {"amount": self.amount, "date": self.date, "text_info": self.text_info, "returned": self.returned,
-                "return_date": self.return_date}
+        return {"amount": self.amount, "date": date_to_string(self.date), "text_info": self.text_info,
+                "returned": self.returned, "return_date": date_to_string(self.return_date)}
 
 
 class DB:
