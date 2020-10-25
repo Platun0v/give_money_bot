@@ -1,5 +1,3 @@
-from typing import List
-
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -184,7 +182,7 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
 
     text = f"Кто тебе должен {value} руб?"
     if len(message_text) > 1:
-        text += "\n|"
+        text += "\nза "
         for i in range(1, len(message_text)):
             text += f"{message_text[i]} "
 
@@ -204,7 +202,7 @@ async def process_callback_save(call: types.CallbackQuery):
             text += f"{config.USERS[user_id]}, "
         text = text[:-2]
         info = get_info(call.message)
-        text += "\n|" + info
+        text += "\nза " + info
         text += "\nСохранено"
         user_id = call.from_user.id
         db.add_entry(user_id, users, value, info)
@@ -257,11 +255,7 @@ def main():
 
 
 def get_info(message: types.Message):
-    message_text = message.text.split("|")
-    text = ""
-    if len(message_text) > 1:
-        text += f"{message_text[1]}"
-    return text
+    return message.text.split("\n")[1]
 
 
 if __name__ == "__main__":
