@@ -1,3 +1,5 @@
+from typing import List
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -26,7 +28,7 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
     try:
         value = int(message.text)
         await state.update_data({"value": value, "users": []})
-        await message.answer(f"Кто тебе должен {value} руб?", reply_markup=kb.get_inline_markup(message.from_user.id))
+        await message.answer(f"Кто тебе должен {value} руб?", reply_markup=kb.get_inline_markup(message.from_user.id, value, set()))
     except Exception:
         await message.answer("Мне было нужно число, а ты мне что дал?")
     await state.reset_state(with_data=False)
@@ -54,23 +56,32 @@ async def process_callback_cancel(call: types.CallbackQuery, state: FSMContext):
     await bot.answer_callback_query(call.id, text="Отмена")
 
 
-@dp.callback_query_handler(lambda c: int(c.data) in config.USERS)
-async def process_callback(call: types.CallbackQuery, state: FSMContext):
-    user_id = call.data
-    async with state.proxy() as data:
-        users = data.get("users")
-        if user_id in users:
-            users.remove(user_id)
-        else:
-            users.append(user_id)
-        data["users"] = users
-    data = await state.get_data()
-    text = f"Тебе { data.get('value')} руб должен "
-    for id in data.get("users"):
+@dp.callback_query_handler(text_contains="user")
+async def process_callback(call: types.CallbackQuery):
+    markup = call.message.reply_markup
+
+    users = set()
+    value = None
+    for i in markup["inline_keyboard"]:
+        if "save" in i[0].callback_data:
+            value = kb.save_data.parse(i[0].callback_data).get("value")
+        if "user" in i[0].callback_data:
+            user_data = kb.user_data.parse(i[0].callback_data)
+            if user_data.get("has_mark") == "1":
+                users.add(user_data.get("id"))
+
+    user_id = kb.user_data.parse(call.data).get("id")
+    if user_id in users:
+        users.remove(user_id)
+    else:
+        users.add(user_id)
+
+    text = f"Тебе {value} руб должен "
+    for id in users:
         text += f"{config.USERS[int(id)]}, "
     text += "..."
-    await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                text=text, reply_markup=call.message.reply_markup)
+
+    await call.message.edit_text(text=text, reply_markup=kb.get_inline_markup(call.from_user.id, value, users))
     await bot.answer_callback_query(call.id)
 
 
