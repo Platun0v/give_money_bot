@@ -24,10 +24,32 @@ def get_inline_markup(for_user_id, value, users: set):
             if str(id) in users:
                 text += "+"
                 has_mark = 1
-            print(text)
             markup.add(InlineKeyboardButton(text, callback_data=user_data.new(id, has_mark)))
     inline_save.callback_data = save_data.new(value)
     markup.add(inline_save)
     markup.add(inline_cancel)
     return markup
 
+
+def get_data_from_markup(markup):
+    users = set()
+    value = None
+    for i in markup["inline_keyboard"]:
+        if "save" in i[0].callback_data:
+            value = save_data.parse(i[0].callback_data).get("value")
+        if "user" in i[0].callback_data:
+            data = user_data.parse(i[0].callback_data)
+            if data.get("has_mark") == "1":
+                users.add(data.get("id"))
+    return value, users
+
+
+def get_value_from_markup(markup):
+    value = None
+    for i in markup["inline_keyboard"]:
+        if "save" in i[0].callback_data:
+            value = save_data.parse(i[0].callback_data).get("value")
+    return value
+
+def get_user_id(data):
+    return user_data.parse(data).get("id")

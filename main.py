@@ -27,50 +27,43 @@ async def process_callback_info(message: types.Message):
 async def read_num_from_user(message: types.Message, state: FSMContext):
     try:
         value = int(message.text)
-        await state.update_data({"value": value, "users": []})
-        await message.answer(f"Кто тебе должен {value} руб?", reply_markup=kb.get_inline_markup(message.from_user.id, value, set()))
+        await message.answer(f"Кто тебе должен {value} руб?",
+                             reply_markup=kb.get_inline_markup(message.from_user.id, value, set()))
     except Exception:
         await message.answer("Мне было нужно число, а ты мне что дал?")
-    await state.reset_state(with_data=False)
+    await state.finish()
 
 
-@dp.callback_query_handler(lambda c: c.data == 'save')
-async def process_callback_save(call: types.CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    text = f"Тебе { data.get('value')} руб должен "
-    for id in data.get("users"):
-        text += f"{config.USERS[int(id)]}, "
-    text = text[:-2]
-    text += "\nСохранено"
-    await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text)
-    await state.reset_state()
+@dp.callback_query_handler(text_contains="save")
+async def process_callback_save(call: types.CallbackQuery):
+    value, users = kb.get_data_from_markup(call.message.reply_markup)
+
+    text = ""
+    if len(users) == 0:
+        text = "Ты забыл указать должников"
+    else:
+        text = f"Тебе {value} руб должен "
+        for id in users:
+            text += f"{config.USERS[int(id)]}, "
+        text = text[:-2]
+        text += "\nСохранено"
+        await call.message.edit_text(text)
+
     await bot.answer_callback_query(call.id, text=text, show_alert=True)
 
 
-@dp.callback_query_handler(lambda c: c.data == 'cancel')
-async def process_callback_cancel(call: types.CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    await bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                text=f"{data.get('value')} руб. Отмена")
-    await state.reset_state()
+@dp.callback_query_handler(text_contains="cancel")
+async def process_callback_cancel(call: types.CallbackQuery):
+    value = kb.get_value_from_markup(call.message.reply_markup)
+    await call.message.edit_text(f"{value} руб. Отмена")
     await bot.answer_callback_query(call.id, text="Отмена")
 
 
 @dp.callback_query_handler(text_contains="user")
 async def process_callback(call: types.CallbackQuery):
-    markup = call.message.reply_markup
+    value, users = kb.get_data_from_markup(call.message.reply_markup)
+    user_id = kb.get_user_id(call.data)
 
-    users = set()
-    value = None
-    for i in markup["inline_keyboard"]:
-        if "save" in i[0].callback_data:
-            value = kb.save_data.parse(i[0].callback_data).get("value")
-        if "user" in i[0].callback_data:
-            user_data = kb.user_data.parse(i[0].callback_data)
-            if user_data.get("has_mark") == "1":
-                users.add(user_data.get("id"))
-
-    user_id = kb.user_data.parse(call.data).get("id")
     if user_id in users:
         users.remove(user_id)
     else:
