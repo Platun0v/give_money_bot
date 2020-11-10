@@ -24,6 +24,12 @@ class Credit(Base):
     returned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     return_date = sqlalchemy.Column(sqlalchemy.DateTime)
 
+    def get_date_str(self):
+        return f"{self.date.day}.{self.date.month}.{self.date.year}"
+
+    def get_return_date_str(self):
+        return f"{self.return_date.day}.{self.return_date.month}.{self.return_date.year}"
+
     def __repr__(self):
         return f"<Credit('{config.USERS[self.from_id]}' -> '{config.USERS[self.to_id]}', amount='{self.amount}')>"
 
@@ -49,6 +55,7 @@ class DB:
     def return_credit(self, credit_ids:  typing.Union[List[int], int]):
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
+
         for credit_id in credit_ids:
             credit: Credit = self.session.query(Credit).filter(Credit.id == credit_id).first()
             credit.returned = True
@@ -58,6 +65,7 @@ class DB:
     def reject_return_credit(self, credit_ids: typing.Union[List[int], int]):
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
+
         for credit_id in credit_ids:
             credit: Credit = self.session.query(Credit).filter(Credit.id == credit_id).first()
             credit.returned = False
