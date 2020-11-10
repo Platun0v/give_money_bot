@@ -14,7 +14,6 @@ USERS = {
     441085220: "Чонг",
 }
 
-EMOJI = {
-    "false": "❌",
-    "true": "✅",
-}
+class Emoji:
+    FALSE = "❌"
+    TRUE = "✅"

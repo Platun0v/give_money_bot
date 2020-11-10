@@ -1,7 +1,7 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
     InlineKeyboardButton, InlineKeyboardMarkup
 from config import USERS
-from config import EMOJI
+from config import Emoji
 from aiogram.utils.callback_data import CallbackData
 
 save_data = CallbackData("save", "value")
@@ -29,12 +29,12 @@ murkup_credits.add(inline_user_credits)
 def get_check_markup(credit_id: int, value: bool):
     markup = InlineKeyboardMarkup()
     if value:
-        markup.add(InlineKeyboardButton(f"Все верно{EMOJI['true']}", callback_data="true"))
-        markup.add(InlineKeyboardButton(f"Это не так{EMOJI['false']}", callback_data="false"))
+        markup.add(InlineKeyboardButton(f"Все верно{Emoji.TRUE}", callback_data="true"))
+        markup.add(InlineKeyboardButton(f"Это не так{Emoji.FALSE}", callback_data="false"))
         markup.add(InlineKeyboardButton("Сохранить", callback_data=check_data.new(credit_id, "1")))
     else:
-        markup.add(InlineKeyboardButton(f"Все верно{EMOJI['false']}", callback_data="true"))
-        markup.add(InlineKeyboardButton(f"Это не так{EMOJI['true']}", callback_data="false"))
+        markup.add(InlineKeyboardButton(f"Все верно{Emoji.FALSE}", callback_data="true"))
+        markup.add(InlineKeyboardButton(f"Это не так{Emoji.TRUE}", callback_data="false"))
         markup.add(InlineKeyboardButton("Сохранить", callback_data=check_data.new(credit_id, "0")))
     return markup
 
@@ -52,9 +52,9 @@ def get_credits_markup(value: int, marked_credits: set):
         has_mark = 0
         if i in marked_credits:
             has_mark = 1
-            text += EMOJI["true"]
+            text += Emoji.TRUE
         else:
-            text += EMOJI["false"]
+            text += Emoji.FALSE
         markup.add(InlineKeyboardButton(text, callback_data=credit_data.new(i, has_mark)))
     markup.add(inline_return_credit)
     markup.add(incline_credit_cancel)
@@ -83,9 +83,9 @@ def get_inline_markup(for_user_id: int, value: int, users: set):
             has_mark = 0
             if id in users:
                 has_mark = 1
-                text += EMOJI["true"]
+                text += Emoji.TRUE
             else:
-                text += EMOJI["false"]
+                text += Emoji.FALSE
             markup.add(InlineKeyboardButton(text, callback_data=user_data.new(id, has_mark)))
     inline_save = InlineKeyboardButton("Сохранить", callback_data=save_data.new(value))
     markup.add(inline_save)
