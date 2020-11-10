@@ -38,7 +38,7 @@ async def process_callback_user_credits(call: types.CallbackQuery):
             text += f"\n{index}){credit.amount} руб. ему:{config.USERS[credit.to_id]}"
             if len(credit.text_info) != 0:
                 text += f"\n{credit.text_info}"
-            text += f"\nДолг был добавлен {credit.date}"
+            text += f"\nДолг был добавлен {credit.get_date_str()}"
             index += 1
         text += "\nТы можешь выбрать долги, которые ты уже вернул:"
         await call.message.edit_text(text, reply_markup=kb.get_credits_markup(len(credits), set()))
@@ -81,7 +81,7 @@ async def process_callback_return_credit(call: types.CallbackQuery):
             text += f"\n{credit.amount} руб. ему: {config.USERS[credit.to_id]}"
             if len(credit.text_info) != 0:
                 text += f"\n{credit.text_info}"
-            text += f"\nДолг был добавлен {credit.date}"
+            text += f"\nДолг был добавлен {credit.get_date_str()}"
 
         db.return_credit(returned_credits)
         await call.message.edit_text(text)
@@ -94,8 +94,8 @@ async def process_callback_return_credit(call: types.CallbackQuery):
         message = f"Тебе {config.USERS[credit.from_id]} вернул {credit.amount} руб."
         if len(credit.text_info) != 0:
             message += f"\n{credit.text_info}"
-        message += f"\nДолг был добавлен {credit.date}"
-        message += f"\nДолг был возвращен {credit.return_date}"
+        message += f"\nДолг был добавлен {credit.get_date_str()}"
+        message += f"\nДолг был возвращен {credit.get_return_date_str()}"
         try:
             await bot.send_message(credit.to_id, message, reply_markup=markup)
         except Exception:
@@ -135,7 +135,7 @@ async def process_callback_check(call: types.CallbackQuery):
         message = f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.amount} руб."
         if len(credit.text_info) != 0:
             message += f"\n{credit.text_info}"
-        message += f"\nДолг был добавлен {credit.date}"
+        message += f"\nДолг был добавлен {credit.get_date_str()}"
 
         await bot.send_message(credit.from_id, message)
 
@@ -163,7 +163,7 @@ async def process_callback_credits_to_user(call: types.CallbackQuery):
             text += f"\n{index}){config.USERS[credit.from_id]}: {credit.amount} руб."
             if len(credit.text_info) != 0:
                 text += f"\n{credit.text_info}"
-            text += f"\nДолг был добавлен {credit.date}"
+            text += f"\nДолг был добавлен {credit.get_date_str()}"
             index += 1
     await call.message.edit_text(text)
     await bot.answer_callback_query(call.id)
