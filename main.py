@@ -31,7 +31,7 @@ async def process_callback_plus(message: types.Message):
 # Done
 @dp.message_handler(check_user, text="info", state=None)
 async def process_callback_info(message: types.Message):
-    await message.answer("Что интересует?", reply_markup=kb.markup_credits)
+    await message.answer("Что интересует?", reply_markup=kb.credits_info_markup)
 
 
 @dp.callback_query_handler(text_contains="user_credits")
@@ -160,20 +160,20 @@ async def process_callback_credit_cancel(call: types.CallbackQuery):
     await call.answer()
 
 
+# Done
 @dp.callback_query_handler(text_contains="credits_to_user")
 async def process_callback_credits_to_user(call: types.CallbackQuery):
-    text = "Тебе должны:"
-    credits = db.credits_to_user(call.from_user.id)
-    if len(credits) == 0:
+    credits_to_user = db.credits_to_user(call.from_user.id)
+    if not credits_to_user:
         text = "Тебе никто не должен. Можешь спать спокойно"
     else:
-        index = 1
-        for credit in credits:
-            text += f"\n{index}){config.USERS[credit.from_id]}: {credit.amount} руб."
-            if len(credit.text_info) != 0:
-                text += f"\n{credit.text_info}"
-            text += f"\nДолг был добавлен {credit.get_date_str()}"
-            index += 1
+        text = "Тебе должны:"
+        for i, credit in enumerate(credits_to_user, 1):
+            text = f'{text}\n' \
+                   f'{i}) {config.USERS[credit.from_id]}: {credit.amount} руб.\n' \
+                   f'{credit.get_text_info_new_line()}' \
+                   f'Долг был добавлен {credit.get_date_str()}'
+
     await call.message.edit_text(text)
     await call.answer()
 
@@ -252,7 +252,7 @@ async def process_callback(call: types.CallbackQuery):
 # Done
 @dp.message_handler(check_user, commands=['start'])
 async def process_start_command(message: types.Message):
-    await message.answer("Привет!", reply_markup=kb.markup_main)
+    await message.answer("Привет!", reply_markup=kb.main_markup)
 
 
 # Done

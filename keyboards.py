@@ -11,22 +11,16 @@ user_data = CallbackData("user", "id", "has_mark")
 credit_data = CallbackData("credit_chose", "index", "has_mark")
 check_data = CallbackData("check", "credit_id", "value")
 
-button_plus = KeyboardButton("+")
-button_info = KeyboardButton("info")
 
-markup_main = ReplyKeyboardMarkup(resize_keyboard=True).row(button_plus, button_info)
+main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(KeyboardButton("+"), KeyboardButton("info"))
+
+credits_info_markup = InlineKeyboardMarkup()
+credits_info_markup.add(InlineKeyboardButton("Кто мне должен?", callback_data="credits_to_user"))
+credits_info_markup.add(InlineKeyboardButton("Кому я должен?", callback_data="user_credits"))
 
 cancel_inline_button = InlineKeyboardButton("Отмена", callback_data="cancel")
-
-inline_credits_to_user = InlineKeyboardButton("Кто мне должен?", callback_data="credits_to_user")
-inline_user_credits = InlineKeyboardButton("Кому я должен?", callback_data="user_credits")
-inline_return_credit = InlineKeyboardButton("Вернуть выбранные долги", callback_data="return_credit")
-incline_credit_cancel = InlineKeyboardButton("Я ничего еще не вернул", callback_data="credit_cancel")
-
-markup_credits = InlineKeyboardMarkup()
-markup_credits.add(inline_credits_to_user)
-markup_credits.add(inline_user_credits)
-
+return_credit_inline_button = InlineKeyboardButton("Вернуть выбранные долги", callback_data="return_credit")
+cancel_credit_inline_button = InlineKeyboardButton("Я ничего еще не вернул", callback_data="credit_cancel")
 
 # Done
 def get_check_markup(credit_id: int, value: bool) -> InlineKeyboardMarkup:
@@ -59,8 +53,8 @@ def get_credits_markup(value: int, marked_credits: set):
         else:
             text += Emoji.FALSE
         markup.add(InlineKeyboardButton(text, callback_data=credit_data.new(i, has_mark)))
-    markup.add(inline_return_credit)
-    markup.add(incline_credit_cancel)
+    markup.add(return_credit_inline_button)
+    markup.add(cancel_credit_inline_button)
     return markup
 
 
