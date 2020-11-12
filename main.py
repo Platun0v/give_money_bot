@@ -34,30 +34,30 @@ async def process_callback_info(message: types.Message):
     await message.answer("Что интересует?", reply_markup=kb.credits_info_markup)
 
 
+# Done
 @dp.callback_query_handler(text_contains="user_credits")
 async def process_callback_user_credits(call: types.CallbackQuery):
-    credits = db.user_credits(call.from_user.id)
-    if len(credits) == 0:
+    user_credits = db.user_credits(call.from_user.id)
+    if not user_credits:
         text = "Ты никому не должен. Свободен"
         await call.message.edit_text(text)
     else:
         text = "Ты должен:"
-        index = 1
-        for credit in credits:
-            text += f"\n{index}){credit.amount} руб. ему:{config.USERS[credit.to_id]}"
-            if len(credit.text_info) != 0:
-                text += f"\n{credit.text_info}"
-            text += f"\nДолг был добавлен {credit.get_date_str()}"
-            index += 1
-        text += "\nТы можешь выбрать долги, которые ты уже вернул:"
-        await call.message.edit_text(text, reply_markup=kb.get_credits_markup(len(credits), set()))
+        for i, credit in enumerate(user_credits, 1):
+            text = f'{text}\n' \
+                   f'{i}) {credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
+                   f'{credit.get_text_info_new_line()}' \
+                   f'Долг был добавлен {credit.get_date_str()}'
+        text += "Ты можешь выбрать долги, которые ты уже вернул:"
+        await call.message.edit_text(text, reply_markup=kb.get_credits_markup(user_credits, set()))
     await call.answer()
 
 
+# Done
 @dp.callback_query_handler(text_contains="credit_chose")
 async def process_callback_credit_chose(call: types.CallbackQuery):
     marked_credits = kb.get_marked_credits(call.message.reply_markup)
-    credit_id = kb.get_credit_index(call.data)
+    credit_id = kb.get_credit_id(call.data)
     user_id = int(call.from_user.id)
 
     if credit_id in marked_credits:
@@ -66,51 +66,46 @@ async def process_callback_credit_chose(call: types.CallbackQuery):
         marked_credits.add(credit_id)
 
     await call.message.edit_reply_markup(
-        reply_markup=kb.get_credits_markup(len(db.user_credits(user_id)), marked_credits))
+        reply_markup=kb.get_credits_markup(db.user_credits(user_id), marked_credits))
     await call.answer()
 
 
+# Done
 @dp.callback_query_handler(text_contains="return_credit")
 async def process_callback_return_credit(call: types.CallbackQuery):
     marked_credits = kb.get_marked_credits(call.message.reply_markup)
-    user_id = int(call.from_user.id)
-    credits = db.user_credits(user_id)
 
-    text = ""
-    if len(marked_credits) == 0:
+    if not marked_credits:
         text = "Ты ничего не отметил"
     else:
-
         returned_credits = []
-
         text = "Ты вернул:"
-        for index in marked_credits:
-            credit = credits[index]
-            returned_credits.append(credit.id)
-            text += f"\n{credit.amount} руб. ему: {config.USERS[credit.to_id]}"
-            if len(credit.text_info) != 0:
-                text += f"\n{credit.text_info}"
-            text += f"\nДолг был добавлен {credit.get_date_str()}"
+        for credit_id in marked_credits:
+            returned_credits.append(credit_id)
+            credit = db.get_credit(credit_id)
+            text = f'{credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
+                   f'{credit.get_text_info_new_line()}' \
+                   f'Долг был добавлен {credit.get_date_str()}'
 
         db.return_credit(returned_credits)
         await call.message.edit_text(text)
 
     await call.answer(text=text, show_alert=True)
 
-    for index in marked_credits:
-        credit = credits[index]
-        markup = kb.get_check_markup(credit.id, True)
-        message = f"Тебе {config.USERS[credit.from_id]} вернул {credit.amount} руб."
-        if len(credit.text_info) != 0:
-            message += f"\n{credit.text_info}"
-        message += f"\nДолг был добавлен {credit.get_date_str()}"
-        message += f"\nДолг был возвращен {credit.get_return_date_str()}"
+    for credit_id in marked_credits:
+        credit = db.get_credit(credit_id)
+        markup = kb.get_check_markup(credit_id, True)
+        message = f'Тебе {config.USERS[credit.from_id]} вернул {credit.amount} руб.\n' \
+                  f'{credit.get_text_info_new_line()}' \
+                  f'Долг был добавлен {credit.get_date_str()}\n' \
+                  f'Долг был возвращен {credit.get_return_date_str()}\n'
         try:
             await bot.send_message(credit.to_id, message, reply_markup=markup)
         except Exception:
             pass
 
 
+# Done
 @dp.callback_query_handler(text_contains="true")
 async def process_callback_check_true(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
@@ -119,6 +114,7 @@ async def process_callback_check_true(call: types.CallbackQuery):
     await call.answer()
 
 
+# Done
 @dp.callback_query_handler(text_contains="false")
 async def process_callback_check_false(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
@@ -127,6 +123,7 @@ async def process_callback_check_false(call: types.CallbackQuery):
     await call.answer()
 
 
+# Done
 @dp.callback_query_handler(text_contains="check")
 async def process_callback_check(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
@@ -134,29 +131,24 @@ async def process_callback_check(call: types.CallbackQuery):
     await call.answer()
 
     if value == "1":
-        print("hello")
         await call.message.delete_reply_markup()
     else:
         db.reject_return_credit(credit_id)
         text = call.message.text
         await call.message.edit_text(text + "\nОтмена")
         credit = db.get_credit(credit_id)
-        message = f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.amount} руб."
-        if len(credit.text_info) != 0:
-            message += f"\n{credit.text_info}"
-        message += f"\nДолг был добавлен {credit.get_date_str()}"
+        message = f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.amount} руб.\n" \
+                  f"{credit.get_text_info_new_line()}" \
+                  f"Долг был добавлен {credit.get_date_str()}"
 
         await bot.send_message(credit.from_id, message)
 
 
+# Done
 @dp.callback_query_handler(text_contains="credit_cancel")
 async def process_callback_credit_cancel(call: types.CallbackQuery):
-    text = call.message.text.split("\n")
-    message = ""
-    for i in range(0, len(text) - 1):
-        message += text[i] + "\n"
-
-    await call.message.edit_text(message)
+    text = '\n'.join(call.message.text.split("\n")[:-1])
+    await call.message.edit_text(text)
     await call.answer()
 
 

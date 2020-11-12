@@ -1,9 +1,10 @@
-from typing import Set, Tuple
+from typing import Set, Tuple, List, Union
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, \
     InlineKeyboardButton, InlineKeyboardMarkup
 from config import USERS
 from config import Emoji
+from db_connector import Credit
 from aiogram.utils.callback_data import CallbackData
 
 credit_amount_data = CallbackData("save", "value")
@@ -23,7 +24,7 @@ return_credit_inline_button = InlineKeyboardButton("Вернуть выбран�
 cancel_credit_inline_button = InlineKeyboardButton("Я ничего еще не вернул", callback_data="credit_cancel")
 
 # Done
-def get_check_markup(credit_id: int, value: bool) -> InlineKeyboardMarkup:
+def get_check_markup(credit_id: Union[str, int], value: bool) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     if value:
         markup.add(InlineKeyboardButton(f"Все верно{Emoji.TRUE}", callback_data="true"))
@@ -36,39 +37,42 @@ def get_check_markup(credit_id: int, value: bool) -> InlineKeyboardMarkup:
     return markup
 
 
-def get_data_from_check(markup: InlineKeyboardMarkup):
+def get_data_from_check(markup: InlineKeyboardMarkup) -> Tuple[int, str]:
     data = markup["inline_keyboard"][2][0].callback_data
     parsed_data = check_data.parse(data)
-    return parsed_data.get("credit_id"), parsed_data.get("value")
+    return int(parsed_data.get("credit_id")), parsed_data.get("value")
 
 
-def get_credits_markup(value: int, marked_credits: set):
+# Done
+def get_credits_markup(user_credits: List[Credit], marked_credits: set) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
-    for i in range(0, value):
-        text = f"{i + 1}"
-        has_mark = 0
-        if i in marked_credits:
+    for i, credit in enumerate(user_credits, 1):
+        if credit.id in marked_credits:
             has_mark = 1
-            text += Emoji.TRUE
+            text = f'{i} {Emoji.TRUE}'
         else:
-            text += Emoji.FALSE
-        markup.add(InlineKeyboardButton(text, callback_data=credit_data.new(i, has_mark)))
+            has_mark = 0
+            text = f'{i} {Emoji.FALSE}'
+        markup.add(InlineKeyboardButton(text, callback_data=credit_data.new(credit.id, has_mark)))
     markup.add(return_credit_inline_button)
     markup.add(cancel_credit_inline_button)
     return markup
 
 
-def get_marked_credits(markup: InlineKeyboardMarkup):
+# Done
+def get_marked_credits(markup: InlineKeyboardMarkup) -> Set[int]:
     marked_credits = set()
-    for i in markup["inline_keyboard"]:
-        if "credit_chose" in i[0].callback_data:
-            data = credit_data.parse(i[0].callback_data)
-            if data.get("has_mark") == "1":
-                marked_credits.add(int(data.get("index")))
+    for _ in markup["inline_keyboard"]:
+        for elem in _:
+            if "credit_chose" in elem.callback_data:
+                data = credit_data.parse(elem.callback_data)
+                if data.get("has_mark") == "1":
+                    marked_credits.add(int(data.get("index")))
     return marked_credits
 
 
-def get_credit_index(data: str):
+# Done
+def get_credit_id(data: str) -> int:
     return int(credit_data.parse(data).get("index"))
 
 
