@@ -30,6 +30,11 @@ class Credit(Base):
     def get_return_date_str(self):
         return f"{self.return_date.day}.{self.return_date.month}.{self.return_date.year}"
 
+    def get_text_info_new_line(self):
+        if self.text_info:
+            return f'{self.text_info}\n'
+        return ''
+
     def __repr__(self):
         return f"<Credit('{config.USERS[self.from_id]}' -> '{config.USERS[self.to_id]}', amount='{self.amount}')>"
 
