@@ -80,7 +80,6 @@ async def process_callback_return_credit(call: types.CallbackQuery):
             credit = db.get_credit(credit_id)
             text = f'{credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
                    f'{credit.get_text_info_new_line()}' \
-                   f'Долг был добавлен {credit.get_date_str()}'
 
         db.return_credit(returned_credits)
         await call.message.edit_text(text)
@@ -91,9 +90,7 @@ async def process_callback_return_credit(call: types.CallbackQuery):
         credit = db.get_credit(credit_id)
         markup = kb.get_check_markup(credit_id, True)
         message = f'Тебе {config.USERS[credit.from_id]} вернул {credit.amount} руб.\n' \
-                  f'{credit.get_text_info_new_line()}' \
-                  f'Долг был добавлен {credit.get_date_str()}\n' \
-                  f'Долг был возвращен {credit.get_return_date_str()}\n'
+                  f'{credit.get_text_info_new_line()}'
         try:
             await bot.send_message(credit.to_id, message, reply_markup=markup)
         except Exception:
@@ -131,7 +128,6 @@ async def process_callback_check(call: types.CallbackQuery):
         credit = db.get_credit(credit_id)
         message = f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.amount} руб.\n" \
                   f"{credit.get_text_info_new_line()}" \
-                  f"Долг был добавлен {credit.get_date_str()}"
 
         await bot.send_message(credit.from_id, message)
 
