@@ -21,20 +21,17 @@ def get_info(message: types.Message) -> str:
     return '' if len(msg) == 1 else msg[1]
 
 
-# Done
 @dp.message_handler(check_user, text="+", state=None)
 async def process_callback_plus(message: types.Message):
     await message.answer("Введите сумму(по желанию инфу по долгу через пробел)")
     await AddState.read_num.set()
 
 
-# Done
 @dp.message_handler(check_user, text="info", state=None)
 async def process_callback_info(message: types.Message):
     await message.answer("Что интересует?", reply_markup=kb.credits_info_markup)
 
 
-# Done
 @dp.callback_query_handler(text_contains="user_credits")
 async def process_callback_user_credits(call: types.CallbackQuery):
     user_credits = db.user_credits(call.from_user.id)
@@ -53,7 +50,6 @@ async def process_callback_user_credits(call: types.CallbackQuery):
     await call.answer()
 
 
-# Done
 @dp.callback_query_handler(text_contains="credit_chose")
 async def process_callback_credit_chose(call: types.CallbackQuery):
     marked_credits = kb.get_marked_credits(call.message.reply_markup)
@@ -70,7 +66,6 @@ async def process_callback_credit_chose(call: types.CallbackQuery):
     await call.answer()
 
 
-# Done
 @dp.callback_query_handler(text_contains="return_credit")
 async def process_callback_return_credit(call: types.CallbackQuery):
     marked_credits = kb.get_marked_credits(call.message.reply_markup)
@@ -105,7 +100,6 @@ async def process_callback_return_credit(call: types.CallbackQuery):
             pass
 
 
-# Done
 @dp.callback_query_handler(text_contains="true")
 async def process_callback_check_true(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
@@ -114,7 +108,6 @@ async def process_callback_check_true(call: types.CallbackQuery):
     await call.answer()
 
 
-# Done
 @dp.callback_query_handler(text_contains="false")
 async def process_callback_check_false(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
@@ -123,7 +116,6 @@ async def process_callback_check_false(call: types.CallbackQuery):
     await call.answer()
 
 
-# Done
 @dp.callback_query_handler(text_contains="check")
 async def process_callback_check(call: types.CallbackQuery):
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
@@ -144,7 +136,6 @@ async def process_callback_check(call: types.CallbackQuery):
         await bot.send_message(credit.from_id, message)
 
 
-# Done
 @dp.callback_query_handler(text_contains="credit_cancel")
 async def process_callback_credit_cancel(call: types.CallbackQuery):
     text = '\n'.join(call.message.text.split("\n")[:-1])
@@ -152,7 +143,6 @@ async def process_callback_credit_cancel(call: types.CallbackQuery):
     await call.answer()
 
 
-# Done
 @dp.callback_query_handler(text_contains="credits_to_user")
 async def process_callback_credits_to_user(call: types.CallbackQuery):
     credits_to_user = db.credits_to_user(call.from_user.id)
@@ -170,7 +160,6 @@ async def process_callback_credits_to_user(call: types.CallbackQuery):
     await call.answer()
 
 
-# Done
 @dp.message_handler(state=AddState.read_num)
 async def read_num_from_user(message: types.Message, state: FSMContext):
     message_text = message.text.split(" ")
@@ -188,7 +177,6 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-# Done
 @dp.callback_query_handler(text_contains="save")
 async def process_callback_save(call: types.CallbackQuery):
     value, users = kb.get_data_from_markup(call.message.reply_markup)
@@ -215,7 +203,6 @@ async def process_callback_save(call: types.CallbackQuery):
     await call.answer(text=text, show_alert=True)
 
 
-# Done
 @dp.callback_query_handler(text_contains="cancel")
 async def process_callback_cancel(call: types.CallbackQuery):
     value = kb.get_amount_from_markup(call.message.reply_markup)
@@ -226,7 +213,6 @@ async def process_callback_cancel(call: types.CallbackQuery):
     await call.answer(text="Отмена")
 
 
-# Done
 @dp.callback_query_handler(text_contains="user")
 async def process_callback(call: types.CallbackQuery):
     value, users = kb.get_data_from_markup(call.message.reply_markup)
@@ -241,13 +227,11 @@ async def process_callback(call: types.CallbackQuery):
     await call.answer()
 
 
-# Done
 @dp.message_handler(check_user, commands=['start'])
 async def process_start_command(message: types.Message):
     await message.answer("Привет!", reply_markup=kb.main_markup)
 
 
-# Done
 @dp.message_handler(check_user, commands=['id'])
 async def get_id(message: types.Message):
     await message.answer(f"{message.from_user.id}")

@@ -12,7 +12,6 @@ user_data = CallbackData("user", "id", "has_mark")
 credit_data = CallbackData("credit_chose", "index", "has_mark")
 check_data = CallbackData("check", "credit_id", "value")
 
-
 main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(KeyboardButton("+"), KeyboardButton("info"))
 
 credits_info_markup = InlineKeyboardMarkup()
@@ -23,7 +22,7 @@ cancel_inline_button = InlineKeyboardButton("Отмена", callback_data="cance
 return_credit_inline_button = InlineKeyboardButton("Вернуть выбранные долги", callback_data="return_credit")
 cancel_credit_inline_button = InlineKeyboardButton("Я ничего еще не вернул", callback_data="credit_cancel")
 
-# Done
+
 def get_check_markup(credit_id: Union[str, int], value: bool) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     if value:
@@ -43,7 +42,6 @@ def get_data_from_check(markup: InlineKeyboardMarkup) -> Tuple[int, str]:
     return int(parsed_data.get("credit_id")), parsed_data.get("value")
 
 
-# Done
 def get_credits_markup(user_credits: List[Credit], marked_credits: set) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     for i, credit in enumerate(user_credits, 1):
@@ -59,7 +57,6 @@ def get_credits_markup(user_credits: List[Credit], marked_credits: set) -> Inlin
     return markup
 
 
-# Done
 def get_marked_credits(markup: InlineKeyboardMarkup) -> Set[int]:
     marked_credits = set()
     for _ in markup["inline_keyboard"]:
@@ -71,12 +68,10 @@ def get_marked_credits(markup: InlineKeyboardMarkup) -> Set[int]:
     return marked_credits
 
 
-# Done
 def get_credit_id(data: str) -> int:
     return int(credit_data.parse(data).get("index"))
 
 
-# Done
 def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int]) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     for user_id in USERS.keys():
@@ -97,7 +92,6 @@ def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int])
     return markup
 
 
-# Done
 def get_data_from_markup(markup: InlineKeyboardMarkup) -> Tuple[int, Set[int]]:
     users = set()
     value = None
@@ -112,7 +106,6 @@ def get_data_from_markup(markup: InlineKeyboardMarkup) -> Tuple[int, Set[int]]:
     return value, users
 
 
-# Done
 def get_amount_from_markup(markup: InlineKeyboardMarkup) -> int:
     for _ in markup["inline_keyboard"]:
         for elem in _:
@@ -120,6 +113,5 @@ def get_amount_from_markup(markup: InlineKeyboardMarkup) -> int:
                 return int(credit_amount_data.parse(elem.callback_data).get("value"))
 
 
-# Done
 def get_user_id(data: str) -> int:
     return int(user_data.parse(data).get("id"))
