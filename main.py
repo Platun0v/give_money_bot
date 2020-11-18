@@ -115,12 +115,11 @@ async def process_callback_user_credits(message: types.Message):
         text = "Ты никому не должен. Свободен"
         await message.answer(text)
     else:
-        text = "Ты должен:"
+        text = "Ты должен:\n"
         for i, credit in enumerate(user_credits, 1):
-            text = f'{text}\n' \
-                   f'{i}) {credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
-                   f'{credit.get_text_info_new_line()}' \
-                   f'Долг был добавлен {credit.get_date_str()}'
+            text += f'{i}) {credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
+                    f'{credit.get_text_info_new_line()}' \
+                    f'Долг был добавлен {credit.get_date_str()}\n'
         text += "Ты можешь выбрать долги, которые ты уже вернул:"
         await message.answer(text, reply_markup=kb.get_credits_markup(user_credits, set()))
 
