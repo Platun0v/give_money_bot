@@ -116,10 +116,13 @@ async def process_callback_user_credits(message: types.Message):
         await message.answer(text)
     else:
         text = "Ты должен:\n"
+        credits_sum = 0
         for i, credit in enumerate(user_credits, 1):
+            credits_sum += credit.amount
             text += f'{i}) {credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
                     f'{credit.get_text_info_new_line()}' \
                     f'Долг был добавлен {credit.get_date_str()}\n'
+        text += f"Итого: {credits_sum} руб.\n"
         text += "Ты можешь выбрать долги, которые ты уже вернул:"
         await message.answer(text, reply_markup=kb.get_credits_markup(user_credits, set()))
 
@@ -221,12 +224,14 @@ async def process_callback_credits_to_user(message: types.Message):
     if not credits_to_user:
         text = "Тебе никто не должен. Можешь спать спокойно"
     else:
-        text = "Тебе должны:"
+        text = "Тебе должны:\n"
+        credits_sum = 0
         for i, credit in enumerate(credits_to_user, 1):
-            text = f'{text}\n' \
-                   f'{i}) {config.USERS[credit.from_id]}: {credit.amount} руб.\n' \
-                   f'{credit.get_text_info_new_line()}' \
-                   f'Долг был добавлен {credit.get_date_str()}'
+            credits_sum += credit.amount
+            text += f'{i}) {config.USERS[credit.from_id]}: {credit.amount} руб.\n' \
+                    f'{credit.get_text_info_new_line()}' \
+                    f'Долг был добавлен {credit.get_date_str()}\n'
+        text += f'Итог: {credits_sum} руб.'
 
     await message.answer(text, reply_markup=kb.main_markup)
 
