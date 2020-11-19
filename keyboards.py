@@ -53,8 +53,7 @@ def get_credits_markup(user_credits: List[Credit], marked_credits: set) -> Inlin
             has_mark = 0
             text = f'{i} {Emoji.FALSE}'
         markup.add(InlineKeyboardButton(text, callback_data=credit_choose_data.new(credit.id, has_mark)))
-    markup.add(return_credit_inline)
-    markup.add(cancel_return_credit_inline)
+    markup.add(return_credit_inline, cancel_return_credit_inline)
     return markup
 
 
