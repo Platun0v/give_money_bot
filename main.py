@@ -1,13 +1,14 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from loguru import logger
 
 from my_state import AddState
 import keyboards as kb
 from keyboards import CALLBACK
 from db_connector import DB
 import config
+from log import logger
+
 
 bot = Bot(token=config.TOKEN)  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -236,7 +237,6 @@ async def process_callback_credits_to_user(message: types.Message):
     await message.answer(text, reply_markup=kb.main_markup)
 
 
-@logger.catch()
 def main():
     executor.start_polling(dp, skip_updates=True)
 

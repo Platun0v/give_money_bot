@@ -41,7 +41,7 @@ class Credit(Base):
 
 class DB:
     def __init__(self, db_path: str = "db.sqlite"):
-        self.engine = sqlalchemy.create_engine(f'sqlite:///{db_path}', echo=True, connect_args={'check_same_thread': False})
+        self.engine = sqlalchemy.create_engine(f'sqlite:///{db_path}', echo=False, connect_args={'check_same_thread': False})
         Base.metadata.create_all(self.engine)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
