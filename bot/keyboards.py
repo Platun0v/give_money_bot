@@ -5,8 +5,8 @@ from aiogram.utils.callback_data import CallbackData
 
 from config import USERS
 from config import Emoji
-from db_connector import Credit
-from callback_data import CALLBACK
+from db.db_connector import Credit
+from bot.callback_data import CALLBACK
 
 credit_amount_data = CallbackData(CALLBACK.save_credit, "value")
 user_choose_data = CallbackData(CALLBACK.choose_user_for_credit, "id", "has_mark")
