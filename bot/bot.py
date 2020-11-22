@@ -44,7 +44,7 @@ async def show_mass_info(message: types.Message):
         user_credits = db.user_credits(user)
         for credit in user_credits:
 
-            users_credits_amount[user][credit.to_id] += credit.amount
+            users_credits_amount[user][credit.to_id] += credit.get_amount()
 
     width = 10
     for name in ['Кому'] + list(config.USERS.values()):
@@ -142,8 +142,8 @@ async def process_callback_user_credits(message: types.Message):
         text = "Ты должен:\n"
         credits_sum = 0
         for i, credit in enumerate(user_credits, 1):
-            credits_sum += credit.amount
-            text += f'{i}) {credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
+            credits_sum += credit.get_amount()
+            text += f'{i}) {credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n' \
                     f'{credit.get_text_info_new_line()}' \
                     f'Долг был добавлен {credit.get_date_str()}\n'
         text += f"Итого: {credits_sum} руб.\n"
@@ -179,7 +179,7 @@ async def process_callback_return_credit(call: types.CallbackQuery):
         for credit_id in marked_credits:
             returned_credits.append(credit_id)
             credit = db.get_credit(credit_id)
-            text = f'{credit.amount} руб. ему: {config.USERS[credit.to_id]}\n' \
+            text = f'{credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n' \
                    f'{credit.get_text_info_new_line()}'
 
         db.return_credit(returned_credits)
@@ -190,7 +190,7 @@ async def process_callback_return_credit(call: types.CallbackQuery):
     for credit_id in marked_credits:
         credit = db.get_credit(credit_id)
         markup = kb.get_check_markup(credit_id, True)
-        message = f'Тебе {config.USERS[credit.from_id]} вернул {credit.amount} руб.\n' \
+        message = f'Тебе {config.USERS[credit.from_id]} вернул {credit.get_amount()} руб.\n' \
                   f'{credit.get_text_info_new_line()}'
         try:
             await bot.send_message(credit.to_id, message, reply_markup=markup)
@@ -234,7 +234,7 @@ async def process_callback_check(call: types.CallbackQuery):
         text = call.message.text
         await call.message.edit_text(text + "\nОтмена")
         credit = db.get_credit(credit_id)
-        message = f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.amount} руб.\n" \
+        message = f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.get_amount()} руб.\n" \
                   f"{credit.get_text_info_new_line()}"
 
         await bot.send_message(credit.from_id, message)
@@ -251,8 +251,8 @@ async def process_callback_credits_to_user(message: types.Message):
         text = "Тебе должны:\n"
         credits_sum = 0
         for i, credit in enumerate(credits_to_user, 1):
-            credits_sum += credit.amount
-            text += f'{i}) {config.USERS[credit.from_id]}: {credit.amount} руб.\n' \
+            credits_sum += credit.get_amount()
+            text += f'{i}) {config.USERS[credit.from_id]}: {credit.get_amount()} руб.\n' \
                     f'{credit.get_text_info_new_line()}' \
                     f'Долг был добавлен {credit.get_date_str()}\n'
         text += f'Итог: {credits_sum} руб.'
