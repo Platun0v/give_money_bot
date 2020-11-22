@@ -17,7 +17,8 @@ class DB:
 
     def add_entry(self, to_user: int, from_users: List[int], amount: int, additional_info: str = ""):
         for from_user in from_users:
-            self.session.add(Credit(to_id=to_user, from_id=from_user, amount=amount, text_info=additional_info))
+            self.session.add(
+                Credit(to_id=to_user, from_id=from_user, amount=amount, text_info=additional_info, discount=0))
         self.session.commit()
 
     def user_credits(self, user: int) -> List[Credit]:

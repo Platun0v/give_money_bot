@@ -16,6 +16,7 @@ class Credit(Base):
     to_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кому должны
     from_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кто должен
     amount = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    discount = sqlalchemy.Column(sqlalchemy.Integer, default=0)
 
     date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.utcnow)
     text_info = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
