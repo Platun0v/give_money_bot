@@ -39,4 +39,5 @@ class Credit(Base):
         return self.amount - (0 if self.discount is None else self.discount)
 
     def __repr__(self):
-        return f"<Credit('{config.USERS[self.from_id]}' -> '{config.USERS[self.to_id]}', amount='{self.amount}')>"
+        return f"<Credit('{config.USERS[self.from_id]}' -> '{config.USERS[self.to_id]}', " \
+               f"amount='{self.amount}', discount='{self.discount}')>"
