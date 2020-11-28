@@ -21,13 +21,17 @@ class DB:
                 Credit(to_id=to_user, from_id=from_user, amount=amount, text_info=additional_info, discount=0))
         self.session.commit()
 
-    def user_credits(self, user: int) -> List[Credit]:
+    def get_user_credits(self, user: int) -> List[Credit]:
         return self.session.query(Credit).filter(Credit.from_id == user).filter(Credit.returned == False).all()
 
     def credits_to_user(self, user: int) -> List[Credit]:
         return self.session.query(Credit).filter(Credit.to_id == user).filter(Credit.returned == False).all()
 
-    def return_credit(self, credit_ids: typing.Union[List[int], int]):
+    def get_credits_to_user_from_user(self, from_user: int, to_user: int) -> List[Credit]:
+        return self.session.query(Credit).filter(Credit.to_id == to_user).filter(Credit.from_id == from_user)\
+            .filter(Credit.returned == False).all()
+
+    def return_credits(self, credit_ids: typing.Union[List[int], int]):
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
 
@@ -49,3 +53,10 @@ class DB:
 
     def get_credit(self, credit_id: int) -> Credit:
         return self.session.query(Credit).filter(Credit.id == credit_id).first()
+
+    def add_discount(self, credit: typing.Union[int, Credit], discount: int):
+        if isinstance(credit, int):
+            credit = self.get_credit(credit)
+        credit.discount = 0
+        credit.discount += discount
+        self.session.commit()

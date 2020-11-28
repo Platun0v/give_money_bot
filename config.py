@@ -14,6 +14,8 @@ USERS = {
     441085220: "Чонг",
 }
 
+ADMIN = 447411595
+
 
 class Emoji:
     FALSE = "❌"
