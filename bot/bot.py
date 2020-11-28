@@ -49,6 +49,7 @@ async def get_id(message: types.Message):
     await message.answer(f"{message.from_user.id}")
 
 
+# TODO: Divide this shit into many functions
 @dp.message_handler(check_admin, commands=['sqz'])
 async def squeeze_credits(message: types.Message):
     users_id = list(config.USERS.keys())
