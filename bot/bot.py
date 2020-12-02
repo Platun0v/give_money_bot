@@ -67,6 +67,8 @@ async def squeeze_credits(message: types.Message):
                 user1, user2 = user2, user1
                 user1_lst, user2_lst = user2_lst, user1_lst
             diff = user1_amount - user2_amount
+            old_user2_amount = user2_amount
+
             logger.info(f"Try to squeeze of {user1}:{user2} - with amount1={user1_amount},  amount2={user2_amount}")
 
             db.return_credits(list(map(lambda x: x.id, user2_lst)))  # Возвращаем все кредиты 2 пользователя
@@ -93,8 +95,10 @@ async def squeeze_credits(message: types.Message):
                 await bot.send_message(config.ADMIN, "Error occurred")
                 return
 
-            await bot.send_message(user1, f"Были взаимоуничтожены долги на сумму {diff} с {config.USERS[user2]}")
-            await bot.send_message(user2, f"Были взаимоуничтожены долги на сумму {diff} с {config.USERS[user1]}")
+            await bot.send_message(user1,
+                                   f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {config.USERS[user2]}")
+            await bot.send_message(user2,
+                                   f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {config.USERS[user1]}")
 
 
 # ======================================= ADD CREDIT =======================================
@@ -217,12 +221,12 @@ async def process_callback_return_credit(call: types.CallbackQuery):
         text = "Ты ничего не отметил"
     else:
         returned_credits = []
-        text = "Ты вернул:"
+        text = "Ты вернул:\n"
         for credit_id in marked_credits:
             returned_credits.append(credit_id)
             credit = db.get_credit(credit_id)
-            text = f'{credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n' \
-                   f'{credit.get_text_info_new_line()}'
+            text += f'{credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n' \
+                    f'{credit.get_text_info_new_line()}'
 
         db.return_credits(returned_credits)
         await call.message.edit_text(text)
