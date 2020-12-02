@@ -57,6 +57,7 @@ class DB:
     def add_discount(self, credit: typing.Union[int, Credit], discount: int):
         if isinstance(credit, int):
             credit = self.get_credit(credit)
-        credit.discount = 0
+        if credit.discount is None:
+            credit.discount = 0
         credit.discount += discount
         self.session.commit()
