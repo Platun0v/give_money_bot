@@ -22,10 +22,20 @@ class DB:
         self.session.commit()
 
     def get_user_credits(self, user: int) -> List[Credit]:
-        return self.session.query(Credit).filter(Credit.from_id == user).filter(Credit.returned == False).all()
+        return self.session.query(Credit)\
+            .filter(Credit.from_id == user)\
+            .filter(Credit.returned == False) \
+            .order_by(Credit.to_id)\
+            .order_by(Credit.date)\
+            .all()
 
     def credits_to_user(self, user: int) -> List[Credit]:
-        return self.session.query(Credit).filter(Credit.to_id == user).filter(Credit.returned == False).all()
+        return self.session.query(Credit)\
+            .filter(Credit.to_id == user)\
+            .filter(Credit.returned == False) \
+            .order_by(Credit.from_id) \
+            .order_by(Credit.date) \
+            .all()
 
     def get_credits_to_user_from_user(self, from_user: int, to_user: int) -> List[Credit]:
         return self.session.query(Credit).filter(Credit.to_id == to_user).filter(Credit.from_id == from_user)\
