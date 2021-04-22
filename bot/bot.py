@@ -18,6 +18,9 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 db = DB()
 
 
+DIVIDER = "================\n"
+
+
 def check_user(message: types.Message) -> bool:
     return message.from_user.id in config.USERS.keys()
 
@@ -186,11 +189,17 @@ async def process_callback_user_credits(message: types.Message):
     else:
         text = "Ты должен:\n"
         credits_sum = 0
+        credits_sum_by_user = {}
         for i, credit in enumerate(user_credits, 1):
             credits_sum += credit.get_amount()
+            credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
+
             text += f'{i}) {credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n' \
                     f'{credit.get_text_info_new_line()}' \
-                    f'Долг был добавлен {credit.get_date_str()}\n'
+                    # f'Долг был добавлен {credit.get_date_str()}\n'
+        text += DIVIDER
+        for user_id, amount in credits_sum_by_user.items():
+            text += f"Ты должен {config.USERS[user_id]} - {amount} руб.\n"
         text += f"Итого: {credits_sum} руб.\n"
         text += "Ты можешь выбрать долги, которые ты уже вернул:"
 
@@ -296,14 +305,34 @@ async def process_callback_credits_to_user(message: types.Message):
     else:
         text = "Тебе должны:\n"
         credits_sum = 0
+        credits_sum_by_user = {}
         for i, credit in enumerate(credits_to_user, 1):
             credits_sum += credit.get_amount()
+            credits_sum_by_user[credit.from_id] = credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
             text += f'{i}) {config.USERS[credit.from_id]}: {credit.get_amount()} руб.\n' \
                     f'{credit.get_text_info_new_line()}' \
-                    f'Долг был добавлен {credit.get_date_str()}\n'
+                    # f'Долг был добавлен {credit.get_date_str()}\n'
+
+        text += DIVIDER
+        for user_id, amount in credits_sum_by_user.items():
+            text += f"{config.USERS[user_id]} тебе должен - {amount} руб.\n"
         text += f'Итог: {credits_sum} руб.'
 
     await message.answer(text, reply_markup=kb.main_markup)
+
+"""
+        credits_sum_by_user = {}
+        for i, credit in enumerate(user_credits, 1):
+            credits_sum += credit.get_amount()
+            credits_sum_by_user[credit.from_id] = credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
+            
+            text += f'{i}) {credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n' \
+                    f'{credit.get_text_info_new_line()}' \
+                    # f'Долг был добавлен {credit.get_date_str()}\n'
+        text += DIVIDER
+        for user_id, amount in credits_sum_by_user.items():
+            text += f"Ты должен {config.USERS[user_id]} - {amount} руб."
+"""
 
 
 def main():
