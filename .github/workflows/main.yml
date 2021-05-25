@@ -42,5 +42,7 @@ jobs:
           task build
       - name: Type hint test
         shell: bash
-        run: task mypy
+        run: |
+          source venv/bin/activate
+          task mypy
 
