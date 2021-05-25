@@ -1,0 +1,46 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: [3.8]
+    
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Install Task
+        uses: arduino/setup-task@v1
+      - name: Create venv
+        shell: bash
+        run: |
+          pip install virtualenv
+          python -m virtualenv venv
+      - name: Install dependencies
+        shell: bash
+        run: |
+          pip install poetry
+          source venv/bin/activate
+          task build
+      - name: Type hint test
+        shell: bash
+        run: task mypy
+
