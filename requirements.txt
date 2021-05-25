@@ -1,7 +1,0 @@
-python-dotenv
-aiogram
-typing_extensions
-aiohttp_socks
-loguru
-sqlalchemy
-alembic
