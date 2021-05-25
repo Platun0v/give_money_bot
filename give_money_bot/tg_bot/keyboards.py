@@ -3,10 +3,10 @@ from typing import Set, Tuple, List, Union
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
 
-from config import USERS
-from config import Emoji
-from db.db_connector import Credit
-from bot.callback_data import CALLBACK
+from give_money_bot.config import USERS
+from give_money_bot.config import Emoji
+from give_money_bot.db.db_connector import Credit
+from give_money_bot.tg_bot.callback_data import CALLBACK
 
 credit_amount_data = CallbackData(CALLBACK.save_credit, "value")
 user_choose_data = CallbackData(CALLBACK.choose_user_for_credit, "id", "has_mark")

@@ -1,17 +1,17 @@
-from typing import Dict, Tuple, List
+from typing import Tuple, List, Optional
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-from bot.my_state import AddState
-from bot import keyboards as kb
-from bot.keyboards import CALLBACK
-from db.db_connector import DB
-from db.models import Credit
-import config
+from give_money_bot.tg_bot.my_state import AddState
+from give_money_bot import config
+from give_money_bot.tg_bot import keyboards as kb
+from give_money_bot.tg_bot.keyboards import CALLBACK
+from give_money_bot.db.db_connector import DB
+from give_money_bot.db.models import Credit
 
-from utils.log import logger
+from give_money_bot.utils.log import logger
 
 bot = Bot(token=config.TOKEN)  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -54,7 +54,7 @@ async def get_id(message: types.Message):
 
 # TODO: Divide this shit into many functions
 @dp.message_handler(check_admin, commands=['sqz'])
-async def squeeze_credits(message: types.Message):
+async def squeeze_credits(message: Optional[types.Message]):
     users_id = list(config.USERS.keys())
     for i, _user1 in enumerate(users_id):
         for j, _user2 in enumerate(users_id[i + 1:], i + 1):
@@ -159,7 +159,7 @@ async def process_callback_save(call: types.CallbackQuery):
         db.add_entry(user_id, list(users), value, info)
 
         for user in users:
-            try:  # Fixes not started conv with bot
+            try:  # Fixes not started conv with give_money_bot
                 text_users = f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" \
                              f"{info}"
                 await bot.send_message(user, text_users)

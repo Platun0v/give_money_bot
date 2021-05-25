@@ -4,8 +4,7 @@ from typing import Optional
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 
-import config
-
+from give_money_bot import config
 
 Base = declarative_base()
 

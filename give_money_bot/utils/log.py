@@ -29,4 +29,4 @@ logging.getLogger('sqlalchemy').setLevel(logging.INFO)
 logging.getLogger('sqlalchemy').addHandler(handler)
 
 logger.add(sys.stderr, level="DEBUG")
-logger.add("bot.log", level="DEBUG")
+logger.add("give_money_bot.log", level="DEBUG")
