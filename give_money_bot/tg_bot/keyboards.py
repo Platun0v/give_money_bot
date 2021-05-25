@@ -1,4 +1,4 @@
-from typing import Set, Tuple, List, Union
+from typing import Set, Tuple, List, Union, Optional
 
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
@@ -93,7 +93,7 @@ def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int])
     return markup
 
 
-def get_data_from_markup(markup: InlineKeyboardMarkup) -> Tuple[int, Set[int]]:
+def get_data_from_markup(markup: InlineKeyboardMarkup) -> Tuple[Optional[int], Set[int]]:
     users = set()
     value = None
     for _ in markup["inline_keyboard"]:
@@ -107,11 +107,12 @@ def get_data_from_markup(markup: InlineKeyboardMarkup) -> Tuple[int, Set[int]]:
     return value, users
 
 
-def get_amount_from_markup(markup: InlineKeyboardMarkup) -> int:
+def get_amount_from_markup(markup: InlineKeyboardMarkup) -> Optional[int]:
     for _ in markup["inline_keyboard"]:
         for elem in _:
             if CALLBACK.save_credit in elem.callback_data:
                 return int(credit_amount_data.parse(elem.callback_data).get("value"))
+    return None
 
 
 def get_user_id(data: str) -> int:

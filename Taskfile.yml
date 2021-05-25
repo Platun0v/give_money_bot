@@ -1,0 +1,11 @@
+version: '3'
+
+tasks:
+  mypy:
+    cmds:
+      - poetry run mypy give_money_bot --show-traceback --ignore-missing-imports --follow-imports=skip --config-file mypy.ini
+
+  build:
+    cmds:
+      - poetry install
+

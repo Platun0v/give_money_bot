@@ -12,24 +12,26 @@ Base = declarative_base()
 class Credit(Base):
     __tablename__ = 'credits'
 
-    id: int = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True, autoincrement=True)
-    to_id: int = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кому должны
-    from_id: int = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кто должен
-    amount: int = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
-    discount: Optional[int] = sqlalchemy.Column(sqlalchemy.Integer, default=0)
+    id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True, autoincrement=True)
+    to_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кому должны
+    from_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)  # Кто должен
+    amount = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    discount = sqlalchemy.Column(sqlalchemy.Integer, default=0)
 
-    date: datetime.datetime = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.utcnow)
-    text_info: str = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
-    returned: bool = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
-    return_date: Optional[datetime.datetime] = sqlalchemy.Column(sqlalchemy.DateTime)
+    date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.utcnow)
+    text_info = sqlalchemy.Column(sqlalchemy.String, nullable=False, default='')
+    returned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
+    return_date = sqlalchemy.Column(sqlalchemy.DateTime)
 
     def get_date_str(self):
         return f"{self.date.day}.{self.date.month}.{self.date.year}"
 
-    def get_return_date_str(self):
-        return f"{self.return_date.day}.{self.return_date.month}.{self.return_date.year}"
+    def get_return_date_str(self) -> str:
+        if self.return_date:
+            return f"{self.return_date.day}.{self.return_date.month}.{self.return_date.year}"
+        return ""
 
-    def get_text_info_new_line(self):
+    def get_text_info_new_line(self) -> str:
         if self.text_info:
             return f'{self.text_info}\n'
         return ''

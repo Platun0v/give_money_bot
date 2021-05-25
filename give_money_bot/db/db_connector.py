@@ -4,7 +4,7 @@ import datetime
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
-from .models import Base, Credit
+from give_money_bot.db.models import Base, Credit
 
 
 class DB:

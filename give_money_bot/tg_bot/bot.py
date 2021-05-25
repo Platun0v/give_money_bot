@@ -1,4 +1,4 @@
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher import FSMContext
@@ -189,7 +189,7 @@ async def process_callback_user_credits(message: types.Message):
     else:
         text = "Ты должен:\n"
         credits_sum = 0
-        credits_sum_by_user = {}
+        credits_sum_by_user: Dict[int, int] = {}
         for i, credit in enumerate(user_credits, 1):
             credits_sum += credit.get_amount()
             credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
@@ -305,7 +305,7 @@ async def process_callback_credits_to_user(message: types.Message):
     else:
         text = "Тебе должны:\n"
         credits_sum = 0
-        credits_sum_by_user = {}
+        credits_sum_by_user: Dict[int, int] = {}
         for i, credit in enumerate(credits_to_user, 1):
             credits_sum += credit.get_amount()
             credits_sum_by_user[credit.from_id] = credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
