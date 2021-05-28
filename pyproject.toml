@@ -20,6 +20,7 @@ alembic = "^1.5.6"
 [tool.poetry.dev-dependencies]
 mypy = "^0.812"
 sqlalchemy-stubs = "^0.4"
+black = "^21.5b1"
 
 [mypy]
 plugins = ["sqlmypy"]

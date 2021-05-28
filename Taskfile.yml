@@ -9,3 +9,11 @@ tasks:
     cmds:
       - poetry install
 
+  build-release:
+    cmds:
+      - poetry install --no-dev
+
+  format:
+    cmds:
+      - poetry run black give_money_bot
+
