@@ -13,7 +13,7 @@ tasks:
     cmds:
       - poetry install --no-dev
 
-  format:
+  black:
     cmds:
       - poetry run black give_money_bot
 

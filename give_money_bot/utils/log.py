@@ -18,15 +18,17 @@ class InterceptHandler(logging.Handler):
             frame = frame.f_back
             depth += 1
 
-        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        logger.opt(depth=depth, exception=record.exc_info).log(
+            level, record.getMessage()
+        )
 
 
 handler = InterceptHandler()
 handler.setLevel(logging.DEBUG)
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger().addHandler(handler)
-logging.getLogger('sqlalchemy').setLevel(logging.INFO)
-logging.getLogger('sqlalchemy').addHandler(handler)
+logging.getLogger("sqlalchemy").setLevel(logging.INFO)
+logging.getLogger("sqlalchemy").addHandler(handler)
 
 logger.add(sys.stderr, level="DEBUG")
 logger.add("give_money_bot.log", level="DEBUG")
