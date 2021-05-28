@@ -151,6 +151,9 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
     except ValueError:
         await message.answer("Требуется число в начале сообщения")
         return
+    if value <= 0:
+        await message.answer("Треюуется положительное число")
+        return
 
     text = f"Кто тебе должен {value} руб?\n" f"{' '.join(message_text[1:])}"
 
