@@ -13,7 +13,7 @@ from give_money_bot.db.models import Credit
 
 from give_money_bot.utils.log import logger
 
-logger.debug("DbPath: \"{}\", LogPath: \"{}\"", config.DB_PATH, config.LOG_PATH)
+logger.debug('DbPath: "{}", LogPath: "{}"', config.DB_PATH, config.LOG_PATH)
 
 bot = Bot(
     token=config.TOKEN

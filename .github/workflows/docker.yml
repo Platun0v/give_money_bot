@@ -38,7 +38,7 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/give_money_bot:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/give-money-bot:latest
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
