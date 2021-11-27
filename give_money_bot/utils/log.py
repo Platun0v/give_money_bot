@@ -3,6 +3,8 @@ import sys
 from loguru import logger
 import logging
 
+from give_money_bot.config import LOG_PATH
+
 
 class InterceptHandler(logging.Handler):
     def emit(self, record):
@@ -31,4 +33,4 @@ logging.getLogger("sqlalchemy").setLevel(logging.INFO)
 logging.getLogger("sqlalchemy").addHandler(handler)
 
 logger.add(sys.stderr, level="DEBUG")
-logger.add("give_money_bot.log", level="DEBUG")
+logger.add(LOG_PATH + "give_money_bot.log", level="DEBUG")

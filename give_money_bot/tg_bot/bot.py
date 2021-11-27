@@ -13,11 +13,13 @@ from give_money_bot.db.models import Credit
 
 from give_money_bot.utils.log import logger
 
+logger.debug("DbPath: \"{}\", LogPath: \"{}\"", config.DB_PATH, config.LOG_PATH)
+
 bot = Bot(
     token=config.TOKEN
 )  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
-db = DB()
+db = DB(db_path=config.DB_PATH + "db.sqlite")
 
 
 DIVIDER = "================\n"

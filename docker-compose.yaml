@@ -1,0 +1,12 @@
+version: '3.7'
+services:
+  bot:
+    image: give-money-bot-image
+    build: ./
+    command: "python run.py"
+    container_name: give-money-bot-image
+    volumes:
+      - ./data:/prod/data
+    env_file:
+      - ./.env
+    restart: on-failure
