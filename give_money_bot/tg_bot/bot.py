@@ -393,4 +393,5 @@ async def process_callback_credits_to_user(message: types.Message):
 
 
 def main():
+    logger.info("Starting bot")
     executor.start_polling(dp, skip_updates=True)
