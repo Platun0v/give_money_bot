@@ -153,11 +153,14 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
     except ValueError:
         await message.answer("Требуется число в начале сообщения")
         return
-    if value <= 0:
-        await message.answer("Треюуется положительное число")
+    if value == 0:
+        await message.answer("Требуется ненулевое значение")
         return
 
-    text = f"Кто тебе должен {value} руб?\n" f"{' '.join(message_text[1:])}"
+    if value > 0:
+        text = f"Кто тебе должен {value} руб?\n" f"{' '.join(message_text[1:])}"
+    else:
+        text = f"Кому ты должен {abs(value)} руб?\n" f"{' '.join(message_text[1:])}"
 
     await message.answer(
         text,
@@ -189,26 +192,38 @@ async def process_callback_save(call: types.CallbackQuery):
     if not users:
         text = "Ты забыл указать должников"
     else:
+        pos = True
+        if value < 0:
+            pos = False
+            value = abs(value)
+
         user_names = list(map(lambda x: config.USERS[x], users))
         info = get_info(call.message)
         text = (
-            f'Тебе {value} руб должен: {", ".join(user_names)}\n'
+            f'Тебе должен {value} руб: {", ".join(user_names)}\n'
+            if pos
+            else f'Ты должен {value} руб: {", ".join(user_names)}\n'
             f"{info}\n"
             f"Сохранено"
         )
         await call.message.edit_text(text)
 
         user_id = call.from_user.id
-        db.add_entry(user_id, list(users), value, info)
+        if pos:
+            db.add_entry(user_id, list(users), value, info)
+        else:
+            db.add_entry_2(list(users), user_id, value, info)
 
         for user in users:
             try:  # Fixes not started conv with give_money_bot
                 text_users = (
-                    f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" f"{info}"
+                    f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" if pos else f"Тебе должен {value} руб.: {config.USERS[user_id]}\n"  
+                    f"{info}"
                 )
                 await bot.send_message(user, text_users)
             except Exception:
                 pass
+
     await call.answer(text=text)
     await squeeze_credits(message=None)
 

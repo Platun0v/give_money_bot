@@ -37,6 +37,25 @@ class DB:
             )
         self.session.commit()
 
+    def add_entry_2(
+        self,
+        to_users: List[int],
+        from_user: int,
+        amount: int,
+        additional_info: str = "",
+    ):
+        for to_user in to_users:
+            self.session.add(
+                Credit(
+                    to_id=to_user,
+                    from_id=from_user,
+                    amount=amount,
+                    text_info=additional_info,
+                    discount=0,
+                )
+            )
+        self.session.commit()
+
     def get_user_credits(self, user: int) -> List[Credit]:
         return (
             self.session.query(Credit)
