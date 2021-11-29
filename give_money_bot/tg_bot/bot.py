@@ -152,7 +152,7 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
     message_text = message.text.split("\n")
     try:
         value = message_text[0]
-        p = Popen('./parser', stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
         out, err = p.communicate(bytes(value, "utf-8"))
         if err:
             await message.answer(err.decode("utf-8").split("\n")[0])
