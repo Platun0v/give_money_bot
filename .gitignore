@@ -1,3 +1,4 @@
+**/.stack_work/
 **/.idea
 *.sqlite*
 receipt.py
