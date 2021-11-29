@@ -14,6 +14,7 @@ strToRPN :: String -> [String] -> [String] -> [String]
 strToRPN xss stack out
     | null xss =                       out ++ stack
     | x == '(' =                       strToRPN xs ("(" : stack) out
+    | x == ')' && null afterBracket = error "parsing poshel po pizde"
     | x == ')' =                       strToRPN xs (tail afterBracket) (out ++ beforeBracket)
     | x == ' ' =                       strToRPN xs stack out
     | x `elem` firstOrderOperations =  strToRPN xs ([x] : afterNotFirstPriority) (out ++ whileFirstPriority)
@@ -22,32 +23,32 @@ strToRPN xss stack out
     | otherwise = error "parse error"
     where   beforeBracket =          takeWhile (/= "(") stack
             afterBracket =           dropWhile (/= "(") stack
-            whileFirstPriority =     takeWhile (\x -> head x `elem` firstOrderOperations) stack
-            afterNotFirstPriority =  dropWhile (\x -> head x `elem` firstOrderOperations) stack
-            number =                 takeWhile (`elem` digits) xss
-            afterNumber =            dropWhile (`elem` digits) xss
+            whileFirstPriority =     takeWhile (\y -> head y `elem` firstOrderOperations) stack
+            afterNotFirstPriority =  dropWhile (\y -> head y `elem` firstOrderOperations) stack
+            number =                 takeWhile (\y -> y `elem` digits || y == '.') xss
+            afterNumber =            dropWhile (\y -> y `elem` digits || y == '.') xss
             x =                      head xss
             xs =                     tail xss
 
 test :: String -> [String]
 test str = strToRPN str [] []
 
-eval :: [String] -> [String] -> Int
+eval :: [String] -> [String] -> Float
 eval before next
-    | null next && length before == 1 = read $ head before :: Int
-    | null (tail next) && not (all isDigit (head next)) = error "eblan?"
+    | null next && length before == 1 = read $ head before :: Float
+    | not (all (\x -> isDigit x || x == '.') $ head next) && length before < 2 = error "eblan?"
     | head next == "+" =                eval (newBefore ++ [show $ first + second]) (tail next)
     | head next == "-" =                eval (newBefore ++ [show $ first - second]) (tail next)
     | head next == "*" =                eval (newBefore ++ [show $ first * second]) (tail next)
-    | head next == "/" =                eval (newBefore ++ [show $ first `div` second]) (tail next)
-    | all isDigit (head next) =         eval (before ++ [head next]) (tail next)
-    | otherwise =                       error "ti eblan vashe?"
-    where second =     read $ last before :: Int
-          first =      read $ head $ tail (reverse before) :: Int
+    | head next == "/" =                eval (newBefore ++ [show $ first / second]) (tail next)
+    | all (\x -> isDigit x || x == '.') (head next) =         eval (before ++ [head next]) (tail next)
+    | otherwise =                       error "unexprected eblan"
+    where second =     read $ last before :: Float
+          first =      read $ head $ tail (reverse before) :: Float
           newBefore =  reverse(tail $ tail (reverse before))
 
 compute :: String -> Int
-compute string = eval [] (test string)
+compute string = round $ eval [] (test string)
 
 main :: IO ()
 main = do
