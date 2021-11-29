@@ -1,4 +1,12 @@
 ###############################################
+# Haskell Compile Image
+###############################################
+FROM haskell:9.0.1-buster as haskell-base
+
+COPY ./additional_stuff/parser.hs /opt/
+WORKDIR /opt
+RUN ghc parser.hs -o parser
+###############################################
 # Base Image
 ###############################################
 FROM python:3.9-slim-buster as python-base
@@ -39,11 +47,10 @@ RUN poetry install --no-dev
 ###############################################
 # Production Image
 ###############################################
-# A quick note: in COPY, the last argument is the target
 FROM python-base as production
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
-# Instead of a singular COPY command, multiple ones are used to protect the folder structure.
-#COPY ./.env /prod/.env
+COPY --from=haskell-base /opt/parser /prod/parser
+
 COPY ./give_money_bot /prod/give_money_bot/
 
 COPY ./docker/run.py /prod/run.py

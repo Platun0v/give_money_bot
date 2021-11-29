@@ -12,6 +12,8 @@ from give_money_bot.db.db_connector import DB
 from give_money_bot.db.models import Credit
 
 from give_money_bot.utils.log import logger
+from subprocess import Popen, PIPE
+import os
 
 logger.debug('DbPath: "{}", LogPath: "{}"', config.DB_PATH, config.LOG_PATH)
 
@@ -147,9 +149,15 @@ async def process_callback_plus(message: types.Message):
 async def read_num_from_user(message: types.Message, state: FSMContext):
     await state.finish()
 
-    message_text = message.text.split(" ")
+    message_text = message.text.split("\n")
     try:
-        value = int(message_text[0])
+        value = message_text[0]
+        p = Popen('./parser', stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        out, err = p.communicate(bytes(value, "utf-8"))
+        if err:
+            await message.answer(err.decode("utf-8").split("\n")[0])
+            return
+        value = int(out)
     except ValueError:
         await message.answer("Требуется число в начале сообщения")
         return
@@ -217,7 +225,9 @@ async def process_callback_save(call: types.CallbackQuery):
         for user in users:
             try:  # Fixes not started conv with give_money_bot
                 text_users = (
-                    f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n" if pos else f"Тебе должен {value} руб.: {config.USERS[user_id]}\n"  
+                    f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n"
+                    if pos
+                    else f"Тебе должен {value} руб.: {config.USERS[user_id]}\n"
                     f"{info}"
                 )
                 await bot.send_message(user, text_users)
