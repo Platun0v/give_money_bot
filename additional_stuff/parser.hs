@@ -48,7 +48,8 @@ eval before next
           newBefore =  reverse(tail $ tail (reverse before))
 
 compute :: String -> Int
-compute string = round $ eval [] (test string)
+compute string |head string == '-' = -(round $ eval [] (test $ tail string))
+               |otherwise = round $ eval [] (test string)
 
 main :: IO ()
 main = do
