@@ -36,22 +36,30 @@ test str = strToRPN str [] []
 eval :: [String] -> [String] -> Float
 eval before next
     | null next && length before == 1 = read $ head before :: Float
-    | not (all (\x -> isDigit x || x == '.') $ head next) && length before < 2 = error "eblan?"
+    | not (all (\x -> isDigit x || x == '.' || x == '-') $ head next) && length before < 2 = error "eblan?"
     | head next == "+" =                eval (newBefore ++ [show $ first + second]) (tail next)
     | head next == "-" =                eval (newBefore ++ [show $ first - second]) (tail next)
     | head next == "*" =                eval (newBefore ++ [show $ first * second]) (tail next)
     | head next == "/" =                eval (newBefore ++ [show $ first / second]) (tail next)
-    | all (\x -> isDigit x || x == '.') (head next) =         eval (before ++ [head next]) (tail next)
+    | all (\x -> isDigit x || x == '.' || x == '-') (head next) =         eval (before ++ [head next]) (tail next)
     | otherwise =                       error "unexprected eblan"
     where second =     read $ last before :: Float
           first =      read $ head $ tail (reverse before) :: Float
           newBefore =  reverse(tail $ tail (reverse before))
 
+evalFirstBrackets :: String -> [String]
+evalFirstBrackets str = ('-' : head result) : tail result
+                where brackets = tail $ dropWhile (/= '(') $ takeWhile (/= ')') str
+                      afterBrackets = tail $ dropWhile (/= ')') str
+                      result = test $ show(eval [] (test brackets)) ++ afterBrackets
+
+
 compute :: String -> Int
-compute string |head string == '-' = round $ eval [] prelast
+compute string |head string == '-' && isDigit (head $ tail string) = round $ eval [] modified
+               |head string == '-' && head (tail string) == '(' = round $ eval [] (evalFirstBrackets string)
                |otherwise = round $ eval [] (test string)
-               where list = tail (test string)
-                     prelast = ('-' : head list) : tail list
+               where list = test (tail string)
+                     modified = ('-' : head list) : tail list
 
 main :: IO ()
 main = do
