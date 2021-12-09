@@ -1,7 +1,7 @@
+import logging
 import sys
 
 from loguru import logger
-import logging
 
 from give_money_bot.config import LOG_PATH
 

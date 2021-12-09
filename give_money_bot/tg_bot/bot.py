@@ -1,19 +1,17 @@
+from subprocess import Popen, PIPE
 from typing import Tuple, List, Optional, Dict
 
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
 
-from give_money_bot.tg_bot.my_state import AddState
 from give_money_bot import config
-from give_money_bot.tg_bot import keyboards as kb
-from give_money_bot.tg_bot.keyboards import CALLBACK
 from give_money_bot.db.db_connector import DB
 from give_money_bot.db.models import Credit
-
+from give_money_bot.tg_bot import keyboards as kb
+from give_money_bot.tg_bot.keyboards import CALLBACK
+from give_money_bot.tg_bot.my_state import AddState
 from give_money_bot.utils.log import logger
-from subprocess import Popen, PIPE
-import os
 
 logger.debug('DbPath: "{}", LogPath: "{}"', config.DB_PATH, config.LOG_PATH)
 
@@ -22,7 +20,6 @@ bot = Bot(
 )  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
 db = DB(db_path=config.DB_PATH + "db.sqlite")
-
 
 DIVIDER = "================\n"
 

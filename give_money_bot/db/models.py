@@ -1,5 +1,4 @@
 import datetime
-from typing import Optional
 
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base

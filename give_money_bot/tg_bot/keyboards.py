@@ -8,8 +8,8 @@ from aiogram.types import (
 )
 from aiogram.utils.callback_data import CallbackData
 
-from give_money_bot.config import USERS
 from give_money_bot.config import Emoji
+from give_money_bot.config import USERS
 from give_money_bot.db.db_connector import Credit
 from give_money_bot.tg_bot.callback_data import CALLBACK
 
