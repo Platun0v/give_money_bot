@@ -1,9 +1,10 @@
-import typing
-from typing import Dict, List, Optional, Set
 import datetime
+import typing
+from typing import List
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
+
 from give_money_bot.db.models import Base, Credit
 
 

@@ -1,19 +1,19 @@
+import string
+from subprocess import Popen, PIPE
 from typing import Tuple, List, Optional, Dict
 
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
 
-from give_money_bot.tg_bot.my_state import AddState
 from give_money_bot import config
-from give_money_bot.tg_bot import keyboards as kb
-from give_money_bot.tg_bot.keyboards import CALLBACK
 from give_money_bot.db.db_connector import DB
 from give_money_bot.db.models import Credit
-
+from give_money_bot.tg_bot import keyboards as kb
+from give_money_bot.tg_bot.keyboards import CALLBACK
+from give_money_bot.tg_bot.my_state import AddState
 from give_money_bot.utils.log import logger
-from subprocess import Popen, PIPE
-import os
+from give_money_bot.utils.strings import Strings
 
 logger.debug('DbPath: "{}", LogPath: "{}"', config.DB_PATH, config.LOG_PATH)
 
@@ -22,9 +22,6 @@ bot = Bot(
 )  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
 db = DB(db_path=config.DB_PATH + "db.sqlite")
-
-
-DIVIDER = "================\n"
 
 
 def check_user(message: types.Message) -> bool:
@@ -52,7 +49,7 @@ def get_credits_amount(from_user: int, to_user: int) -> Tuple[int, List[Credit]]
 
 @dp.message_handler(check_user, commands=["start"])
 async def process_start_command(message: types.Message):
-    await message.answer("Привет!", reply_markup=kb.main_markup)
+    await message.answer(Strings.HELLO_MESSAGE, reply_markup=kb.main_markup)
 
 
 @dp.message_handler(check_user, commands=["id"])
@@ -141,37 +138,44 @@ async def squeeze_credits(message: Optional[types.Message]):
 # ======================================= ADD CREDIT =======================================
 @dp.message_handler(check_user, text="+")
 async def process_callback_plus(message: types.Message):
-    await message.answer("Введите сумму(по желанию инфу по долгу через пробел)")
+    await message.answer(Strings.INPUT_CREDIT)
     await AddState.read_num.set()
+
+
+def parse_expression(value: str) -> Tuple[int, str]:
+    p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate(bytes(value, "utf-8"))
+    if err:
+        out = None
+        err = err.decode("utf-8").split("\n")[0]
+    else:
+        err = None
+        out = int(out)
+    return out, err
+
+
+def parse_info_from_message(message: str) -> Tuple[str, str]:
+    for i, char in enumerate(message):
+        if char not in Strings.DIGITS:
+            return message[:i], message[i:]
+    return message, ""
 
 
 @dp.message_handler(state=AddState.read_num)
 async def read_num_from_user(message: types.Message, state: FSMContext):
     await state.finish()
 
-    message_text = message.text.split("\n")
-    try:
-        value = message_text[0]
-        p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        out, err = p.communicate(bytes(value, "utf-8"))
-        if err:
-            await message.answer(err.decode("utf-8").split("\n")[0])
-            return
-        value = int(out)
-    except ValueError:
-        await message.answer("Требуется число в начале сообщения")
+    value_str, info = parse_info_from_message(message.text)
+    value, err = parse_expression(value_str)
+    if err is not None:
+        await message.answer(err)
         return
     if value == 0:
-        await message.answer("Требуется ненулевое значение")
+        await message.answer(Strings.NEED_NON_ZERO)
         return
 
-    if value > 0:
-        text = f"Кто тебе должен {value} руб?\n" f"{' '.join(message_text[1:])}"
-    else:
-        text = f"Кому ты должен {abs(value)} руб?\n" f"{' '.join(message_text[1:])}"
-
     await message.answer(
-        text,
+        Strings.ASK_FOR_DEBTORS(value, info, negative=value > 0),
         reply_markup=kb.get_keyboard_users_for_credit(
             message.from_user.id, value, set()
         ),
@@ -198,51 +202,36 @@ async def process_callback(call: types.CallbackQuery):
 async def process_callback_save(call: types.CallbackQuery):
     value, users = kb.get_data_from_markup(call.message.reply_markup)
     if not users:
-        text = "Ты забыл указать должников"
+        await call.answer(text=Strings.FORGOT_CHOOSE)
+        return
+
+    neg = False
+    if value < 0:
+        neg = True
+        value = abs(value)
+
+    user_names = list(map(lambda x: config.USERS[x], users))
+    info = get_info(call.message)
+    await call.message.edit_text(Strings.SAVE_CREDIT(value, user_names, info, negative=neg))
+
+    user_id = call.from_user.id
+    if neg:
+        db.add_entry_2(list(users), user_id, value, info)
     else:
-        pos = True
-        if value < 0:
-            pos = False
-            value = abs(value)
+        db.add_entry(user_id, list(users), value, info)
 
-        user_names = list(map(lambda x: config.USERS[x], users))
-        info = get_info(call.message)
-        text = (
-            f'Тебе должен {value} руб: {", ".join(user_names)}\n'
-            if pos
-            else f'Ты должен {value} руб: {", ".join(user_names)}\n'
-            f"{info}\n"
-            f"Сохранено"
-        )
-        await call.message.edit_text(text)
+    for user in users:
+        try:  # Fixes not started conv with give_money_bot
+            await bot.send_message(user, Strings.ANNOUNCE_NEW_CREDIT(value, config.USERS[user_id], info, neg))
+        except Exception:
+            pass
 
-        user_id = call.from_user.id
-        if pos:
-            db.add_entry(user_id, list(users), value, info)
-        else:
-            db.add_entry_2(list(users), user_id, value, info)
-
-        for user in users:
-            try:  # Fixes not started conv with give_money_bot
-                text_users = (
-                    f"Ты должен {value} руб. ему: {config.USERS[user_id]}\n"
-                    if pos
-                    else f"Тебе должен {value} руб.: {config.USERS[user_id]}\n"
-                    f"{info}"
-                )
-                await bot.send_message(user, text_users)
-            except Exception:
-                pass
-
-    await call.answer(text=text)
     await squeeze_credits(message=None)
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_crt_credit)
 async def process_callback_cancel(call: types.CallbackQuery):
-    value = kb.get_amount_from_markup(call.message.reply_markup)
-    await call.message.edit_text(f"{value} руб. {get_info(call.message)}\n" f"Отменено")
-    await call.answer(text="Отмена")
+    await call.message.edit_text(Strings.CANCEL)
 
 
 # ======================================= REMOVE CREDIT =======================================
@@ -250,31 +239,25 @@ async def process_callback_cancel(call: types.CallbackQuery):
 async def process_callback_user_credits(message: types.Message):
     user_credits = db.get_user_credits(message.from_user.id)
     if not user_credits:
-        text = "Ты никому не должен. Свободен"
-        await message.answer(text)
-    else:
-        text = "Ты должен:\n"
-        credits_sum = 0
-        credits_sum_by_user: Dict[int, int] = {}
-        for i, credit in enumerate(user_credits, 1):
-            credits_sum += credit.get_amount()
-            credits_sum_by_user[credit.to_id] = (
-                credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
-            )
+        await message.answer(Strings.NO_CREDITS_DEBTOR)
+        return
 
-            text += (
-                f"{i}) {credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n"
-                f"{credit.get_text_info_new_line()}"
-            )  # f'Долг был добавлен {credit.get_date_str()}\n'
-        text += DIVIDER
-        for user_id, amount in credits_sum_by_user.items():
-            text += f"Ты должен {config.USERS[user_id]} - {amount} руб.\n"
-        text += f"Итого: {credits_sum} руб.\n"
-        text += "Ты можешь выбрать долги, которые ты уже вернул:"
-
-        await message.answer(
-            text, reply_markup=kb.get_credits_markup(user_credits, set())
+    text = Strings.DEBTOR_CREDITS_GENERATOR()
+    credits_sum = 0
+    credits_sum_by_user: Dict[int, int] = {}
+    for i, credit in enumerate(user_credits, 1):
+        credits_sum += credit.get_amount()
+        credits_sum_by_user[credit.to_id] = (
+            credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
         )
+        text.add_position(i, credit.get_amount(), config.USERS[credit.to_id], credit.text_info)
+
+    for user_id, amount in credits_sum_by_user.items():
+        text.add_sum(amount, config.USERS[user_id])
+
+    await message.answer(
+        text.finish(credits_sum), reply_markup=kb.get_credits_markup(user_credits, set())
+    )
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.choose_credit_for_return)
@@ -299,32 +282,30 @@ async def process_callback_return_credit(call: types.CallbackQuery):
     marked_credits = kb.get_marked_credits(call.message.reply_markup)
 
     if not marked_credits:
-        text = "Ты ничего не отметил"
-    else:
-        returned_credits = []
-        text = "Ты вернул:\n"
-        for credit_id in marked_credits:
-            returned_credits.append(credit_id)
-            credit = db.get_credit(credit_id)
-            text += (
-                f"{credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n"
-                f"{credit.get_text_info_new_line()}"
-            )
+        await call.answer(Strings.FORGOT_CHOOSE)
+        return
 
-        db.return_credits(returned_credits)
-        await call.message.edit_text(text)
+    returned_credits = []
+    text = Strings.RETURN_GENERATOR()
+    for credit_id in marked_credits:
+        returned_credits.append(credit_id)
+        credit = db.get_credit(credit_id)
+        text.add_position(credit.get_amount(), config.USERS[credit.to_id], credit.text_info)
 
-    await call.answer(text=text, show_alert=True)
+    db.return_credits(returned_credits)
+    await call.message.edit_text(text.finish())
+
+    await call.answer(text=text.finish(), show_alert=True)
 
     for credit_id in marked_credits:
         credit = db.get_credit(credit_id)
         markup = kb.get_check_markup(credit_id, True)
-        message = (
-            f"Тебе {config.USERS[credit.from_id]} вернул {credit.get_amount()} руб.\n"
-            f"{credit.get_text_info_new_line()}"
-        )
         try:
-            await bot.send_message(credit.to_id, message, reply_markup=markup)
+            await bot.send_message(
+                credit.to_id,
+                Strings.ANNOUNCE_RETURN_CREDIT(credit.get_amount(), config.USERS[credit.from_id], credit.text_info),
+                reply_markup=markup
+            )
         except Exception:
             pass
 
@@ -379,42 +360,24 @@ async def process_callback_credits_to_user(message: types.Message):
     credits_to_user = db.credits_to_user(message.from_user.id)
 
     if not credits_to_user:
-        text = "Тебе никто не должен. Можешь спать спокойно"
-    else:
-        text = "Тебе должны:\n"
-        credits_sum = 0
-        credits_sum_by_user: Dict[int, int] = {}
-        for i, credit in enumerate(credits_to_user, 1):
-            credits_sum += credit.get_amount()
-            credits_sum_by_user[credit.from_id] = (
-                credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
-            )
-            text += (
-                f"{i}) {config.USERS[credit.from_id]}: {credit.get_amount()} руб.\n"
-                f"{credit.get_text_info_new_line()}"
-            )  # f'Долг был добавлен {credit.get_date_str()}\n'
+        text = Strings.NO_CREDITS_CREDITOR
+        await message.answer(text, reply_markup=kb.main_markup)
+        return
 
-        text += DIVIDER
-        for user_id, amount in credits_sum_by_user.items():
-            text += f"{config.USERS[user_id]} тебе должен - {amount} руб.\n"
-        text += f"Итог: {credits_sum} руб."
+    text = Strings.CREDITOR_CREDITS_GENERATOR()
+    credits_sum = 0
+    credits_sum_by_user: Dict[int, int] = {}
+    for i, credit in enumerate(credits_to_user, 1):
+        credits_sum += credit.get_amount()
+        credits_sum_by_user[credit.from_id] = (
+            credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
+        )
+        text.add_position(i, credit.get_amount(), config.USERS[credit.from_id], credit.text_info)
 
-    await message.answer(text, reply_markup=kb.main_markup)
+    for user_id, amount in credits_sum_by_user.items():
+        text.add_sum(amount, config.USERS[user_id])
 
-
-"""
-        credits_sum_by_user = {}
-        for i, credit in enumerate(user_credits, 1):
-            credits_sum += credit.get_amount()
-            credits_sum_by_user[credit.from_id] = credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
-            
-            text += f'{i}) {credit.get_amount()} руб. ему: {config.USERS[credit.to_id]}\n' \
-                    f'{credit.get_text_info_new_line()}' \
-                    # f'Долг был добавлен {credit.get_date_str()}\n'
-        text += DIVIDER
-        for user_id, amount in credits_sum_by_user.items():
-            text += f"Ты должен {config.USERS[user_id]} - {amount} руб."
-"""
+    await message.answer(text.finish(credits_sum), reply_markup=kb.main_markup)
 
 
 def main():

@@ -8,10 +8,11 @@ from aiogram.types import (
 )
 from aiogram.utils.callback_data import CallbackData
 
-from give_money_bot.config import USERS
 from give_money_bot.config import Emoji
+from give_money_bot.config import USERS
 from give_money_bot.db.db_connector import Credit
 from give_money_bot.tg_bot.callback_data import CALLBACK
+from give_money_bot.utils.strings import Strings
 
 credit_amount_data = CallbackData(CALLBACK.save_credit, "value")
 user_choose_data = CallbackData(CALLBACK.choose_user_for_credit, "id", "has_mark")
@@ -25,13 +26,13 @@ main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
 )
 
 cancel_crt_credit_inline = InlineKeyboardButton(
-    "Отмена", callback_data=CALLBACK.cancel_crt_credit
+    Strings.CANCEL, callback_data=CALLBACK.cancel_crt_credit
 )
 return_credit_inline = InlineKeyboardButton(
     "Вернуть выбранные долги", callback_data=CALLBACK.return_credits
 )
 cancel_return_credit_inline = InlineKeyboardButton(
-    "Отмена", callback_data=CALLBACK.cancel_return_credits
+    Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits
 )
 
 
@@ -133,7 +134,7 @@ def get_keyboard_users_for_credit(
                 )
             )
     inline_save = InlineKeyboardButton(
-        "Сохранить", callback_data=credit_amount_data.new(value)
+        Strings.SAVE, callback_data=credit_amount_data.new(value)
     )
     markup.add(
         inline_save,
