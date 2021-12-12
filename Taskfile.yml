@@ -20,4 +20,11 @@ tasks:
   black:
     cmds:
       - poetry run black give_money_bot
+  
+  dbuild:
+    cmds:
+      - podman build -t give-money-bot .
 
+  drun:
+    cmds:
+      - podman run --env-file .env -it give-money-bot "python -m give_money_bot"
