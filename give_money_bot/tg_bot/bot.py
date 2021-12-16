@@ -142,16 +142,12 @@ async def process_callback_plus(message: types.Message):
     await AddState.read_num.set()
 
 
-def parse_expression(value: str) -> Tuple[int, str]:
+def parse_expression(value: str) -> Tuple[Optional[int], Optional[str]]:
     p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate(bytes(value, "utf-8"))
     if err:
-        out = None
-        err = err.decode("utf-8").split("\n")[0]
-    else:
-        err = None
-        out = int(out)
-    return out, err
+        return None, err.decode("utf-8").split("\n")[0]
+    return int(out), None
 
 
 def parse_info_from_message(message: str) -> Tuple[str, str]:
@@ -167,7 +163,7 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
 
     value_str, info = parse_info_from_message(message.text)
     value, err = parse_expression(value_str)
-    if err is not None:
+    if value is None:
         await message.answer(err)
         return
     if value == 0:
