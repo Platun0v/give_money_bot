@@ -2,6 +2,7 @@
 **/.idea
 *.sqlite*
 receipt.py
+parser
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
