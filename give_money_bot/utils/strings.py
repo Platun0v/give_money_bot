@@ -49,8 +49,8 @@ class Strings:
     @staticmethod
     def ANNOUNCE_RETURN_CREDIT(value: int, username: str, info: str) -> str:
         return (
-            f"Тебе {username} вернул {value} руб.\n"
-            f"{info}\n" if info else ""
+            f"Тебе {username} вернул {value} руб.\n" +
+            (f"{info}\n" if info else "")
         )
 
     class DEBTOR_CREDITS_GENERATOR(MessageGenerator):
@@ -60,8 +60,8 @@ class Strings:
 
         def add_position(self, i: int, value: int, username: str, info: str):
             self.add(
-                f"{i}) {value} руб. ему: {username}\n"
-                f"{info}\n" if info else ""
+                f"{i}) {value} руб. ему: {username}\n" +
+                (f"{info}\n" if info else "")
             )
 
         def add_sum(self, amount: int, username: str):
@@ -81,8 +81,8 @@ class Strings:
 
         def add_position(self, value: int, username: str, info: str):
             self.add(
-                f"{value} руб. ему: {username}\n"
-                f"{info}\n" if info else ""
+                f"{value} руб. ему: {username}\n" +
+                (f"{info}\n" if info else "")
             )
 
         def finish(self) -> str:
@@ -95,8 +95,8 @@ class Strings:
 
         def add_position(self, i: int, value: int, username: str, info: str):
             self.add(
-                f"{i}) {username}: {value} руб.\n"
-                f"{info}\n" if info else ""
+                f"{i}) {username}: {value} руб.\n" +
+                (f"{info}\n" if info else "")
             )
 
         def add_sum(self, amount: int, username: str):
