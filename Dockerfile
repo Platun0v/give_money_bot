@@ -9,7 +9,7 @@ RUN ghc parser.hs -o parser
 ###############################################
 # Base Image
 ###############################################
-FROM python:3.9-alpine as python-base
+FROM python:3.9-slim-buster as python-base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -28,10 +28,14 @@ ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 # Builder Image
 ###############################################
 FROM python-base as builder-base
-RUN apk update \
-    && apk add \
+#RUN apk update \
+#    && apk add \
+#    curl \
+#    build-base
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
     curl \
-    build-base
+    build-essential
 
 RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
 
