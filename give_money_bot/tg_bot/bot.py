@@ -1,3 +1,4 @@
+import os
 import string
 from subprocess import Popen, PIPE
 from typing import Tuple, List, Optional, Dict
@@ -62,7 +63,7 @@ async def get_id(message: types.Message):
 async def squeeze_credits(message: Optional[types.Message]):
     users_id = list(config.USERS.keys())
     for i, _user1 in enumerate(users_id):
-        for j, _user2 in enumerate(users_id[i + 1 :], i + 1):
+        for j, _user2 in enumerate(users_id[i + 1:], i + 1):
             user1, user2 = _user1, _user2
 
             user1_amount, user1_lst = get_credits_amount(
