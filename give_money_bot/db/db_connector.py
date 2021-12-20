@@ -6,6 +6,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 
 from give_money_bot.db.models import Base, Credit
+from give_money_bot import config
 
 
 class DB:
@@ -122,3 +123,6 @@ class DB:
             credit.discount = 0
         credit.discount += discount
         self.session.commit()
+
+
+db = DB(db_path=config.DB_PATH + "db.sqlite")

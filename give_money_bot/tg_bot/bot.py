@@ -1,50 +1,22 @@
-import os
-import string
-from subprocess import Popen, PIPE
-from typing import Tuple, List, Optional, Dict
+from typing import Optional, Dict
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import FSMContext
 
 from give_money_bot import config
-from give_money_bot.db.db_connector import DB
-from give_money_bot.db.models import Credit
+from give_money_bot.db.db_connector import db
 from give_money_bot.tg_bot import keyboards as kb
 from give_money_bot.tg_bot.keyboards import CALLBACK
+from give_money_bot.tg_bot.utils import check_user, check_admin, get_info, get_credits_amount, parse_info_from_message, \
+    parse_expression
 from give_money_bot.utils.log import logger
 from give_money_bot.utils.strings import Strings
 
-logger.debug('DbPath: "{}", LogPath: "{}"', config.DB_PATH, config.LOG_PATH)
 
 bot = Bot(
     token=config.TOKEN
 )  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
-db = DB(db_path=config.DB_PATH + "db.sqlite")
-
-
-def check_user(message: types.Message) -> bool:
-    return message.from_user.id in config.USERS.keys()
-
-
-def check_admin(message: types.Message) -> bool:
-    return message.from_user.id == config.ADMIN
-
-
-def get_info(message: types.Message) -> str:
-    msg = message.text.split("\n")
-    return "" if len(msg) == 1 else msg[1]
-
-
-def get_credits_amount(from_user: int, to_user: int) -> Tuple[int, List[Credit]]:
-    user_credits = db.get_credits_to_user_from_user(
-        from_user=from_user, to_user=to_user
-    )
-    res_sum = 0
-    for credit in user_credits:
-        res_sum += credit.get_amount()
-    return res_sum, user_credits
 
 
 @dp.message_handler(check_user, commands=["start"])
@@ -72,12 +44,12 @@ async def squeeze_credits(message: Optional[types.Message]):
                 user2, user1
             )  # сколько 2 должен 1
             if (
-                user1_amount == 0 or user2_amount == 0
+                    user1_amount == 0 or user2_amount == 0
             ):  # Не выполняем код, если первый не должен второму
                 continue
 
             if (
-                user2_amount > user1_amount
+                    user2_amount > user1_amount
             ):  # Меняем местами 1 и 2, чтобы amount1 > amount2
                 user1_amount, user2_amount = user2_amount, user1_amount
                 user1, user2 = user2, user1
@@ -154,21 +126,6 @@ async def read_num_from_user(message: types.Message):
     )
 
 
-def parse_expression(value: str) -> Tuple[Optional[int], Optional[str]]:
-    p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    out, err = p.communicate(bytes(value, "utf-8"))
-    if err:
-        return None, err.decode("utf-8").split("\n")[0]
-    return int(out), None
-
-
-def parse_info_from_message(message: str) -> Tuple[str, str]:
-    for i, char in enumerate(message):
-        if char not in Strings.DIGITS:
-            return message[:i], message[i:]
-    return message, ""
-
-
 @dp.callback_query_handler(text_contains=CALLBACK.choose_user_for_credit)
 async def process_callback(call: types.CallbackQuery):
     value, users = kb.get_data_from_markup(call.message.reply_markup)
@@ -235,7 +192,7 @@ async def process_callback_user_credits(message: types.Message):
     for i, credit in enumerate(user_credits, 1):
         credits_sum += credit.get_amount()
         credits_sum_by_user[credit.to_id] = (
-            credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
+                credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
         )
         text.add_position(i, credit.get_amount(), config.USERS[credit.to_id], credit.text_info)
 
@@ -357,7 +314,7 @@ async def process_callback_credits_to_user(message: types.Message):
     for i, credit in enumerate(credits_to_user, 1):
         credits_sum += credit.get_amount()
         credits_sum_by_user[credit.from_id] = (
-            credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
+                credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
         )
         text.add_position(i, credit.get_amount(), config.USERS[credit.from_id], credit.text_info)
 
