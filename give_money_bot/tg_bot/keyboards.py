@@ -22,7 +22,7 @@ credit_choose_data = CallbackData(
 check_return_data = CallbackData(CALLBACK.check_return_of_credit, "credit_id", "value")
 
 main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
-    KeyboardButton("+"), KeyboardButton("-"), KeyboardButton("info")
+    KeyboardButton("-"), KeyboardButton("info")
 )
 
 cancel_crt_credit_inline = InlineKeyboardButton(

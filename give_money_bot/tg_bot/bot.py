@@ -12,7 +12,6 @@ from give_money_bot.db.db_connector import DB
 from give_money_bot.db.models import Credit
 from give_money_bot.tg_bot import keyboards as kb
 from give_money_bot.tg_bot.keyboards import CALLBACK
-from give_money_bot.tg_bot.my_state import AddState
 from give_money_bot.utils.log import logger
 from give_money_bot.utils.strings import Strings
 
@@ -137,31 +136,7 @@ async def squeeze_credits(message: Optional[types.Message]):
 
 
 # ======================================= ADD CREDIT =======================================
-@dp.message_handler(check_user, text="+")
-async def process_callback_plus(message: types.Message):
-    await message.answer(Strings.INPUT_CREDIT)
-    await AddState.read_num.set()
-
-
-def parse_expression(value: str) -> Tuple[Optional[int], Optional[str]]:
-    p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    out, err = p.communicate(bytes(value, "utf-8"))
-    if err:
-        return None, err.decode("utf-8").split("\n")[0]
-    return int(out), None
-
-
-def parse_info_from_message(message: str) -> Tuple[str, str]:
-    for i, char in enumerate(message):
-        if char not in Strings.DIGITS:
-            return message[:i], message[i:]
-    return message, ""
-
-
-@dp.message_handler(state=AddState.read_num)
-async def read_num_from_user(message: types.Message, state: FSMContext):
-    await state.finish()
-
+async def read_num_from_user(message: types.Message):
     value_str, info = parse_info_from_message(message.text)
     value, err = parse_expression(value_str)
     if value is None:
@@ -177,6 +152,21 @@ async def read_num_from_user(message: types.Message, state: FSMContext):
             message.from_user.id, value, set()
         ),
     )
+
+
+def parse_expression(value: str) -> Tuple[Optional[int], Optional[str]]:
+    p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate(bytes(value, "utf-8"))
+    if err:
+        return None, err.decode("utf-8").split("\n")[0]
+    return int(out), None
+
+
+def parse_info_from_message(message: str) -> Tuple[str, str]:
+    for i, char in enumerate(message):
+        if char not in Strings.DIGITS:
+            return message[:i], message[i:]
+    return message, ""
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.choose_user_for_credit)
@@ -375,6 +365,9 @@ async def process_callback_credits_to_user(message: types.Message):
         text.add_sum(amount, config.USERS[user_id])
 
     await message.answer(text.finish(credits_sum), reply_markup=kb.main_markup)
+
+
+dp.register_message_handler(read_num_from_user, check_user)
 
 
 def main():
