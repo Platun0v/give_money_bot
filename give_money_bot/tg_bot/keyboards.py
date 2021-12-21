@@ -1,4 +1,4 @@
-from typing import Set, Tuple, List, Union, Optional
+from typing import Set, Tuple, List, Union, Optional, Dict
 
 from aiogram.types import (
     KeyboardButton,
@@ -22,7 +22,7 @@ credit_choose_data = CallbackData(
 check_return_data = CallbackData(CALLBACK.check_return_of_credit, "credit_id", "value")
 
 main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
-    KeyboardButton("+"), KeyboardButton("-"), KeyboardButton("info")
+    KeyboardButton("-"), KeyboardButton("info")
 )
 
 cancel_crt_credit_inline = InlineKeyboardButton(
@@ -80,19 +80,19 @@ def get_data_from_check(markup: InlineKeyboardMarkup) -> Tuple[int, str]:
 
 
 def get_credits_markup(
-    user_credits: List[Credit], marked_credits: set
+    user_credits: Dict[int, int], marked_credits: set
 ) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
-    for i, credit in enumerate(user_credits, 1):
-        if credit.id in marked_credits:
+    for user_id, credit_sum in user_credits.items():
+        if user_id in marked_credits:
             has_mark = 1
-            text = f"{i} {Emoji.TRUE}"
+            text = f"{USERS[user_id]} - {credit_sum} {Emoji.TRUE}"
         else:
             has_mark = 0
-            text = f"{i} {Emoji.FALSE}"
+            text = f"{USERS[user_id]} - {credit_sum} {Emoji.FALSE}"
         markup.add(
             InlineKeyboardButton(
-                text, callback_data=credit_choose_data.new(credit.id, has_mark)
+                text, callback_data=credit_choose_data.new(user_id, has_mark)
             )
         )
     markup.add(return_credit_inline)
