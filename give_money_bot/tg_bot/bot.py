@@ -1,10 +1,11 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from give_money_bot import config
 from give_money_bot.db.db_connector import db
+from give_money_bot.db.models import Credit
 from give_money_bot.tg_bot import keyboards as kb
 from give_money_bot.tg_bot.keyboards import CALLBACK
 from give_money_bot.tg_bot.utils import check_user, check_admin, get_info, get_credits_amount, parse_info_from_message, \
@@ -200,58 +201,66 @@ async def process_callback_user_credits(message: types.Message):
         text.add_sum(amount, config.USERS[user_id])
 
     await message.answer(
-        text.finish(credits_sum), reply_markup=kb.get_credits_markup(user_credits, set())
+        text.finish(credits_sum), reply_markup=kb.get_credits_markup(credits_sum_by_user, set())
     )
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.choose_credit_for_return)
 async def process_callback_credit_chose(call: types.CallbackQuery):
-    marked_credits = kb.get_marked_credits(call.message.reply_markup)
-    credit_id = kb.get_credit_id(call.data)
-    user_id = int(call.from_user.id)
+    marked_users = kb.get_marked_credits(call.message.reply_markup)
+    chosen_user_id = kb.get_credit_id(call.data)
 
-    if credit_id in marked_credits:
-        marked_credits.remove(credit_id)
+    if chosen_user_id in marked_users:
+        marked_users.remove(chosen_user_id)
     else:
-        marked_credits.add(credit_id)
+        marked_users.add(chosen_user_id)
+
+    credits_sum_by_user: Dict[int, int] = {}
+    for credit in db.get_user_credits(int(call.from_user.id)):
+        credits_sum_by_user[credit.to_id] = (
+                credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
+        )
 
     await call.message.edit_reply_markup(
-        reply_markup=kb.get_credits_markup(db.get_user_credits(user_id), marked_credits)
+        reply_markup=kb.get_credits_markup(credits_sum_by_user, marked_users)
     )
     await call.answer()
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.return_credits)
 async def process_callback_return_credit(call: types.CallbackQuery):
-    marked_credits = kb.get_marked_credits(call.message.reply_markup)
+    marked_users = kb.get_marked_credits(call.message.reply_markup)
 
-    if not marked_credits:
+    if not marked_users:
         await call.answer(Strings.FORGOT_CHOOSE)
         return
 
-    returned_credits = []
+    returned_credits: List[int] = []
     text = Strings.RETURN_GENERATOR()
-    for credit_id in marked_credits:
-        returned_credits.append(credit_id)
-        credit = db.get_credit(credit_id)
-        text.add_position(credit.get_amount(), config.USERS[credit.to_id], credit.text_info)
+    for user_id in marked_users:
+        amount, credits = get_credits_amount(call.from_user.id, user_id)
+        for credit in credits:
+            returned_credits.append(credit.id)
+        text.add_position(amount, config.USERS[user_id])
 
-    db.return_credits(returned_credits)
     await call.message.edit_text(text.finish())
-
     await call.answer(text=text.finish(), show_alert=True)
 
-    for credit_id in marked_credits:
-        credit = db.get_credit(credit_id)
-        markup = kb.get_check_markup(credit_id, True)
+    for user_id in marked_users:
+        amount, credits = get_credits_amount(call.from_user.id, user_id)
+        info = []
+        for credit in credits:
+            info.append(credit.text_info)
+        # markup = kb.get_check_markup(credit_id, True)
         try:
             await bot.send_message(
-                credit.to_id,
-                Strings.ANNOUNCE_RETURN_CREDIT(credit.get_amount(), config.USERS[credit.from_id], credit.text_info),
-                reply_markup=markup
+                user_id,
+                Strings.ANNOUNCE_RETURN_CREDIT(amount, config.USERS[call.from_user.id], "\n".join(info)),
+                # reply_markup=markup
             )
         except Exception:
             pass
+    db.return_credits(returned_credits)
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_return_credits)

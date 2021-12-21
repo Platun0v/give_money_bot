@@ -79,10 +79,9 @@ class Strings:
         def __init__(self):
             self.message += "Ты вернул:\n"
 
-        def add_position(self, value: int, username: str, info: str):
+        def add_position(self, value: int, username: str):
             self.add(
-                f"{value} руб. ему: {username}\n" +
-                (f"{info}\n" if info else "")
+                f"{value} руб. ему: {username}\n"
             )
 
         def finish(self) -> str:
