@@ -28,3 +28,15 @@ tasks:
   drun:
     cmds:
       - podman run --env-file .env -v ./data:/prod/data -it give-money-bot "python -m give_money_bot"
+
+  migrate-up:
+    cmds:
+      - alembic upgrade head
+
+  migrate-down:
+    cmds:
+      - alembic downgrade -1
+
+  make-migration:
+    cmds:
+      - alembic revision --message="" --autogenerate
