@@ -325,10 +325,10 @@ async def process_callback_credits_to_user(message: types.Message):
         credits_sum_by_user[credit.from_id] = (
                 credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
         )
-        text.add_position(i, credit.get_amount(), config.USERS[credit.from_id], credit.text_info)
+        text.add_position(i, credit.get_amount(), credit.debtor.name, credit.text_info)
 
     for user_id, amount in credits_sum_by_user.items():
-        text.add_sum(amount, config.USERS[user_id])
+        text.add_sum(amount, db.get_user(user_id).name)
 
     await message.answer(text.finish(credits_sum), reply_markup=kb.main_markup)
 

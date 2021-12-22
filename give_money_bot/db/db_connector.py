@@ -5,7 +5,7 @@ from typing import List
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 
-from give_money_bot.db.models import Base, Credit
+from give_money_bot.db.models import Base, Credit, User
 from give_money_bot import config
 
 
@@ -123,6 +123,9 @@ class DB:
             credit.discount = 0
         credit.discount += discount
         self.session.commit()
+
+    def get_user(self, user_id: int) -> User:
+        return self.session.query(User).filter(User.user_id == user_id).first()
 
 
 db = DB(db_path=config.DB_PATH + "db.sqlite")
