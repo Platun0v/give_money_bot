@@ -10,11 +10,11 @@ from give_money_bot.utils.strings import Strings
 
 
 def check_user(message: types.Message) -> bool:
-    return message.from_user.id in config.USERS.keys()
+    return message.from_user.id in db.get_user_ids()
 
 
 def check_admin(message: types.Message) -> bool:
-    return message.from_user.id == config.ADMIN
+    return db.get_user(message.from_user.id).admin
 
 
 def get_info(message: types.Message) -> str:

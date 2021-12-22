@@ -9,8 +9,7 @@ from aiogram.types import (
 from aiogram.utils.callback_data import CallbackData
 
 from give_money_bot.config import Emoji
-from give_money_bot.config import USERS
-from give_money_bot.db.db_connector import Credit
+from give_money_bot.db.db_connector import Credit, User, db
 from give_money_bot.tg_bot.callback_data import CALLBACK
 from give_money_bot.utils.strings import Strings
 
@@ -86,10 +85,10 @@ def get_credits_markup(
     for user_id, credit_sum in user_credits.items():
         if user_id in marked_credits:
             has_mark = 1
-            text = f"{USERS[user_id]} - {credit_sum} {Emoji.TRUE}"
+            text = f"{db.get_user(user_id).name} - {credit_sum} {Emoji.TRUE}"
         else:
             has_mark = 0
-            text = f"{USERS[user_id]} - {credit_sum} {Emoji.FALSE}"
+            text = f"{db.get_user(user_id).name} - {credit_sum} {Emoji.FALSE}"
         markup.add(
             InlineKeyboardButton(
                 text, callback_data=credit_choose_data.new(user_id, has_mark)
@@ -119,18 +118,18 @@ def get_keyboard_users_for_credit(
     for_user_id: int, value: int, users: Set[int]
 ) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
-    for user_id in USERS.keys():
-        if user_id != for_user_id:
-            if user_id in users:
+    for user in db.get_users():
+        if user.user_id != for_user_id:
+            if user.user_id in users:
                 has_mark = 1
-                text = f"{USERS[user_id]}{Emoji.TRUE}"
+                text = f"{user.name}{Emoji.TRUE}"
             else:
                 has_mark = 0
-                text = f"{USERS[user_id]}{Emoji.FALSE}"
+                text = f"{user.name}{Emoji.FALSE}"
 
             markup.add(
                 InlineKeyboardButton(
-                    text, callback_data=user_choose_data.new(user_id, has_mark)
+                    text, callback_data=user_choose_data.new(user.user_id, has_mark)
                 )
             )
     inline_save = InlineKeyboardButton(
@@ -145,9 +144,9 @@ def get_keyboard_users_for_credit(
 
 def get_data_from_markup(
     markup: InlineKeyboardMarkup,
-) -> Tuple[Optional[int], Set[int]]:
+) -> Tuple[int, Set[int]]:
     users = set()
-    value = None
+    value = 0
     for _ in markup["inline_keyboard"]:
         for elem in _:
             if CALLBACK.save_credit in elem.callback_data:

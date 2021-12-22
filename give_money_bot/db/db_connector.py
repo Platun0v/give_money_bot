@@ -1,6 +1,6 @@
 import datetime
 import typing
-from typing import List
+from typing import List, Optional, Iterable
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -126,6 +126,17 @@ class DB:
 
     def get_user(self, user_id: int) -> User:
         return self.session.query(User).filter(User.user_id == user_id).first()
+
+    def get_users(self, user_ids: Optional[Iterable[int]] = None) -> List[User]:
+        if user_ids is None:
+            return self.session.query(User).all()
+        return self.session.query(User).filter(User.user_id.in_(user_ids)).all()
+
+    def get_user_ids(self) -> List[int]:
+        return [e.user_id for e in self.get_users()]
+
+    def get_admin(self) -> User:
+        return self.session.query(User).filter(User.admin == True).first()
 
 
 db = DB(db_path=config.DB_PATH + "db.sqlite")
