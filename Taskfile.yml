@@ -27,4 +27,4 @@ tasks:
 
   drun:
     cmds:
-      - podman run --env-file .env -it give-money-bot "python -m give_money_bot"
+      - podman run --env-file .env -v ./data:/prod/data -it give-money-bot "python -m give_money_bot"

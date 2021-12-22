@@ -53,6 +53,7 @@ COPY --from=haskell-base /opt/parser /prod/parser
 
 COPY ./give_money_bot /prod/give_money_bot/
 COPY ./docker/docker-entrypoint.sh /prod/docker-entrypoint.sh
+COPY ./alembic.ini /prod/alembic.ini
 RUN chmod +x /prod/docker-entrypoint.sh
 
 WORKDIR /prod

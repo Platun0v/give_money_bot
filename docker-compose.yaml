@@ -3,7 +3,7 @@ services:
   bot:
     image: give-money-bot-image
     build: ./
-    command: "python run.py"
+    command: "python -m give_money_bot"
     container_name: give-money-bot-image
     volumes:
       - ./data:/prod/data
