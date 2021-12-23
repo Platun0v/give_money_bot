@@ -18,7 +18,7 @@ def check_admin(message: types.Message) -> bool:
 
 
 def get_info(message: types.Message) -> str:
-    msg = message.text.split("\n")
+    msg: List[str] = message.text.split("\n")
     return "" if len(msg) == 1 else msg[1]
 
 

@@ -33,7 +33,7 @@ class Credit(Base):
     returned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     return_date = sqlalchemy.Column(sqlalchemy.DateTime)
 
-    def get_date_str(self):
+    def get_date_str(self) -> str:
         return f"{self.date.day}.{self.date.month}.{self.date.year}"
 
     def get_return_date_str(self) -> str:
@@ -49,7 +49,7 @@ class Credit(Base):
     def get_amount(self) -> int:
         return self.amount - (0 if self.discount is None else self.discount)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<Credit('{self.debtor.name}' -> '{self.creditor.name}', "
             f"amount='{self.amount}', discount='{self.discount}')>"
@@ -68,7 +68,7 @@ class User(Base):
     admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     # credits = relationship('Credit', primaryjoin="or_(users.user_id==credits.creditor_id, users.user_id==credits.debtor_id)", lazy='dynamic')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<User(id='{self.user_id}', name='{self.name}', admin='{self.admin}')>"
         )

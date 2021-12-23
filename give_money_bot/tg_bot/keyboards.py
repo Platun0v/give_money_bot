@@ -79,7 +79,7 @@ def get_data_from_check(markup: InlineKeyboardMarkup) -> Tuple[int, str]:
 
 
 def get_credits_markup(
-    user_credits: Dict[int, int], marked_credits: set
+    user_credits: Dict[int, int], marked_credits: Set[int]
 ) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     for user_id, credit_sum in user_credits.items():

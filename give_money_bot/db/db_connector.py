@@ -26,7 +26,7 @@ class DB:
         from_users: List[int],
         amount: int,
         additional_info: str = "",
-    ):
+    ) -> None:
         for from_user in from_users:
             self.session.add(
                 Credit(
@@ -45,7 +45,7 @@ class DB:
         from_user: int,
         amount: int,
         additional_info: str = "",
-    ):
+    ) -> None:
         for to_user in to_users:
             self.session.add(
                 Credit(
@@ -89,7 +89,7 @@ class DB:
             .all()
         )
 
-    def return_credits(self, credit_ids: typing.Union[List[int], int]):
+    def return_credits(self, credit_ids: typing.Union[List[int], int]) -> None:
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
 
@@ -101,7 +101,7 @@ class DB:
             credit.return_date = datetime.datetime.utcnow()
         self.session.commit()
 
-    def reject_return_credit(self, credit_ids: typing.Union[List[int], int]):
+    def reject_return_credit(self, credit_ids: typing.Union[List[int], int]) -> None:
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
 
@@ -116,7 +116,7 @@ class DB:
     def get_credit(self, credit_id: int) -> Credit:
         return self.session.query(Credit).filter(Credit.id == credit_id).first()
 
-    def add_discount(self, credit: typing.Union[int, Credit], discount: int):
+    def add_discount(self, credit: typing.Union[int, Credit], discount: int) -> None:
         if isinstance(credit, int):
             credit = self.get_credit(credit)
         if credit.discount is None:

@@ -21,18 +21,18 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 @dp.message_handler(check_user, commands=["start"])
-async def process_start_command(message: types.Message):
+async def process_start_command(message: types.Message) -> None:
     await message.answer(Strings.HELLO_MESSAGE, reply_markup=kb.main_markup)
 
 
 @dp.message_handler(check_user, commands=["id"])
-async def get_id(message: types.Message):
+async def get_id(message: types.Message) -> None:
     await message.answer(f"{message.from_user.id}")
 
 
 # TODO: Divide this shit into many functions
 @dp.message_handler(check_admin, commands=["sqz"])
-async def squeeze_credits(message: Optional[types.Message]):
+async def squeeze_credits(message: Optional[types.Message]) -> None:
     user_ids = [e.user_id for e in db.get_users()]
     for i, _user1 in enumerate(user_ids):
         for j, _user2 in enumerate(user_ids[i + 1:], i + 1):
@@ -109,7 +109,7 @@ async def squeeze_credits(message: Optional[types.Message]):
 
 
 # ======================================= ADD CREDIT =======================================
-async def read_num_from_user(message: types.Message):
+async def read_num_from_user(message: types.Message) -> None:
     value_str, info = parse_info_from_message(message.text)
     value, err = parse_expression(value_str)
     if value is None:
@@ -128,7 +128,7 @@ async def read_num_from_user(message: types.Message):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.choose_user_for_credit)
-async def process_callback(call: types.CallbackQuery):
+async def process_callback(call: types.CallbackQuery) -> None:
     value, users = kb.get_data_from_markup(call.message.reply_markup)
     user_id = kb.get_user_id(call.data)
 
@@ -144,7 +144,7 @@ async def process_callback(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.save_credit)
-async def process_callback_save(call: types.CallbackQuery):
+async def process_callback_save(call: types.CallbackQuery) -> None:
     value, users = kb.get_data_from_markup(call.message.reply_markup)
     if not users:
         await call.answer(text=Strings.FORGOT_CHOOSE)
@@ -174,13 +174,13 @@ async def process_callback_save(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_crt_credit)
-async def process_callback_cancel(call: types.CallbackQuery):
+async def process_callback_cancel(call: types.CallbackQuery) -> None:
     await call.message.edit_text(Strings.CANCEL)
 
 
 # ======================================= REMOVE CREDIT =======================================
 @dp.message_handler(check_user, text="-")
-async def process_callback_user_credits(message: types.Message):
+async def process_callback_user_credits(message: types.Message) -> None:
     user_credits = db.get_user_credits(message.from_user.id)
     if not user_credits:
         await message.answer(Strings.NO_CREDITS_DEBTOR)
@@ -205,7 +205,7 @@ async def process_callback_user_credits(message: types.Message):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.choose_credit_for_return)
-async def process_callback_credit_chose(call: types.CallbackQuery):
+async def process_callback_credit_chose(call: types.CallbackQuery) -> None:
     marked_users = kb.get_marked_credits(call.message.reply_markup)
     chosen_user_id = kb.get_credit_id(call.data)
 
@@ -227,7 +227,7 @@ async def process_callback_credit_chose(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.return_credits)
-async def process_callback_return_credit(call: types.CallbackQuery):
+async def process_callback_return_credit(call: types.CallbackQuery) -> None:
     marked_users = kb.get_marked_credits(call.message.reply_markup)
 
     if not marked_users:
@@ -263,14 +263,14 @@ async def process_callback_return_credit(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_return_credits)
-async def process_callback_credit_cancel(call: types.CallbackQuery):
+async def process_callback_credit_cancel(call: types.CallbackQuery) -> None:
     text = "\n".join(call.message.text.split("\n")[:-1])
     await call.message.edit_text(text)
     await call.answer()
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.check_return_approve)
-async def process_callback_check_true(call: types.CallbackQuery):
+async def process_callback_check_true(call: types.CallbackQuery) -> None:
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
     if value == "0":
         await call.message.edit_reply_markup(kb.get_check_markup(credit_id, True))
@@ -278,7 +278,7 @@ async def process_callback_check_true(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.check_return_reject)
-async def process_callback_check_false(call: types.CallbackQuery):
+async def process_callback_check_false(call: types.CallbackQuery) -> None:
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
     if value == "1":
         await call.message.edit_reply_markup(kb.get_check_markup(credit_id, False))
@@ -286,7 +286,7 @@ async def process_callback_check_false(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.check_return_of_credit)
-async def process_callback_check(call: types.CallbackQuery):
+async def process_callback_check(call: types.CallbackQuery) -> None:
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
 
     await call.answer()
@@ -308,7 +308,7 @@ async def process_callback_check(call: types.CallbackQuery):
 
 # ======================================= INFO =======================================
 @dp.message_handler(check_user, text="info")
-async def process_callback_credits_to_user(message: types.Message):
+async def process_callback_credits_to_user(message: types.Message) -> None:
     credits_to_user = db.credits_to_user(message.from_user.id)
 
     if not credits_to_user:
@@ -334,6 +334,6 @@ async def process_callback_credits_to_user(message: types.Message):
 dp.register_message_handler(read_num_from_user, check_user)
 
 
-def main():
+def main() -> None:
     logger.info("Starting bot")
     executor.start_polling(dp, skip_updates=True)
