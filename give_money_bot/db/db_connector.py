@@ -89,9 +89,11 @@ class DB:
             .all()
         )
 
-    def return_credits(self, credit_ids: typing.Union[List[int], int]) -> None:
+    def return_credits(self, credit_ids: typing.Union[List[int], int, Credit]) -> None:
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
+        if isinstance(credit_ids, Credit):
+            credit_ids = [credit_ids.id]
 
         for credit_id in credit_ids:
             credit: Credit = (
@@ -115,6 +117,9 @@ class DB:
 
     def get_credit(self, credit_id: int) -> Credit:
         return self.session.query(Credit).filter(Credit.id == credit_id).first()
+
+    def get_credits(self) -> List[Credit]:
+        return self.session.query(Credit).filter(Credit.returned == False).all()
 
     def add_discount(self, credit: typing.Union[int, Credit], discount: int) -> None:
         if isinstance(credit, int):

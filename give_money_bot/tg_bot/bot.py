@@ -30,82 +30,82 @@ async def get_id(message: types.Message) -> None:
     await message.answer(f"{message.from_user.id}")
 
 
-# TODO: Divide this shit into many functions
-@dp.message_handler(check_admin, commands=["sqz"])
-async def squeeze_credits(message: Optional[types.Message]) -> None:
-    user_ids = [e.user_id for e in db.get_users()]
-    for i, _user1 in enumerate(user_ids):
-        for j, _user2 in enumerate(user_ids[i + 1:], i + 1):
-            user1, user2 = _user1, _user2
-
-            user1_amount, user1_lst = get_credits_amount(
-                user1, user2
-            )  # сколько 1 должен 2
-            user2_amount, user2_lst = get_credits_amount(
-                user2, user1
-            )  # сколько 2 должен 1
-            if (
-                    user1_amount == 0 or user2_amount == 0
-            ):  # Не выполняем код, если первый не должен второму
-                continue
-
-            if (
-                    user2_amount > user1_amount
-            ):  # Меняем местами 1 и 2, чтобы amount1 > amount2
-                user1_amount, user2_amount = user2_amount, user1_amount
-                user1, user2 = user2, user1
-                user1_lst, user2_lst = user2_lst, user1_lst
-            diff = user1_amount - user2_amount
-            old_user2_amount = user2_amount
-
-            logger.info(
-                f"Try to squeeze of {user1}:{user2} - with amount1={user1_amount},  amount2={user2_amount}"
-            )
-
-            db.return_credits(
-                list(map(lambda x: x.id, user2_lst))
-            )  # Возвращаем все кредиты 2 пользователя
-
-            user1_lst.sort(
-                key=lambda x: x.get_amount()
-            )  # Сортируем долги 1 по возрастанию
-            it = 0
-            credits_to_return = []
-            while user2_amount > 0:  # Обнуляем долги 1 на сумму amount2
-                if user2_amount < user1_lst[it].get_amount():
-                    db.add_discount(user1_lst[it], discount=user2_amount)
-                    user2_amount = 0
-                else:
-                    user2_amount -= user1_lst[it].get_amount()
-                    credits_to_return.append(user1_lst[it].id)
-                it += 1
-            db.return_credits(credits_to_return)
-
-            user1_amount, user1_lst = get_credits_amount(
-                user1, user2
-            )  # сколько 1 должен 2
-            user2_amount, user2_lst = get_credits_amount(
-                user2, user1
-            )  # сколько 2 должен 1
-
-            logger.info(
-                f"Squeeze of {user1}:{user2} - amount1={user1_amount} amount2={user2_amount}"
-            )
-            if diff != (user1_amount - user2_amount):  # Что-то пошло не так
-                logger.error(
-                    f"Failed squeeze credits of {user1}:{user2} - {user1 - user2}\n{user1_lst}\n{user2_lst}"
-                )
-                await bot.send_message(db.get_admin().user_id, "Error occurred")
-                return
-
-            await bot.send_message(
-                user1,
-                f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {db.get_user(user2).name}",
-            )
-            await bot.send_message(
-                user2,
-                f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {db.get_user(user1).name}",
-            )
+# # TODO: Divide this shit into many functions
+# @dp.message_handler(check_admin, commands=["sqz"])
+# async def squeeze_credits(message: Optional[types.Message]) -> None:
+#     user_ids = [e.user_id for e in db.get_users()]
+#     for i, _user1 in enumerate(user_ids):
+#         for j, _user2 in enumerate(user_ids[i + 1:], i + 1):
+#             user1, user2 = _user1, _user2
+#
+#             user1_amount, user1_lst = get_credits_amount(
+#                 user1, user2
+#             )  # сколько 1 должен 2
+#             user2_amount, user2_lst = get_credits_amount(
+#                 user2, user1
+#             )  # сколько 2 должен 1
+#             if (
+#                     user1_amount == 0 or user2_amount == 0
+#             ):  # Не выполняем код, если первый не должен второму
+#                 continue
+#
+#             if (
+#                     user2_amount > user1_amount
+#             ):  # Меняем местами 1 и 2, чтобы amount1 > amount2
+#                 user1_amount, user2_amount = user2_amount, user1_amount
+#                 user1, user2 = user2, user1
+#                 user1_lst, user2_lst = user2_lst, user1_lst
+#             diff = user1_amount - user2_amount
+#             old_user2_amount = user2_amount
+#
+#             logger.info(
+#                 f"Try to squeeze of {user1}:{user2} - with amount1={user1_amount},  amount2={user2_amount}"
+#             )
+#
+#             db.return_credits(
+#                 list(map(lambda x: x.id, user2_lst))
+#             )  # Возвращаем все кредиты 2 пользователя
+#
+#             user1_lst.sort(
+#                 key=lambda x: x.get_amount()
+#             )  # Сортируем долги 1 по возрастанию
+#             it = 0
+#             credits_to_return = []
+#             while user2_amount > 0:  # Обнуляем долги 1 на сумму amount2
+#                 if user2_amount < user1_lst[it].get_amount():
+#                     db.add_discount(user1_lst[it], discount=user2_amount)
+#                     user2_amount = 0
+#                 else:
+#                     user2_amount -= user1_lst[it].get_amount()
+#                     credits_to_return.append(user1_lst[it].id)
+#                 it += 1
+#             db.return_credits(credits_to_return)
+#
+#             user1_amount, user1_lst = get_credits_amount(
+#                 user1, user2
+#             )  # сколько 1 должен 2
+#             user2_amount, user2_lst = get_credits_amount(
+#                 user2, user1
+#             )  # сколько 2 должен 1
+#
+#             logger.info(
+#                 f"Squeeze of {user1}:{user2} - amount1={user1_amount} amount2={user2_amount}"
+#             )
+#             if diff != (user1_amount - user2_amount):  # Что-то пошло не так
+#                 logger.error(
+#                     f"Failed squeeze credits of {user1}:{user2} - {user1 - user2}\n{user1_lst}\n{user2_lst}"
+#                 )
+#                 await bot.send_message(db.get_admin().user_id, "Error occurred")
+#                 return
+#
+#             await bot.send_message(
+#                 user1,
+#                 f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {db.get_user(user2).name}",
+#             )
+#             await bot.send_message(
+#                 user2,
+#                 f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {db.get_user(user1).name}",
+#             )
 
 
 # ======================================= ADD CREDIT =======================================
@@ -170,7 +170,7 @@ async def process_callback_save(call: types.CallbackQuery) -> None:
         except Exception:
             pass
 
-    await squeeze_credits(message=None)
+    # await squeeze_credits(message=None)
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_crt_credit)
