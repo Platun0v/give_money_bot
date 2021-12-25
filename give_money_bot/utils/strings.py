@@ -53,6 +53,10 @@ class Strings:
                 (f"{info}\n" if info else "")
         )
 
+    @staticmethod
+    def REMOVE_CREDITS_WITH(amount: int, creditor: str) -> str:
+        return f"Теперь ты должен на {amount} руб. меньше ему: {creditor}"
+
     class DEBTOR_CREDITS_GENERATOR(MessageGenerator):
         def __init__(self) -> None:
             self.message += "Ты должен:\n"
