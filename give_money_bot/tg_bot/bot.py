@@ -11,6 +11,7 @@ from give_money_bot.tg_bot.keyboards import CALLBACK
 from give_money_bot.tg_bot.utils import check_user, check_admin, get_info, get_credits_amount, parse_info_from_message, \
     parse_expression
 from give_money_bot.utils.log import logger
+from give_money_bot.utils.squeezer import squeeze
 from give_money_bot.utils.strings import Strings
 
 
@@ -21,95 +22,25 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 @dp.message_handler(check_user, commands=["start"])
-async def process_start_command(message: types.Message):
+async def process_start_command(message: types.Message) -> None:
     await message.answer(Strings.HELLO_MESSAGE, reply_markup=kb.main_markup)
 
 
 @dp.message_handler(check_user, commands=["id"])
-async def get_id(message: types.Message):
+async def get_id(message: types.Message) -> None:
     await message.answer(f"{message.from_user.id}")
 
 
-# TODO: Divide this shit into many functions
 @dp.message_handler(check_admin, commands=["sqz"])
-async def squeeze_credits(message: Optional[types.Message]):
-    users_id = list(config.USERS.keys())
-    for i, _user1 in enumerate(users_id):
-        for j, _user2 in enumerate(users_id[i + 1:], i + 1):
-            user1, user2 = _user1, _user2
-
-            user1_amount, user1_lst = get_credits_amount(
-                user1, user2
-            )  # сколько 1 должен 2
-            user2_amount, user2_lst = get_credits_amount(
-                user2, user1
-            )  # сколько 2 должен 1
-            if (
-                    user1_amount == 0 or user2_amount == 0
-            ):  # Не выполняем код, если первый не должен второму
-                continue
-
-            if (
-                    user2_amount > user1_amount
-            ):  # Меняем местами 1 и 2, чтобы amount1 > amount2
-                user1_amount, user2_amount = user2_amount, user1_amount
-                user1, user2 = user2, user1
-                user1_lst, user2_lst = user2_lst, user1_lst
-            diff = user1_amount - user2_amount
-            old_user2_amount = user2_amount
-
-            logger.info(
-                f"Try to squeeze of {user1}:{user2} - with amount1={user1_amount},  amount2={user2_amount}"
-            )
-
-            db.return_credits(
-                list(map(lambda x: x.id, user2_lst))
-            )  # Возвращаем все кредиты 2 пользователя
-
-            user1_lst.sort(
-                key=lambda x: x.get_amount()
-            )  # Сортируем долги 1 по возрастанию
-            it = 0
-            credits_to_return = []
-            while user2_amount > 0:  # Обнуляем долги 1 на сумму amount2
-                if user2_amount < user1_lst[it].get_amount():
-                    db.add_discount(user1_lst[it], discount=user2_amount)
-                    user2_amount = 0
-                else:
-                    user2_amount -= user1_lst[it].get_amount()
-                    credits_to_return.append(user1_lst[it].id)
-                it += 1
-            db.return_credits(credits_to_return)
-
-            user1_amount, user1_lst = get_credits_amount(
-                user1, user2
-            )  # сколько 1 должен 2
-            user2_amount, user2_lst = get_credits_amount(
-                user2, user1
-            )  # сколько 2 должен 1
-
-            logger.info(
-                f"Squeeze of {user1}:{user2} - amount1={user1_amount} amount2={user2_amount}"
-            )
-            if diff != (user1_amount - user2_amount):  # Что-то пошло не так
-                logger.error(
-                    f"Failed squeeze credits of {user1}:{user2} - {user1 - user2}\n{user1_lst}\n{user2_lst}"
-                )
-                await bot.send_message(config.ADMIN, "Error occurred")
-                return
-
-            await bot.send_message(
-                user1,
-                f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {config.USERS[user2]}",
-            )
-            await bot.send_message(
-                user2,
-                f"Были взаимоуничтожены долги на сумму {old_user2_amount} с {config.USERS[user1]}",
-            )
+async def squeeze_credits(message: Optional[types.Message]) -> None:
+    sqz_report = squeeze()
+    for e in sqz_report:
+        for edge in e.cycle:
+            await bot.send_message(edge.from_id, Strings.REMOVE_CREDITS_WITH(e.amount, db.get_user(edge.to_id).name))
 
 
 # ======================================= ADD CREDIT =======================================
-async def read_num_from_user(message: types.Message):
+async def read_num_from_user(message: types.Message) -> None:
     value_str, info = parse_info_from_message(message.text)
     value, err = parse_expression(value_str)
     if value is None:
@@ -128,7 +59,7 @@ async def read_num_from_user(message: types.Message):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.choose_user_for_credit)
-async def process_callback(call: types.CallbackQuery):
+async def process_callback(call: types.CallbackQuery) -> None:
     value, users = kb.get_data_from_markup(call.message.reply_markup)
     user_id = kb.get_user_id(call.data)
 
@@ -144,7 +75,7 @@ async def process_callback(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.save_credit)
-async def process_callback_save(call: types.CallbackQuery):
+async def process_callback_save(call: types.CallbackQuery) -> None:
     value, users = kb.get_data_from_markup(call.message.reply_markup)
     if not users:
         await call.answer(text=Strings.FORGOT_CHOOSE)
@@ -155,9 +86,8 @@ async def process_callback_save(call: types.CallbackQuery):
         neg = True
         value = abs(value)
 
-    user_names = list(map(lambda x: config.USERS[x], users))
     info = get_info(call.message)
-    await call.message.edit_text(Strings.SAVE_CREDIT(value, user_names, info, negative=neg))
+    await call.message.edit_text(Strings.SAVE_CREDIT(value, [e.name for e in db.get_users(users)], info, negative=neg))
 
     user_id = call.from_user.id
     if neg:
@@ -167,7 +97,7 @@ async def process_callback_save(call: types.CallbackQuery):
 
     for user in users:
         try:  # Fixes not started conv with give_money_bot
-            await bot.send_message(user, Strings.ANNOUNCE_NEW_CREDIT(value, config.USERS[user_id], info, neg))
+            await bot.send_message(user, Strings.ANNOUNCE_NEW_CREDIT(value, db.get_user(user_id).name, info, neg))
         except Exception:
             pass
 
@@ -175,13 +105,13 @@ async def process_callback_save(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_crt_credit)
-async def process_callback_cancel(call: types.CallbackQuery):
+async def process_callback_cancel(call: types.CallbackQuery) -> None:
     await call.message.edit_text(Strings.CANCEL)
 
 
 # ======================================= REMOVE CREDIT =======================================
 @dp.message_handler(check_user, text="-")
-async def process_callback_user_credits(message: types.Message):
+async def process_callback_user_credits(message: types.Message) -> None:
     user_credits = db.get_user_credits(message.from_user.id)
     if not user_credits:
         await message.answer(Strings.NO_CREDITS_DEBTOR)
@@ -195,10 +125,10 @@ async def process_callback_user_credits(message: types.Message):
         credits_sum_by_user[credit.to_id] = (
                 credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
         )
-        text.add_position(i, credit.get_amount(), config.USERS[credit.to_id], credit.text_info)
+        text.add_position(i, credit.get_amount(), credit.creditor.name, credit.text_info)
 
     for user_id, amount in credits_sum_by_user.items():
-        text.add_sum(amount, config.USERS[user_id])
+        text.add_sum(amount, db.get_user(user_id).name)
 
     await message.answer(
         text.finish(credits_sum), reply_markup=kb.get_credits_markup(credits_sum_by_user, set())
@@ -206,7 +136,7 @@ async def process_callback_user_credits(message: types.Message):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.choose_credit_for_return)
-async def process_callback_credit_chose(call: types.CallbackQuery):
+async def process_callback_credit_chose(call: types.CallbackQuery) -> None:
     marked_users = kb.get_marked_credits(call.message.reply_markup)
     chosen_user_id = kb.get_credit_id(call.data)
 
@@ -228,7 +158,7 @@ async def process_callback_credit_chose(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.return_credits)
-async def process_callback_return_credit(call: types.CallbackQuery):
+async def process_callback_return_credit(call: types.CallbackQuery) -> None:
     marked_users = kb.get_marked_credits(call.message.reply_markup)
 
     if not marked_users:
@@ -241,7 +171,7 @@ async def process_callback_return_credit(call: types.CallbackQuery):
         amount, credits = get_credits_amount(call.from_user.id, user_id)
         for credit in credits:
             returned_credits.append(credit.id)
-        text.add_position(amount, config.USERS[user_id])
+        text.add_position(amount, db.get_user(user_id).name)
 
     await call.message.edit_text(text.finish())
     await call.answer(text=text.finish(), show_alert=True)
@@ -255,7 +185,7 @@ async def process_callback_return_credit(call: types.CallbackQuery):
         try:
             await bot.send_message(
                 user_id,
-                Strings.ANNOUNCE_RETURN_CREDIT(amount, config.USERS[call.from_user.id], "\n".join(info)),
+                Strings.ANNOUNCE_RETURN_CREDIT(amount, db.get_user(call.from_user.id).name, "\n".join(info)),
                 # reply_markup=markup
             )
         except Exception:
@@ -264,14 +194,14 @@ async def process_callback_return_credit(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_return_credits)
-async def process_callback_credit_cancel(call: types.CallbackQuery):
+async def process_callback_credit_cancel(call: types.CallbackQuery) -> None:
     text = "\n".join(call.message.text.split("\n")[:-1])
     await call.message.edit_text(text)
     await call.answer()
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.check_return_approve)
-async def process_callback_check_true(call: types.CallbackQuery):
+async def process_callback_check_true(call: types.CallbackQuery) -> None:
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
     if value == "0":
         await call.message.edit_reply_markup(kb.get_check_markup(credit_id, True))
@@ -279,7 +209,7 @@ async def process_callback_check_true(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.check_return_reject)
-async def process_callback_check_false(call: types.CallbackQuery):
+async def process_callback_check_false(call: types.CallbackQuery) -> None:
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
     if value == "1":
         await call.message.edit_reply_markup(kb.get_check_markup(credit_id, False))
@@ -287,7 +217,7 @@ async def process_callback_check_false(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.check_return_of_credit)
-async def process_callback_check(call: types.CallbackQuery):
+async def process_callback_check(call: types.CallbackQuery) -> None:
     credit_id, value = kb.get_data_from_check(call.message.reply_markup)
 
     await call.answer()
@@ -300,7 +230,7 @@ async def process_callback_check(call: types.CallbackQuery):
         await call.message.edit_text(text + "\nОтмена")
         credit = db.get_credit(credit_id)
         message = (
-            f"{config.USERS[credit.to_id]} отметил, что ты не вернул {credit.get_amount()} руб.\n"
+            f"{credit.creditor.name} отметил, что ты не вернул {credit.get_amount()} руб.\n"
             f"{credit.get_text_info_new_line()}"
         )
 
@@ -309,12 +239,11 @@ async def process_callback_check(call: types.CallbackQuery):
 
 # ======================================= INFO =======================================
 @dp.message_handler(check_user, text="info")
-async def process_callback_credits_to_user(message: types.Message):
+async def process_callback_credits_to_user(message: types.Message) -> None:
     credits_to_user = db.credits_to_user(message.from_user.id)
 
     if not credits_to_user:
-        text = Strings.NO_CREDITS_CREDITOR
-        await message.answer(text, reply_markup=kb.main_markup)
+        await message.answer(Strings.NO_CREDITS_CREDITOR, reply_markup=kb.main_markup)
         return
 
     text = Strings.CREDITOR_CREDITS_GENERATOR()
@@ -336,6 +265,6 @@ async def process_callback_credits_to_user(message: types.Message):
 dp.register_message_handler(read_num_from_user, check_user)
 
 
-def main():
+def main() -> None:
     logger.info("Starting bot")
     executor.start_polling(dp, skip_updates=True)

@@ -14,7 +14,7 @@ class CallbackStrings:
     check_return_reject = ""
     check_return_approve = ""
 
-    def __init__(self):
+    def __init__(self) -> None:
         variables = self.__class__.__dict__.keys()
         for key in variables:
             if (

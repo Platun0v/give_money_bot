@@ -1,6 +1,6 @@
 import datetime
 import typing
-from typing import List
+from typing import List, Optional, Iterable
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -26,7 +26,7 @@ class DB:
         from_users: List[int],
         amount: int,
         additional_info: str = "",
-    ):
+    ) -> None:
         for from_user in from_users:
             self.session.add(
                 Credit(
@@ -45,7 +45,7 @@ class DB:
         from_user: int,
         amount: int,
         additional_info: str = "",
-    ):
+    ) -> None:
         for to_user in to_users:
             self.session.add(
                 Credit(
@@ -89,9 +89,11 @@ class DB:
             .all()
         )
 
-    def return_credits(self, credit_ids: typing.Union[List[int], int]):
+    def return_credits(self, credit_ids: typing.Union[List[int], int, Credit]) -> None:
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
+        if isinstance(credit_ids, Credit):
+            credit_ids = [credit_ids.id]
 
         for credit_id in credit_ids:
             credit: Credit = (
@@ -101,7 +103,7 @@ class DB:
             credit.return_date = datetime.datetime.utcnow()
         self.session.commit()
 
-    def reject_return_credit(self, credit_ids: typing.Union[List[int], int]):
+    def reject_return_credit(self, credit_ids: typing.Union[List[int], int]) -> None:
         if isinstance(credit_ids, int):
             credit_ids = [credit_ids]
 
@@ -116,7 +118,10 @@ class DB:
     def get_credit(self, credit_id: int) -> Credit:
         return self.session.query(Credit).filter(Credit.id == credit_id).first()
 
-    def add_discount(self, credit: typing.Union[int, Credit], discount: int):
+    def get_credits(self) -> List[Credit]:
+        return self.session.query(Credit).filter(Credit.returned == False).all()
+
+    def add_discount(self, credit: typing.Union[int, Credit], discount: int) -> None:
         if isinstance(credit, int):
             credit = self.get_credit(credit)
         if credit.discount is None:
@@ -126,6 +131,17 @@ class DB:
 
     def get_user(self, user_id: int) -> User:
         return self.session.query(User).filter(User.user_id == user_id).first()
+
+    def get_users(self, user_ids: Optional[Iterable[int]] = None) -> List[User]:
+        if user_ids is None:
+            return self.session.query(User).all()
+        return self.session.query(User).filter(User.user_id.in_(user_ids)).all()
+
+    def get_user_ids(self) -> List[int]:
+        return [e.user_id for e in self.get_users()]
+
+    def get_admin(self) -> User:
+        return self.session.query(User).filter(User.admin == True).first()
 
 
 db = DB(db_path=config.DB_PATH + "db.sqlite")

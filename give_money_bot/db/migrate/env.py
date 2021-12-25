@@ -18,7 +18,7 @@ config.set_main_option('sqlalchemy.url', f"sqlite:///{DB_PATH}/db.sqlite")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+fileConfig(config.config_file_name)  # type: ignore
 
 # add your model's MetaData object here
 # for 'autogenerate' support
