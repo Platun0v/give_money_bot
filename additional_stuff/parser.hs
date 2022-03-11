@@ -56,6 +56,6 @@ main = do
   str <- getLine
   let result = solveRPN $ transform $ rpn str
   if length result > 1 
-    then print "dolbaeb" 
+    then error "dolbaeb" 
     else print $ head result
 
