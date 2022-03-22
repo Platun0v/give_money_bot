@@ -75,7 +75,7 @@ class User(Base):
             return set()
         return set(map(int, self.show_users.split(',')))
 
-    def add_show_user(self, user: Union[int, "User"]):
+    def add_show_user(self, user: Union[int, "User"]) -> None:
         if self.show_users is None:
             self.show_users = ""
 

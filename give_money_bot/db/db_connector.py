@@ -138,8 +138,8 @@ class DB:
         return self.session.query(User).filter(User.user_id.in_(user_ids)).all()
 
     def get_show_user(self, user: int) -> List[User]:
-        user = self.get_user(user)
-        return self.get_users(user.get_show_users())
+        recv_user = self.get_user(user)
+        return self.get_users(recv_user.get_show_users())
 
     def get_user_ids(self) -> List[int]:
         return [e.user_id for e in self.get_users()]
@@ -153,7 +153,7 @@ class DB:
         self.session.commit()
         return user
 
-    def add_show_users(self, user_id: int, user_ids: List[int]):
+    def add_show_users(self, user_id: int, user_ids: List[int]) -> None:
         user = self.get_user(user_id)
         for e in user_ids:
             user.add_show_user(e)
