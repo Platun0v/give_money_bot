@@ -35,8 +35,24 @@ async def get_id(message: types.Message) -> None:
 async def squeeze_credits(message: Optional[types.Message]) -> None:
     sqz_report = squeeze()
     for e in sqz_report:
+        chain = " -> ".join(map(lambda x: db.get_user(x.from_id).name, e.cycle))
         for edge in e.cycle:
-            await bot.send_message(edge.from_id, Strings.REMOVE_CREDITS_WITH(e.amount, db.get_user(edge.to_id).name))
+            await bot.send_message(edge.from_id, Strings.REMOVE_CREDITS_WITH(e.amount, chain))
+
+
+@dp.message_handler(check_admin, commands=["add_user"])
+async def add_user(message: types.Message) -> None:
+    _, user_id, name = message.text.split()
+    db.add_user(user_id, name)
+    await message.answer("Added user")
+
+
+@dp.message_handler(check_admin, commands=["add_show_user"])
+async def add_show_user(message: types.Message) -> None:
+    lst = message.text.split()
+    _, user_id, user_ids = lst[0], lst[1], lst[2:]
+    db.add_show_users(user_id, user_ids)
+    await message.answer("Added users for showing")
 
 
 # ======================================= ADD CREDIT =======================================

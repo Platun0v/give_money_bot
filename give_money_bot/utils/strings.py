@@ -54,8 +54,9 @@ class Strings:
         )
 
     @staticmethod
-    def REMOVE_CREDITS_WITH(amount: int, creditor: str) -> str:
-        return f"Теперь ты должен на {amount} руб. меньше ему: {creditor}"
+    def REMOVE_CREDITS_WITH(amount: int, chain: str) -> str:
+        return f"Была уничтожена цепочка долгов на сумму {amount}:\n" \
+               f"{chain}"
 
     class DEBTOR_CREDITS_GENERATOR(MessageGenerator):
         def __init__(self) -> None:

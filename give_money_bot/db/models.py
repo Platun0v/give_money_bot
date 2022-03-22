@@ -1,4 +1,5 @@
 import datetime
+from typing import List, Union, Set
 
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
@@ -66,7 +67,24 @@ class User(Base):
     )
     name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
+    show_users = sqlalchemy.Column(sqlalchemy.String, nullable=True, default="")
     # credits = relationship('Credit', primaryjoin="or_(users.user_id==credits.creditor_id, users.user_id==credits.debtor_id)", lazy='dynamic')
+
+    def get_show_users(self) -> Set[int]:
+        if self.show_users is None or len(self.show_users) == 0:
+            return set()
+        return set(map(int, self.show_users.split(',')))
+
+    def add_show_user(self, user: Union[int, "User"]) -> None:
+        if self.show_users is None:
+            self.show_users = ""
+
+        res = self.get_show_users()
+        if isinstance(user, User):
+            res.add(user.user_id)
+        else:
+            res.add(user)
+        self.show_users = ','.join(map(str, res))
 
     def __repr__(self) -> str:
         return (
