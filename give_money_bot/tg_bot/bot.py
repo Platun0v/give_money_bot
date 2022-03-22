@@ -40,6 +40,21 @@ async def squeeze_credits(message: Optional[types.Message]) -> None:
             await bot.send_message(edge.from_id, Strings.REMOVE_CREDITS_WITH(e.amount, chain))
 
 
+@dp.message_handler(check_admin, commands=["add_user"])
+async def squeeze_credits(message: Optional[types.Message]) -> None:
+    _, user_id, name = message.text.split()
+    db.add_user(user_id, name)
+    await message.answer("Added user")
+
+
+@dp.message_handler(check_admin, commands=["add_show_user"])
+async def squeeze_credits(message: Optional[types.Message]) -> None:
+    lst = message.text.split()
+    _, user_id, user_ids = lst[0], lst[1], lst[2:]
+    db.add_show_users(user_id, user_ids)
+    await message.answer("Added users for showing")
+
+
 # ======================================= ADD CREDIT =======================================
 async def read_num_from_user(message: types.Message) -> None:
     value_str, info = parse_info_from_message(message.text)

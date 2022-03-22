@@ -137,11 +137,27 @@ class DB:
             return self.session.query(User).all()
         return self.session.query(User).filter(User.user_id.in_(user_ids)).all()
 
+    def get_show_user(self, user: int) -> List[User]:
+        user = self.get_user(user)
+        return self.get_users(user.get_show_users())
+
     def get_user_ids(self) -> List[int]:
         return [e.user_id for e in self.get_users()]
 
     def get_admin(self) -> User:
         return self.session.query(User).filter(User.admin == True).first()
+
+    def add_user(self, user_id: int, name: str) -> User:
+        user = User(user_id=user_id, name=name, admin=False, show_users="")
+        self.session.add(user)
+        self.session.commit()
+        return user
+
+    def add_show_users(self, user_id: int, user_ids: List[int]):
+        user = self.get_user(user_id)
+        for e in user_ids:
+            user.add_show_user(e)
+        self.session.commit()
 
 
 db = DB(db_path=config.DB_PATH + "db.sqlite")

@@ -118,20 +118,21 @@ def get_keyboard_users_for_credit(
     for_user_id: int, value: int, users: Set[int]
 ) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
-    for user in db.get_users():
-        if user.user_id != for_user_id:
-            if user.user_id in users:
-                has_mark = 1
-                text = f"{user.name}{Emoji.TRUE}"
-            else:
-                has_mark = 0
-                text = f"{user.name}{Emoji.FALSE}"
+    for user in db.get_show_user(for_user_id):
+        if user.user_id == for_user_id:
+            continue
+        if user.user_id in users:
+            has_mark = 1
+            text = f"{user.name}{Emoji.TRUE}"
+        else:
+            has_mark = 0
+            text = f"{user.name}{Emoji.FALSE}"
 
-            markup.add(
-                InlineKeyboardButton(
-                    text, callback_data=user_choose_data.new(user.user_id, has_mark)
-                )
+        markup.add(
+            InlineKeyboardButton(
+                text, callback_data=user_choose_data.new(user.user_id, has_mark)
             )
+        )
     inline_save = InlineKeyboardButton(
         Strings.SAVE, callback_data=credit_amount_data.new(value)
     )
