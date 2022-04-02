@@ -1,11 +1,87 @@
-from typing import List
+from typing import List, Dict
 
+from jinja2 import Template
 
-class MessageGenerator:
-    message = ""
+from give_money_bot.db.models import Credit
 
-    def add(self, text: str) -> None:
-        self.message += text
+ASK_FOR_DEBTORS_MESSAGE = """
+{%- if negative -%}
+Кому ты должен {{ value | abs }} руб?
+{{ info }}
+{%- else -%}
+Кто тебе должен {{ value }} руб?
+{{ info }}
+{%- endif -%}
+"""
+
+SAVE_CREDIT_MESSAGE = """
+{%- if negative -%}
+Ты должен {{ value }} руб. {{ username | join(', ') }}
+{%- else -%}
+Тебе должен {{ value }} руб. {{ username | join(', ') }}
+{%- endif -%}
+{{ info }}
+Сохранено
+"""
+
+ANNOUNCE_NEW_CREDIT_MESSAGE = """
+{%- if negative -%}
+Тебе должен {{ value }} руб.: {{ username }}
+{%- else -%}
+Ты должен {{ value }} руб. ему: {{ username }}
+{%- endif -%}
+{{ info }}
+"""
+
+ANNOUNCE_RETURN_CREDIT_MESSAGE = """
+Тебе {{ username }} вернул {{ value }} руб.
+{%- if info -%}
+{{ info }}
+{%- endif -%}
+"""
+
+REMOVE_CREDITS_WITH_MESSAGE = """ 
+Была уничтожена цепочка долгов на сумму {{ amount }} руб.:
+{{ chain }}
+"""
+
+DEBTOR_CREDITS_MESSAGE = """
+Ты должен:
+{%- for credit in credits %}
+{{ loop.index }}) {{ credit.get_amount() }} руб. ему {{ credit.creditor.name }}
+{%- if credit.text_info %}
+{{ credit.text_info }}
+{%- endif -%}
+{% endfor %}
+====================
+{%- for user, value in user_credits.items() %}
+Ты должен {{ users[user] }} - {{ value }} руб.
+{%- endfor %}
+Итого: {{ credits_sum }} руб.
+Ты можешь выбрать долги, которые ты уже вернул:
+"""
+
+RETURN_GENERATOR_MESSAGE = """
+Ты вернул:
+{%- for user_id, value in credits.items() %}
+{{ value }} руб. ему: {{ user[user_id] }}
+{% endfor -%}
+"""
+
+CREDITOR_CREDITS_GENERATOR_MESSAGE = """
+Тебе должны:
+{%- for credit in credits %}
+{{ loop.index }}) {{ credit.debtor.name }}: {{ credit.get_amount() }} руб.
+{%- if credit.text_info %}
+{{ credit.text_info }}
+{%- endif -%}
+{% endfor %}
+====================
+{%- for user, value in user_credits.items() %}
+{{ users[user] }} тебе должен - {{ value }} руб.
+{%- endfor %}
+Итог: {{ credits_sum }} руб.
+"""
 
 
 class Strings:
@@ -26,89 +102,38 @@ class Strings:
 
     @staticmethod
     def ASK_FOR_DEBTORS(value: int, info: str, negative: bool = False) -> str:
-        if negative:
-            return f"Кому ты должен {abs(value)} руб?\n{info}"
-        return f"Кто тебе должен {value} руб?\n{info}"
+        return Template(ASK_FOR_DEBTORS_MESSAGE).render(value=value, info=info, negative=negative)
 
     @staticmethod
     def SAVE_CREDIT(value: int, usernames: List[str], info: str, negative: bool = False) -> str:
-        if negative:
-            text = f'Ты должен {value} руб: {", ".join(usernames)}\n'
-        else:
-            text = f'Тебе должен {value} руб: {", ".join(usernames)}\n'
-        return text + f"{info}\n" + "Сохранено"
+        return Template(SAVE_CREDIT_MESSAGE).render(value=value, usernames=usernames, info=info, negative=negative)
 
     @staticmethod
     def ANNOUNCE_NEW_CREDIT(value: int, username: str, info: str, negative: bool = False) -> str:
-        if negative:
-            text = f"Тебе должен {value} руб.: {username}\n"
-        else:
-            text = f"Ты должен {value} руб. ему: {username}\n"
-        return text + info
+        return Template(ANNOUNCE_NEW_CREDIT_MESSAGE).render(value=value, username=username, info=info,
+                                                            negative=negative)
 
     @staticmethod
     def ANNOUNCE_RETURN_CREDIT(value: int, username: str, info: str) -> str:
-        return (
-                f"Тебе {username} вернул {value} руб.\n" +
-                (f"{info}\n" if info else "")
-        )
+        return Template(ANNOUNCE_RETURN_CREDIT_MESSAGE).render(value=value, username=username, info=info)
 
     @staticmethod
     def REMOVE_CREDITS_WITH(amount: int, chain: str) -> str:
-        return f"Была уничтожена цепочка долгов на сумму {amount}:\n" \
-               f"{chain}"
+        return Template(REMOVE_CREDITS_WITH_MESSAGE).render(amount=amount, chain=chain)
 
-    class DEBTOR_CREDITS_GENERATOR(MessageGenerator):
-        def __init__(self) -> None:
-            self.message += "Ты должен:\n"
-            self.flag = True
+    @staticmethod
+    def DEBTOR_CREDITS_MESSAGE(credits: List[Credit], user_credits: Dict[int, int], credits_sum: int,
+                               users: Dict[int, str]) -> str:
+        template = Template(DEBTOR_CREDITS_MESSAGE)
+        return template.render(credits=credits, user_credits=user_credits, credits_sum=credits_sum, users=users)
 
-        def add_position(self, i: int, value: int, username: str, info: str) -> None:
-            self.add(
-                f"{i}) {value} руб. ему: {username}\n" +
-                (f"{info}\n" if info else "")
-            )
+    @staticmethod
+    def RETURN_MESSAGE(returned_credits_sum: Dict[int, int], users: Dict[int, str]):
+        template = Template(RETURN_GENERATOR_MESSAGE)
+        return template.render(credits=returned_credits_sum, users=users)
 
-        def add_sum(self, amount: int, username: str) -> None:
-            if self.flag:
-                self.add(Strings.DIVIDER)
-                self.flag = False
-            self.add(f"Ты должен {username} - {amount} руб.\n")
-
-        def finish(self, credits_sum: int) -> str:
-            self.add(f"Итого: {credits_sum} руб.\n")
-            self.add("Ты можешь выбрать долги, которые ты уже вернул:")
-            return self.message
-
-    class RETURN_GENERATOR(MessageGenerator):
-        def __init__(self) -> None:
-            self.message += "Ты вернул:\n"
-
-        def add_position(self, value: int, username: str) -> None:
-            self.add(
-                f"{value} руб. ему: {username}\n"
-            )
-
-        def finish(self) -> str:
-            return self.message
-
-    class CREDITOR_CREDITS_GENERATOR(MessageGenerator):
-        def __init__(self) -> None:
-            self.add("Тебе должны:\n")
-            self.flag = True
-
-        def add_position(self, i: int, value: int, username: str, info: str) -> None:
-            self.add(
-                f"{i}) {username}: {value} руб.\n" +
-                (f"{info}\n" if info else "")
-            )
-
-        def add_sum(self, amount: int, username: str) -> None:
-            if self.flag:
-                self.add(Strings.DIVIDER)
-                self.flag = False
-            self.add(f"{username} тебе должен - {amount} руб.\n")
-
-        def finish(self, credits_sum: int) -> str:
-            self.add(f"Итог: {credits_sum} руб.")
-            return self.message
+    @staticmethod
+    def CREDITOR_CREDITS_GENERATOR(credits: List[Credit], user_credits: Dict[int, int], credits_sum: int,
+                                   users: Dict[int, str]) -> str:
+        template = Template(CREDITOR_CREDITS_GENERATOR_MESSAGE)
+        return template.render(credits=credits, user_credits=user_credits, credits_sum=credits_sum, users=users)

@@ -1,12 +1,12 @@
 import datetime
 import typing
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, Dict
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 
-from give_money_bot.db.models import Base, Credit, User
 from give_money_bot import config
+from give_money_bot.db.models import Base, Credit, User
 
 
 class DB:
@@ -21,11 +21,11 @@ class DB:
         self.session = Session()
 
     def add_entry(
-        self,
-        to_user: int,
-        from_users: List[int],
-        amount: int,
-        additional_info: str = "",
+            self,
+            to_user: int,
+            from_users: List[int],
+            amount: int,
+            additional_info: str = "",
     ) -> None:
         for from_user in from_users:
             self.session.add(
@@ -40,11 +40,11 @@ class DB:
         self.session.commit()
 
     def add_entry_2(
-        self,
-        to_users: List[int],
-        from_user: int,
-        amount: int,
-        additional_info: str = "",
+            self,
+            to_users: List[int],
+            from_user: int,
+            amount: int,
+            additional_info: str = "",
     ) -> None:
         for to_user in to_users:
             self.session.add(
@@ -61,32 +61,32 @@ class DB:
     def get_user_credits(self, user: int) -> List[Credit]:
         return (
             self.session.query(Credit)
-            .filter(Credit.from_id == user)
-            .filter(Credit.returned == False)
-            .order_by(Credit.to_id)
-            .order_by(Credit.date)
-            .all()
+                .filter(Credit.from_id == user)
+                .filter(Credit.returned == False)
+                .order_by(Credit.to_id)
+                .order_by(Credit.date)
+                .all()
         )
 
     def credits_to_user(self, user: int) -> List[Credit]:
         return (
             self.session.query(Credit)
-            .filter(Credit.to_id == user)
-            .filter(Credit.returned == False)
-            .order_by(Credit.from_id)
-            .order_by(Credit.date)
-            .all()
+                .filter(Credit.to_id == user)
+                .filter(Credit.returned == False)
+                .order_by(Credit.from_id)
+                .order_by(Credit.date)
+                .all()
         )
 
     def get_credits_to_user_from_user(
-        self, from_user: int, to_user: int
+            self, from_user: int, to_user: int
     ) -> List[Credit]:
         return (
             self.session.query(Credit)
-            .filter(Credit.to_id == to_user)
-            .filter(Credit.from_id == from_user)
-            .filter(Credit.returned == False)
-            .all()
+                .filter(Credit.to_id == to_user)
+                .filter(Credit.from_id == from_user)
+                .filter(Credit.returned == False)
+                .all()
         )
 
     def return_credits(self, credit_ids: typing.Union[List[int], int, Credit]) -> None:
@@ -103,17 +103,17 @@ class DB:
             credit.return_date = datetime.datetime.utcnow()
         self.session.commit()
 
-    def reject_return_credit(self, credit_ids: typing.Union[List[int], int]) -> None:
-        if isinstance(credit_ids, int):
-            credit_ids = [credit_ids]
-
-        for credit_id in credit_ids:
-            credit: Credit = (
-                self.session.query(Credit).filter(Credit.id == credit_id).first()
-            )
-            credit.returned = False
-            credit.return_date = None
-        self.session.commit()
+    # def reject_return_credit(self, credit_ids: typing.Union[List[int], int]) -> None:
+    #     if isinstance(credit_ids, int):
+    #         credit_ids = [credit_ids]
+    #
+    #     for credit_id in credit_ids:
+    #         credit: Credit = (
+    #             self.session.query(Credit).filter(Credit.id == credit_id).first()
+    #         )
+    #         credit.returned = False
+    #         credit.return_date = None
+    #     self.session.commit()
 
     def get_credit(self, credit_id: int) -> Credit:
         return self.session.query(Credit).filter(Credit.id == credit_id).first()
@@ -136,6 +136,11 @@ class DB:
         if user_ids is None:
             return self.session.query(User).all()
         return self.session.query(User).filter(User.user_id.in_(user_ids)).all()
+
+    def get_user_ids_with_name(self) -> Dict[int, str]:
+        return {
+            user.user_id: user.name for user in self.session.query(User).all()
+        }
 
     def get_show_user(self, user: int) -> List[User]:
         recv_user = self.get_user(user)

@@ -133,7 +133,6 @@ async def process_callback_user_credits(message: types.Message) -> None:
         await message.answer(Strings.NO_CREDITS_DEBTOR)
         return
 
-    text = Strings.DEBTOR_CREDITS_GENERATOR()
     credits_sum = 0
     credits_sum_by_user: Dict[int, int] = {}
     for i, credit in enumerate(user_credits, 1):
@@ -141,13 +140,10 @@ async def process_callback_user_credits(message: types.Message) -> None:
         credits_sum_by_user[credit.to_id] = (
                 credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
         )
-        text.add_position(i, credit.get_amount(), credit.creditor.name, credit.text_info)
-
-    for user_id, amount in credits_sum_by_user.items():
-        text.add_sum(amount, db.get_user(user_id).name)
 
     await message.answer(
-        text.finish(credits_sum), reply_markup=kb.get_credits_markup(credits_sum_by_user, set())
+        Strings.DEBTOR_CREDITS_MESSAGE(user_credits, credits_sum_by_user, credits_sum, db.get_user_ids_with_name()),
+        reply_markup=kb.get_credits_markup(credits_sum_by_user, set())
     )
 
 
@@ -182,15 +178,16 @@ async def process_callback_return_credit(call: types.CallbackQuery) -> None:
         return
 
     returned_credits: List[int] = []
-    text = Strings.RETURN_GENERATOR()
+    returned_credits_sum: Dict[int, int] = {}
     for user_id in marked_users:
         amount, credits = get_credits_amount(call.from_user.id, user_id)
         for credit in credits:
             returned_credits.append(credit.id)
-        text.add_position(amount, db.get_user(user_id).name)
+        returned_credits_sum[user_id] = amount
 
-    await call.message.edit_text(text.finish())
-    await call.answer(text=text.finish(), show_alert=True)
+    msg = Strings.RETURN_MESSAGE(returned_credits_sum, db.get_user_ids_with_name())
+    await call.message.edit_text(msg)
+    await call.answer(text=msg, show_alert=True)
 
     for user_id in marked_users:
         amount, credits = get_credits_amount(call.from_user.id, user_id)
@@ -211,46 +208,9 @@ async def process_callback_return_credit(call: types.CallbackQuery) -> None:
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_return_credits)
 async def process_callback_credit_cancel(call: types.CallbackQuery) -> None:
-    text = "\n".join(call.message.text.split("\n")[:-1])
+    text = "\n".join(call.message.text.split("\n")[:-1])  # Remove last line
     await call.message.edit_text(text)
     await call.answer()
-
-
-@dp.callback_query_handler(text_contains=CALLBACK.check_return_approve)
-async def process_callback_check_true(call: types.CallbackQuery) -> None:
-    credit_id, value = kb.get_data_from_check(call.message.reply_markup)
-    if value == "0":
-        await call.message.edit_reply_markup(kb.get_check_markup(credit_id, True))
-    await call.answer()
-
-
-@dp.callback_query_handler(text_contains=CALLBACK.check_return_reject)
-async def process_callback_check_false(call: types.CallbackQuery) -> None:
-    credit_id, value = kb.get_data_from_check(call.message.reply_markup)
-    if value == "1":
-        await call.message.edit_reply_markup(kb.get_check_markup(credit_id, False))
-    await call.answer()
-
-
-@dp.callback_query_handler(text_contains=CALLBACK.check_return_of_credit)
-async def process_callback_check(call: types.CallbackQuery) -> None:
-    credit_id, value = kb.get_data_from_check(call.message.reply_markup)
-
-    await call.answer()
-
-    if value == "1":
-        await call.message.delete_reply_markup()
-    else:
-        db.reject_return_credit(credit_id)
-        text = call.message.text
-        await call.message.edit_text(text + "\nОтмена")
-        credit = db.get_credit(credit_id)
-        message = (
-            f"{credit.creditor.name} отметил, что ты не вернул {credit.get_amount()} руб.\n"
-            f"{credit.get_text_info_new_line()}"
-        )
-
-        await bot.send_message(credit.from_id, message)
 
 
 # ======================================= INFO =======================================
@@ -262,7 +222,6 @@ async def process_callback_credits_to_user(message: types.Message) -> None:
         await message.answer(Strings.NO_CREDITS_CREDITOR, reply_markup=kb.main_markup)
         return
 
-    text = Strings.CREDITOR_CREDITS_GENERATOR()
     credits_sum = 0
     credits_sum_by_user: Dict[int, int] = {}
     for i, credit in enumerate(credits_to_user, 1):
@@ -270,12 +229,11 @@ async def process_callback_credits_to_user(message: types.Message) -> None:
         credits_sum_by_user[credit.from_id] = (
                 credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
         )
-        text.add_position(i, credit.get_amount(), credit.debtor.name, credit.text_info)
 
-    for user_id, amount in credits_sum_by_user.items():
-        text.add_sum(amount, db.get_user(user_id).name)
-
-    await message.answer(text.finish(credits_sum), reply_markup=kb.main_markup)
+    await message.answer(
+        Strings.CREDITOR_CREDITS_GENERATOR(credits_to_user, credits_sum_by_user, credits_sum, db.get_user_ids_with_name()),
+        reply_markup=kb.main_markup,
+    )
 
 
 dp.register_message_handler(read_num_from_user, check_user)
