@@ -20,9 +20,17 @@ class Credit(Base):
         primary_key=True,
         autoincrement=True,
     )
-    to_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id", name='fk_creditor_id'), nullable=False)  # Кому должны
+    to_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey("users.user_id", name="fk_creditor_id"),
+        nullable=False,
+    )  # Кому должны
     creditor = relationship("User", foreign_keys="Credit.to_id")
-    from_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id", name='fk_debtor_id'), nullable=False)  # Кто должен
+    from_id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        sqlalchemy.ForeignKey("users.user_id", name="fk_debtor_id"),
+        nullable=False,
+    )  # Кто должен
     debtor = relationship("User", foreign_keys="Credit.from_id")
     amount = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     discount = sqlalchemy.Column(sqlalchemy.Integer, default=0)
@@ -60,10 +68,7 @@ class Credit(Base):
 class User(Base):
     __tablename__ = "users"
     user_id = sqlalchemy.Column(
-        sqlalchemy.Integer,
-        nullable=False,
-        unique=True,
-        primary_key=True
+        sqlalchemy.Integer, nullable=False, unique=True, primary_key=True
     )
     name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
@@ -73,7 +78,7 @@ class User(Base):
     def get_show_users(self) -> Set[int]:
         if self.show_users is None or len(self.show_users) == 0:
             return set()
-        return set(map(int, self.show_users.split(',')))
+        return set(map(int, self.show_users.split(",")))
 
     def add_show_user(self, user: Union[int, "User"]) -> None:
         if self.show_users is None:
@@ -84,9 +89,7 @@ class User(Base):
             res.add(user.user_id)
         else:
             res.add(user)
-        self.show_users = ','.join(map(str, res))
+        self.show_users = ",".join(map(str, res))
 
     def __repr__(self) -> str:
-        return (
-            f"<User(id='{self.user_id}', name='{self.name}', admin='{self.admin}')>"
-        )
+        return f"<User(id='{self.user_id}', name='{self.name}', admin='{self.admin}')>"

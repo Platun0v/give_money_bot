@@ -2,41 +2,51 @@ version: '3'
 
 tasks:
   mypy:
+    desc: "Run mypy on the project"
     cmds:
       - poetry run mypy give_money_bot
 
   build:
+    desc: "Install dependencies"
     cmds:
       - poetry install
 
   build-release:
+    desc: "Build the release"
     cmds:
       - poetry install --no-dev
 
   run:
+    desc: "Run the bot"
     cmds:
       - poetry run bot
 
   black:
+    desc: "Format code"
     cmds:
       - poetry run black give_money_bot
   
   dbuild:
+    desc: "Build container"
     cmds:
       - podman build -t give-money-bot .
 
   drun:
+    desc: "Run container"
     cmds:
       - podman run --env-file .env -v ./data:/prod/data -it give-money-bot "python -m give_money_bot"
 
   migrate-up:
+    desc: "Migrate database"
     cmds:
       - alembic upgrade head
 
   migrate-down:
+    desc: "Rollback database"
     cmds:
       - alembic downgrade -1
 
   make-migration:
+    desc: "Create a new migration"
     cmds:
       - alembic revision --message="" --autogenerate

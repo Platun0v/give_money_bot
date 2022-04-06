@@ -18,7 +18,6 @@ user_choose_data = CallbackData(CALLBACK.choose_user_for_credit, "id", "has_mark
 credit_choose_data = CallbackData(
     CALLBACK.choose_credit_for_return, "index", "has_mark"
 )
-check_return_data = CallbackData(CALLBACK.check_return_of_credit, "credit_id", "value")
 
 main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
     KeyboardButton("-"), KeyboardButton("info")
@@ -33,49 +32,6 @@ return_credit_inline = InlineKeyboardButton(
 cancel_return_credit_inline = InlineKeyboardButton(
     Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits
 )
-
-
-def get_check_markup(credit_id: Union[str, int], value: bool) -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup()
-    if value:
-        markup.add(
-            InlineKeyboardButton(
-                f"Все верно{Emoji.TRUE}", callback_data=CALLBACK.check_return_approve
-            )
-        )
-        markup.add(
-            InlineKeyboardButton(
-                f"Это не так{Emoji.FALSE}", callback_data=CALLBACK.check_return_reject
-            )
-        )
-        markup.add(
-            InlineKeyboardButton(
-                "Сохранить", callback_data=check_return_data.new(credit_id, "1")
-            )
-        )
-    else:
-        markup.add(
-            InlineKeyboardButton(
-                f"Все верно{Emoji.FALSE}", callback_data=CALLBACK.check_return_approve
-            )
-        )
-        markup.add(
-            InlineKeyboardButton(
-                f"Это не так{Emoji.TRUE}", callback_data=CALLBACK.check_return_reject
-            )
-        )
-        markup.add(
-            InlineKeyboardButton(
-                "Сохранить", callback_data=check_return_data.new(credit_id, "0")
-            )
-        )
-    return markup
-
-
-def get_data_from_check(markup: InlineKeyboardMarkup) -> Tuple[int, str]:
-    data = markup["inline_keyboard"][2][0].callback_data
-    parsed_data = check_return_data.parse(data)
-    return int(parsed_data.get("credit_id")), parsed_data.get("value")
 
 
 def get_credits_markup(
