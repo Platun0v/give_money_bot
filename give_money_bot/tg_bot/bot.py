@@ -1,4 +1,4 @@
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -17,10 +17,10 @@ from give_money_bot.utils.strings import Strings
 
 
 class UserMiddleware(BaseMiddleware):
-    async def on_pre_process_message(self, message: types.Message, data: dict):
+    async def on_pre_process_message(self, message: types.Message, data: Dict[str, Any]) -> None:
         data["user"] = db.get_user(message.from_user.id)
 
-    async def on_pre_process_callback_query(self, callback_query: types.CallbackQuery, data: dict):
+    async def on_pre_process_callback_query(self, callback_query: types.CallbackQuery, data: Dict[str, Any]) -> None:
         data["user"] = db.get_user(callback_query.from_user.id)
 
 
@@ -130,9 +130,9 @@ async def process_callback_save(call: types.CallbackQuery, user: User) -> None:
     else:
         db.add_entry(user_id, list(users), value, info)
 
-    for user in users:
+    for user_ in users:
         try:  # Fixes not started conv with give_money_bot
-            await bot.send_message(user, Strings.announce_new_credit(value, db.get_user(user_id).name, info))
+            await bot.send_message(user_, Strings.announce_new_credit(value, db.get_user(user_id).name, info))
         except Exception:
             pass
     logger.info(f"{user.name=} saved credit {value=} {users=}")
