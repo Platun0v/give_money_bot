@@ -67,7 +67,7 @@ async def read_num_from_user(message: types.Message) -> None:
         return
 
     await message.answer(
-        Strings.ASK_FOR_DEBTORS(value, info, negative=value < 0),
+        Strings.ask_for_debtors(value, info, negative=value < 0),
         reply_markup=kb.get_keyboard_users_for_credit(
             message.from_user.id, value, set()
         ),

@@ -101,7 +101,7 @@ class Strings:
     NO_CREDITS_DEBTOR = "Ты никому не должен. Свободен"
 
     @staticmethod
-    def ASK_FOR_DEBTORS(value: int, info: str, negative: bool = False) -> str:
+    def ask_for_debtors(value: int, info: str, negative: bool = False) -> str:
         return Template(ASK_FOR_DEBTORS_MESSAGE).render(value=value, info=info, negative=negative)
 
     @staticmethod
@@ -128,7 +128,7 @@ class Strings:
         return template.render(credits=credits, user_credits=user_credits, credits_sum=credits_sum, users=users)
 
     @staticmethod
-    def RETURN_MESSAGE(returned_credits_sum: Dict[int, int], users: Dict[int, str]):
+    def RETURN_MESSAGE(returned_credits_sum: Dict[int, int], users: Dict[int, str]) -> str:
         template = Template(RETURN_GENERATOR_MESSAGE)
         return template.render(credits=returned_credits_sum, users=users)
 
