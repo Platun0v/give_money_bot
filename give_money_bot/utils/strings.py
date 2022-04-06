@@ -111,7 +111,9 @@ class Strings:
         return Template(ASK_FOR_DEBTORS_MESSAGE).render(value=value, info=info)
 
     @staticmethod
-    def credit_saved(value: int, usernames: List[str], info: str, negative: bool = False) -> str:
+    def credit_saved(
+        value: int, usernames: List[str], info: str, negative: bool = False
+    ) -> str:
         """
         Создает сообщение, с информацией о созданном долге
         Parameters:
@@ -120,7 +122,9 @@ class Strings:
             info: информация о долге
             negative:
         """
-        return Template(SAVE_CREDIT_MESSAGE).render(value=value, usernames=usernames, info=info, negative=negative)
+        return Template(SAVE_CREDIT_MESSAGE).render(
+            value=value, usernames=usernames, info=info, negative=negative
+        )
 
     @staticmethod
     def announce_new_credit(value: int, username: str, info: str) -> str:
@@ -131,7 +135,9 @@ class Strings:
             username: имя пользователя
             info: информация о долге
         """
-        return Template(ANNOUNCE_NEW_CREDIT_MESSAGE).render(value=value, username=username, info=info)
+        return Template(ANNOUNCE_NEW_CREDIT_MESSAGE).render(
+            value=value, username=username, info=info
+        )
 
     @staticmethod
     def announce_returned_credit(value: int, username: str, info: str) -> str:
@@ -142,7 +148,9 @@ class Strings:
             username: имя пользователя
             info: информация о долге
         """
-        return Template(ANNOUNCE_RETURN_CREDIT_MESSAGE).render(value=value, username=username, info=info)
+        return Template(ANNOUNCE_RETURN_CREDIT_MESSAGE).render(
+            value=value, username=username, info=info
+        )
 
     @staticmethod
     def removed_credit_chain(amount: int, chain: str) -> str:
@@ -155,8 +163,12 @@ class Strings:
         return Template(REMOVE_CREDITS_WITH_MESSAGE).render(amount=amount, chain=chain)
 
     @staticmethod
-    def debtor_credits(credits: List[Credit], user_credits: Dict[int, int], credits_sum: int,
-                       users: Dict[int, str]) -> str:
+    def debtor_credits(
+        credits: List[Credit],
+        user_credits: Dict[int, int],
+        credits_sum: int,
+        users: Dict[int, str],
+    ) -> str:
         """
         Создает сообщение, в котором сообщается информация о нынешних задолжностях
         Parameters:
@@ -166,10 +178,17 @@ class Strings:
             users: Dict[user_id: username] сопоставление user_id и имени пользователя
         """
         template = Template(DEBTOR_CREDITS_MESSAGE)
-        return template.render(credits=credits, user_credits=user_credits, credits_sum=credits_sum, users=users)
+        return template.render(
+            credits=credits,
+            user_credits=user_credits,
+            credits_sum=credits_sum,
+            users=users,
+        )
 
     @staticmethod
-    def returned_credit(returned_credits_sum: Dict[int, int], users: Dict[int, str]) -> str:
+    def returned_credit(
+        returned_credits_sum: Dict[int, int], users: Dict[int, str]
+    ) -> str:
         """
         Создает сообщение, с информацией о возвращенных долгах
         Parameters:
@@ -180,8 +199,12 @@ class Strings:
         return template.render(credits=returned_credits_sum, users=users)
 
     @staticmethod
-    def creditor_credits(credits: List[Credit], user_credits: Dict[int, int], credits_sum: int,
-                         users: Dict[int, str]) -> str:
+    def creditor_credits(
+        credits: List[Credit],
+        user_credits: Dict[int, int],
+        credits_sum: int,
+        users: Dict[int, str],
+    ) -> str:
         """
         Создает сообщение, в котором сообщается о людях, которые тебе должны
         Parameters:
@@ -191,4 +214,9 @@ class Strings:
             users: Dict[user_id: username] сопоставление user_id и имени пользователя
         """
         template = Template(CREDITOR_CREDITS_GENERATOR_MESSAGE)
-        return template.render(credits=credits, user_credits=user_credits, credits_sum=credits_sum, users=users)
+        return template.render(
+            credits=credits,
+            user_credits=user_credits,
+            credits_sum=credits_sum,
+            users=users,
+        )

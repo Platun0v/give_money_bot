@@ -36,7 +36,11 @@ class Edge:
                 break
 
     def __repr__(self) -> str:
-        return f"<Edge(from_id='{db.get_user(self.from_id).name}', to_id='{db.get_user(self.to_id).name}', amount='{self.amount}')>" if self.exist else ""
+        return (
+            f"<Edge(from_id='{db.get_user(self.from_id).name}', to_id='{db.get_user(self.to_id).name}', amount='{self.amount}')>"
+            if self.exist
+            else ""
+        )
 
 
 class Graph:

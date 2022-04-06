@@ -25,4 +25,6 @@ from give_money_bot.config import LOG_PATH
 #         )
 
 logger.add(sys.stderr, backtrace=True, level="DEBUG")
-logger.add(LOG_PATH + "give_money_bot.log", backtrace=True, rotation="1 MB", level="DEBUG")
+logger.add(
+    LOG_PATH + "give_money_bot.log", backtrace=True, rotation="1 MB", level="DEBUG"
+)

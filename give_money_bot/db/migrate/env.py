@@ -14,7 +14,7 @@ from give_money_bot.config import DB_PATH
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option('sqlalchemy.url', f"sqlite:///{DB_PATH}/db.sqlite")
+config.set_main_option("sqlalchemy.url", f"sqlite:///{DB_PATH}/db.sqlite")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -72,8 +72,9 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata,
-                          render_as_batch=True)
+        context.configure(
+            connection=connection, target_metadata=target_metadata, render_as_batch=True
+        )
 
         with context.begin_transaction():
             context.run_migrations()
