@@ -128,19 +128,14 @@ async def process_callback_save(call: types.CallbackQuery, user: User) -> None:
         await call.answer(text=Strings.FORGOT_CHOOSE)
         return
 
-    neg = False
-    if value < 0:
-        neg = True
-        value = abs(value)
-
     info = get_info(call.message)
     await call.message.edit_text(
-        Strings.credit_saved(value, [e.name for e in db.get_users(users)], info, neg)
+        Strings.credit_saved(value, [e.name for e in db.get_users(users)], info)
     )
 
     user_id = call.from_user.id
-    if neg:
-        db.add_entry_2(list(users), user_id, value, info)
+    if value < 0:
+        db.add_entry_2(list(users), user_id, abs(value), info)
     else:
         db.add_entry(user_id, list(users), value, info)
 
@@ -148,7 +143,7 @@ async def process_callback_save(call: types.CallbackQuery, user: User) -> None:
         try:  # Fixes not started conv with give_money_bot
             await bot.send_message(
                 user_,
-                Strings.announce_new_credit(value, db.get_user(user_id).name, info),
+                Strings.announce_new_credit(value, user.name, info),
             )
         except Exception:
             pass

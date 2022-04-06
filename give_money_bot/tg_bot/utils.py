@@ -41,6 +41,12 @@ def parse_expression(value: str) -> Tuple[Optional[int], Optional[str]]:
 
 
 def parse_info_from_message(message: str) -> Tuple[str, str]:
+    """
+    Divide expression and info
+
+    :param message: str - message from user
+    :return: Tuple[str, str] - expression and info
+    """
     for i, char in enumerate(message):
         if char not in Strings.DIGITS:
             return message[:i], message[i:]

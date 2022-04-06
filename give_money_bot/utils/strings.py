@@ -15,8 +15,8 @@ ASK_FOR_DEBTORS_MESSAGE = """
 """
 
 SAVE_CREDIT_MESSAGE = """
-{%- if negative -%}
-Ты должен {{ value }} руб. {{ username | join(', ') }}
+{%- if value < 0 -%}
+Ты должен {{ value | abs }} руб. {{ username | join(', ') }}
 {%- else -%}
 Тебе должен {{ value }} руб. {{ username | join(', ') }}
 {%- endif -%}
@@ -104,6 +104,7 @@ class Strings:
     def ask_for_debtors(value: int, info: str) -> str:
         """
         Создает сообщение, в котором спрашивается, для кого новый долг
+
         Parameters:
             value: сумма долга
             info: информация о долге
@@ -112,24 +113,25 @@ class Strings:
 
     @staticmethod
     def credit_saved(
-        value: int, usernames: List[str], info: str, negative: bool = False
+        value: int, usernames: List[str], info: str
     ) -> str:
         """
         Создает сообщение, с информацией о созданном долге
+
         Parameters:
             value: сумма долга
             usernames: имена пользователей
             info: информация о долге
-            negative:
         """
         return Template(SAVE_CREDIT_MESSAGE).render(
-            value=value, usernames=usernames, info=info, negative=negative
+            value=value, usernames=usernames, info=info
         )
 
     @staticmethod
     def announce_new_credit(value: int, username: str, info: str) -> str:
         """
         Создает сообщение, которое сообщает пользователю о новом долге для него
+
         Parameters:
             value: сумма долга
             username: имя пользователя
@@ -143,6 +145,7 @@ class Strings:
     def announce_returned_credit(value: int, username: str, info: str) -> str:
         """
         Создает сообщение, в котором сообщается, что пользователю вернули долг
+
         Parameters:
             value: сумма долга
             username: имя пользователя
@@ -156,6 +159,7 @@ class Strings:
     def removed_credit_chain(amount: int, chain: str) -> str:
         """
         Создает сообщение, в котором сообщается об уничтоженной цепочке долгов
+
         Parameters:
             amount: сумма долга
             chain: цепочка пользователей
@@ -171,6 +175,7 @@ class Strings:
     ) -> str:
         """
         Создает сообщение, в котором сообщается информация о нынешних задолжностях
+
         Parameters:
             credits: список с долгами
             user_credits: Dict[user_id: credit_amount] сумма долгов для каждого пользователя
@@ -191,6 +196,7 @@ class Strings:
     ) -> str:
         """
         Создает сообщение, с информацией о возвращенных долгах
+
         Parameters:
             returned_credits_sum: Dict[user_id: credit_amount] сумма долгов для каждого пользователя
             users: Dict[user_id: username] сопоставление user_id и имени пользователя
@@ -207,6 +213,7 @@ class Strings:
     ) -> str:
         """
         Создает сообщение, в котором сообщается о людях, которые тебе должны
+
         Parameters:
             credits: список с долгами
             user_credits: Dict[user_id: credit_amount] сумма долгов для каждого пользователя
