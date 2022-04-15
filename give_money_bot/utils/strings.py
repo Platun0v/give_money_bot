@@ -26,10 +26,10 @@ SAVE_CREDIT_MESSAGE = """
 
 ANNOUNCE_NEW_CREDIT_MESSAGE = """
 {%- if value < 0 -%}
-Тебе должен {{ value }} руб.: {{ username }}
+Тебе должен {{ value | abs }} руб.: {{ username }}
 {%- else -%}
 Ты должен {{ value }} руб. ему: {{ username }}
-{%- endif -%}
+{%- endif %}
 {{ info }}
 """
 

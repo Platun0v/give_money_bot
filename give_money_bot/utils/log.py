@@ -1,10 +1,8 @@
-import logging
 import sys
 
 from loguru import logger
 
 from give_money_bot.config import LOG_PATH
-
 
 # class InterceptHandler(logging.Handler):
 #     def emit(self, record):  # type: ignore
@@ -24,7 +22,7 @@ from give_money_bot.config import LOG_PATH
 #             level, record.getMessage()
 #         )
 
-logger.add(sys.stderr, backtrace=True, level="DEBUG")
+logger.add(sys.stderr, backtrace=True, level="DEBUG", catch=True)
 logger.add(
-    LOG_PATH + "give_money_bot.log", backtrace=True, rotation="1 MB", level="DEBUG"
+    LOG_PATH + "give_money_bot.log", backtrace=True, rotation="1 MB", level="DEBUG", catch=True
 )

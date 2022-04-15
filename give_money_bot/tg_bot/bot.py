@@ -148,7 +148,7 @@ async def process_callback_save(call: types.CallbackQuery, user: User) -> None:
         except Exception:
             pass
     logger.info(f"{user.name=} saved credit {value=} {users=}")
-    await squeeze_credits(message=None)
+    await squeeze_credits(message=None, user=user)
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_crt_credit)
@@ -280,6 +280,12 @@ async def process_callback_credits_to_user(message: types.Message, user: User) -
         ),
         reply_markup=kb.main_markup,
     )
+
+
+@dp.errors_handler()
+async def on_error(update: Any, exception: Exception) -> None:
+    logger.exception(exception)
+    logger.error(exception)
 
 
 dp.register_message_handler(
