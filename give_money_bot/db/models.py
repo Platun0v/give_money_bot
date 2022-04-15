@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Union, Set
+from typing import List, Set, Union
 
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
@@ -35,9 +35,7 @@ class Credit(Base):
     amount = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     discount = sqlalchemy.Column(sqlalchemy.Integer, default=0)
 
-    date = sqlalchemy.Column(
-        sqlalchemy.DateTime, nullable=False, default=datetime.datetime.utcnow
-    )
+    date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.utcnow)
     text_info = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
     returned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     return_date = sqlalchemy.Column(sqlalchemy.DateTime)
@@ -67,9 +65,7 @@ class Credit(Base):
 
 class User(Base):
     __tablename__ = "users"
-    user_id = sqlalchemy.Column(
-        sqlalchemy.Integer, nullable=False, unique=True, primary_key=True
-    )
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
     show_users = sqlalchemy.Column(sqlalchemy.String, nullable=True, default="")

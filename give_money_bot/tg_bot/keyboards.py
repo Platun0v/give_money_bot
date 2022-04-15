@@ -1,10 +1,10 @@
-from typing import Set, Tuple, List, Union, Optional, Dict
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 from aiogram.types import (
-    KeyboardButton,
-    ReplyKeyboardMarkup,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
 )
 from aiogram.utils.callback_data import CallbackData
 
@@ -15,28 +15,16 @@ from give_money_bot.utils.strings import Strings
 
 credit_amount_data = CallbackData(CALLBACK.save_credit, "value")
 user_choose_data = CallbackData(CALLBACK.choose_user_for_credit, "id", "has_mark")
-credit_choose_data = CallbackData(
-    CALLBACK.choose_credit_for_return, "index", "has_mark"
-)
+credit_choose_data = CallbackData(CALLBACK.choose_credit_for_return, "index", "has_mark")
 
-main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(
-    KeyboardButton("-"), KeyboardButton("info")
-)
+main_markup = ReplyKeyboardMarkup(resize_keyboard=True).row(KeyboardButton("-"), KeyboardButton("info"))
 
-cancel_crt_credit_inline = InlineKeyboardButton(
-    Strings.CANCEL, callback_data=CALLBACK.cancel_crt_credit
-)
-return_credit_inline = InlineKeyboardButton(
-    "Вернуть выбранные долги", callback_data=CALLBACK.return_credits
-)
-cancel_return_credit_inline = InlineKeyboardButton(
-    Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits
-)
+cancel_crt_credit_inline = InlineKeyboardButton(Strings.CANCEL, callback_data=CALLBACK.cancel_crt_credit)
+return_credit_inline = InlineKeyboardButton("Вернуть выбранные долги", callback_data=CALLBACK.return_credits)
+cancel_return_credit_inline = InlineKeyboardButton(Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits)
 
 
-def get_credits_markup(
-    user_credits: Dict[int, int], marked_credits: Set[int]
-) -> InlineKeyboardMarkup:
+def get_credits_markup(user_credits: Dict[int, int], marked_credits: Set[int]) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     for user_id, credit_sum in user_credits.items():
         if user_id in marked_credits:
@@ -45,11 +33,7 @@ def get_credits_markup(
         else:
             has_mark = 0
             text = f"{db.get_user(user_id).name} - {credit_sum} {Emoji.FALSE}"
-        markup.add(
-            InlineKeyboardButton(
-                text, callback_data=credit_choose_data.new(user_id, has_mark)
-            )
-        )
+        markup.add(InlineKeyboardButton(text, callback_data=credit_choose_data.new(user_id, has_mark)))
     markup.add(return_credit_inline)
     markup.add(cancel_return_credit_inline)
     return markup
@@ -70,9 +54,7 @@ def get_credit_id(data: str) -> int:
     return int(credit_choose_data.parse(data).get("index"))
 
 
-def get_keyboard_users_for_credit(
-    for_user_id: int, value: int, users: Set[int]
-) -> InlineKeyboardMarkup:
+def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int]) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
     for user in db.get_show_user(for_user_id):
         if user.user_id == for_user_id:
@@ -84,14 +66,8 @@ def get_keyboard_users_for_credit(
             has_mark = 0
             text = f"{user.name}{Emoji.FALSE}"
 
-        markup.add(
-            InlineKeyboardButton(
-                text, callback_data=user_choose_data.new(user.user_id, has_mark)
-            )
-        )
-    inline_save = InlineKeyboardButton(
-        Strings.SAVE, callback_data=credit_amount_data.new(value)
-    )
+        markup.add(InlineKeyboardButton(text, callback_data=user_choose_data.new(user.user_id, has_mark)))
+    inline_save = InlineKeyboardButton(Strings.SAVE, callback_data=credit_amount_data.new(value))
     markup.add(
         inline_save,
         cancel_crt_credit_inline,

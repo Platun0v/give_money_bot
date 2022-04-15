@@ -1,5 +1,5 @@
-from subprocess import Popen, PIPE
-from typing import Optional, Tuple, List
+from subprocess import PIPE, Popen
+from typing import List, Optional, Tuple
 
 from aiogram import types
 
@@ -23,9 +23,7 @@ def get_info(message: types.Message) -> str:
 
 
 def get_credits_amount(from_user: int, to_user: int) -> Tuple[int, List[Credit]]:
-    user_credits = db.get_credits_to_user_from_user(
-        from_user=from_user, to_user=to_user
-    )
+    user_credits = db.get_credits_to_user_from_user(from_user=from_user, to_user=to_user)
     res_sum = 0
     for credit in user_credits:
         res_sum += credit.get_amount()

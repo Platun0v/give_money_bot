@@ -1,15 +1,12 @@
-from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
 import sys
+from logging.config import fileConfig
 from os.path import abspath, dirname
 
-from give_money_bot.db import models
+from alembic import context
+from sqlalchemy import engine_from_config, pool
+
 from give_money_bot.config import DB_PATH
+from give_money_bot.db import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -72,9 +69,7 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata, render_as_batch=True
-        )
+        context.configure(connection=connection, target_metadata=target_metadata, render_as_batch=True)
 
         with context.begin_transaction():
             context.run_migrations()

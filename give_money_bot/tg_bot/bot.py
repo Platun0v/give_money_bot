@@ -1,4 +1,4 @@
-from typing import Optional, Dict, List, Any
+from typing import Any, Dict, List, Optional
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -10,12 +10,12 @@ from give_money_bot.db.models import Credit, User
 from give_money_bot.tg_bot import keyboards as kb
 from give_money_bot.tg_bot.keyboards import CALLBACK
 from give_money_bot.tg_bot.utils import (
-    check_user,
     check_admin,
-    get_info,
+    check_user,
     get_credits_amount,
-    parse_info_from_message,
+    get_info,
     parse_expression,
+    parse_info_from_message,
 )
 from give_money_bot.utils.log import logger
 from give_money_bot.utils.squeezer import squeeze
@@ -23,20 +23,14 @@ from give_money_bot.utils.strings import Strings
 
 
 class UserMiddleware(BaseMiddleware):
-    async def on_pre_process_message(
-        self, message: types.Message, data: Dict[str, Any]
-    ) -> None:
+    async def on_pre_process_message(self, message: types.Message, data: Dict[str, Any]) -> None:
         data["user"] = db.get_user(message.from_user.id)
 
-    async def on_pre_process_callback_query(
-        self, callback_query: types.CallbackQuery, data: Dict[str, Any]
-    ) -> None:
+    async def on_pre_process_callback_query(self, callback_query: types.CallbackQuery, data: Dict[str, Any]) -> None:
         data["user"] = db.get_user(callback_query.from_user.id)
 
 
-bot = Bot(
-    token=config.TOKEN
-)  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
+bot = Bot(token=config.TOKEN)  # Works fine without proxy (18.11.2020) , proxy=config.PROXY)
 dp = Dispatcher(bot, storage=MemoryStorage())
 dp.middleware.setup(UserMiddleware())
 
@@ -60,9 +54,7 @@ async def squeeze_credits(message: Optional[types.Message], user: User) -> None:
     for e in sqz_report:
         chain = " -> ".join(map(lambda x: db.get_user(x.from_id).name, e.cycle))
         for edge in e.cycle:
-            await bot.send_message(
-                edge.from_id, Strings.removed_credit_chain(e.amount, chain)
-            )
+            await bot.send_message(edge.from_id, Strings.removed_credit_chain(e.amount, chain))
 
 
 @dp.message_handler(check_admin, commands=["add_user"])
@@ -96,9 +88,7 @@ async def read_num_from_user(message: types.Message, user: User) -> None:
 
     await message.answer(
         Strings.ask_for_debtors(value, info),
-        reply_markup=kb.get_keyboard_users_for_credit(
-            message.from_user.id, value, set()
-        ),
+        reply_markup=kb.get_keyboard_users_for_credit(message.from_user.id, value, set()),
     )
     logger.info(f"{user.name=} asked for debtors")
 
@@ -114,9 +104,7 @@ async def process_callback(call: types.CallbackQuery, user: User) -> None:
     else:
         users.add(user_id)
 
-    await call.message.edit_reply_markup(
-        reply_markup=kb.get_keyboard_users_for_credit(call.from_user.id, value, users)
-    )
+    await call.message.edit_reply_markup(reply_markup=kb.get_keyboard_users_for_credit(call.from_user.id, value, users))
     await call.answer()
 
 
@@ -129,9 +117,7 @@ async def process_callback_save(call: types.CallbackQuery, user: User) -> None:
         return
 
     info = get_info(call.message)
-    await call.message.edit_text(
-        Strings.credit_saved(value, [e.name for e in db.get_users(users)], info)
-    )
+    await call.message.edit_text(Strings.credit_saved(value, [e.name for e in db.get_users(users)], info))
 
     user_id = call.from_user.id
     if value < 0:
@@ -148,7 +134,7 @@ async def process_callback_save(call: types.CallbackQuery, user: User) -> None:
         except Exception:
             pass
     logger.info(f"{user.name=} saved credit {value=} {users=}")
-    await squeeze_credits(message=None)
+    await squeeze_credits(message=None, user=user)
 
 
 @dp.callback_query_handler(text_contains=CALLBACK.cancel_crt_credit)
@@ -170,14 +156,10 @@ async def process_callback_user_credits(message: types.Message, user: User) -> N
     credits_sum_by_user: Dict[int, int] = {}
     for i, credit in enumerate(user_credits, 1):
         credits_sum += credit.get_amount()
-        credits_sum_by_user[credit.to_id] = (
-            credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
-        )
+        credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
 
     await message.answer(
-        Strings.debtor_credits(
-            user_credits, credits_sum_by_user, credits_sum, db.get_user_ids_with_name()
-        ),
+        Strings.debtor_credits(user_credits, credits_sum_by_user, credits_sum, db.get_user_ids_with_name()),
         reply_markup=kb.get_credits_markup(credits_sum_by_user, set()),
     )
 
@@ -195,13 +177,9 @@ async def process_callback_credit_chose(call: types.CallbackQuery, user: User) -
 
     credits_sum_by_user: Dict[int, int] = {}
     for credit in db.get_user_credits(int(call.from_user.id)):
-        credits_sum_by_user[credit.to_id] = (
-            credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
-        )
+        credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
 
-    await call.message.edit_reply_markup(
-        reply_markup=kb.get_credits_markup(credits_sum_by_user, marked_users)
-    )
+    await call.message.edit_reply_markup(reply_markup=kb.get_credits_markup(credits_sum_by_user, marked_users))
     await call.answer()
 
 
@@ -235,9 +213,7 @@ async def process_callback_return_credit(call: types.CallbackQuery, user: User) 
         try:
             await bot.send_message(
                 user_id,
-                Strings.announce_returned_credit(
-                    amount, db.get_user(call.from_user.id).name, "\n".join(info)
-                ),
+                Strings.announce_returned_credit(amount, db.get_user(call.from_user.id).name, "\n".join(info)),
                 # reply_markup=markup
             )
         except Exception:
@@ -267,9 +243,7 @@ async def process_callback_credits_to_user(message: types.Message, user: User) -
     credits_sum_by_user: Dict[int, int] = {}
     for i, credit in enumerate(credits_to_user, 1):
         credits_sum += credit.get_amount()
-        credits_sum_by_user[credit.from_id] = (
-            credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
-        )
+        credits_sum_by_user[credit.from_id] = credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
 
     await message.answer(
         Strings.creditor_credits(
@@ -280,6 +254,12 @@ async def process_callback_credits_to_user(message: types.Message, user: User) -
         ),
         reply_markup=kb.main_markup,
     )
+
+
+@dp.errors_handler()
+async def on_error(update: Any, exception: Exception) -> None:
+    logger.exception(exception)
+    logger.error(exception)
 
 
 dp.register_message_handler(
