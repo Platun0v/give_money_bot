@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 from jinja2 import Template
 
@@ -112,9 +112,7 @@ class Strings:
         return Template(ASK_FOR_DEBTORS_MESSAGE).render(value=value, info=info)
 
     @staticmethod
-    def credit_saved(
-        value: int, usernames: List[str], info: str
-    ) -> str:
+    def credit_saved(value: int, usernames: List[str], info: str) -> str:
         """
         Создает сообщение, с информацией о созданном долге
 
@@ -123,9 +121,7 @@ class Strings:
             usernames: имена пользователей
             info: информация о долге
         """
-        return Template(SAVE_CREDIT_MESSAGE).render(
-            value=value, usernames=usernames, info=info
-        )
+        return Template(SAVE_CREDIT_MESSAGE).render(value=value, usernames=usernames, info=info)
 
     @staticmethod
     def announce_new_credit(value: int, username: str, info: str) -> str:
@@ -137,9 +133,7 @@ class Strings:
             username: имя пользователя
             info: информация о долге
         """
-        return Template(ANNOUNCE_NEW_CREDIT_MESSAGE).render(
-            value=value, username=username, info=info
-        )
+        return Template(ANNOUNCE_NEW_CREDIT_MESSAGE).render(value=value, username=username, info=info)
 
     @staticmethod
     def announce_returned_credit(value: int, username: str, info: str) -> str:
@@ -151,9 +145,7 @@ class Strings:
             username: имя пользователя
             info: информация о долге
         """
-        return Template(ANNOUNCE_RETURN_CREDIT_MESSAGE).render(
-            value=value, username=username, info=info
-        )
+        return Template(ANNOUNCE_RETURN_CREDIT_MESSAGE).render(value=value, username=username, info=info)
 
     @staticmethod
     def removed_credit_chain(amount: int, chain: str) -> str:
@@ -191,9 +183,7 @@ class Strings:
         )
 
     @staticmethod
-    def returned_credit(
-        returned_credits_sum: Dict[int, int], users: Dict[int, str]
-    ) -> str:
+    def returned_credit(returned_credits_sum: Dict[int, int], users: Dict[int, str]) -> str:
         """
         Создает сообщение, с информацией о возвращенных долгах
 

@@ -1,6 +1,6 @@
 import datetime
 import typing
-from typing import List, Optional, Iterable, Dict
+from typing import Dict, Iterable, List, Optional
 
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -78,9 +78,7 @@ class DB:
             .all()
         )
 
-    def get_credits_to_user_from_user(
-        self, from_user: int, to_user: int
-    ) -> List[Credit]:
+    def get_credits_to_user_from_user(self, from_user: int, to_user: int) -> List[Credit]:
         return (
             self.session.query(Credit)
             .filter(Credit.to_id == to_user)
@@ -96,9 +94,7 @@ class DB:
             credit_ids = [credit_ids.id]
 
         for credit_id in credit_ids:
-            credit: Credit = (
-                self.session.query(Credit).filter(Credit.id == credit_id).first()
-            )
+            credit: Credit = self.session.query(Credit).filter(Credit.id == credit_id).first()
             credit.returned = True
             credit.return_date = datetime.datetime.utcnow()
         self.session.commit()

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from pprint import pprint, pformat
-from typing import List, Dict, Optional
+from pprint import pformat, pprint
+from typing import Dict, List, Optional
 
 from give_money_bot.db.db_connector import db
 from give_money_bot.db.models import Credit
