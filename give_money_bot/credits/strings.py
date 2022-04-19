@@ -85,11 +85,6 @@ CREDITOR_CREDITS_GENERATOR_MESSAGE = """
 
 
 class Strings:
-    DIGITS = "0123456789()+-*/ "
-    DIVIDER = "================\n"
-
-    HELLO_MESSAGE = "Привет!"
-
     INPUT_CREDIT = "Введите сумму(по желанию инфу по долгу через пробел)"
     NEED_NON_ZERO = "Требуется ненулевое значение"
 

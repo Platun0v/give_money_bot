@@ -24,7 +24,7 @@ tasks:
   format:
     desc: "Format code"
     cmds:
-      - poetry run black give_money_bot
+      - poetry run isort give_money_bot
       - poetry run black --line-length=120 --target-version=py39 --skip-string-normalization give_money_bot
   
 #  dbuild:

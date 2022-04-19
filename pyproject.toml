@@ -5,7 +5,7 @@ description = ""
 authors = ["Platun0v <me@platun0v.ru>"]
 
 [tool.poetry.scripts]
-bot = "give_money_bot.tg_bot.bot:main"
+bot = "give_money_bot:main"
 squeeze = "give_money_bot.utils.squeezer:squeeze"
 
 [tool.poetry.dependencies]
