@@ -12,6 +12,7 @@ from give_money_bot.db.db_connector import db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
 from give_money_bot.tg_bot.utils import check_admin, check_user
+from give_money_bot.tg_bot.strings import Strings as tg_strings
 from give_money_bot.utils.log import logger
 
 
@@ -209,7 +210,7 @@ def load_module() -> None:
     dp.register_callback_query_handler(prc_callback_save_new_credit, text_contains=CALLBACK.save_new_credit)
     dp.register_callback_query_handler(prc_callback_cancel_create_credit, text_contains=CALLBACK.cancel_create_credit)
 
-    dp.register_message_handler(prc_user_credits, check_user, text="-")
+    dp.register_message_handler(prc_user_credits, check_user, text=tg_strings.menu_credits)
     dp.register_callback_query_handler(
         prc_callback_choose_credit_for_return,
         text_contains=CALLBACK.choose_credit_for_return,
@@ -217,7 +218,7 @@ def load_module() -> None:
     dp.register_callback_query_handler(prc_callback_return_credits, text_contains=CALLBACK.return_credits)
     dp.register_callback_query_handler(prc_callback_cancel_return_credit, text_contains=CALLBACK.cancel_return_credits)
 
-    dp.register_message_handler(prc_user_debtors, check_user, text="info")
+    dp.register_message_handler(prc_user_debtors, check_user, text=tg_strings.menu_debtors)
 
     dp.register_message_handler(
         read_num_from_user, check_user

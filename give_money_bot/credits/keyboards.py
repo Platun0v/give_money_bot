@@ -3,7 +3,6 @@ from typing import Dict, Optional, Set, Tuple
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
 
-from give_money_bot.config import Emoji
 from give_money_bot.credits.callback_data import CALLBACK
 from give_money_bot.credits.strings import Strings
 from give_money_bot.db.db_connector import db
@@ -22,10 +21,10 @@ def get_credits_markup(user_credits: Dict[int, int], marked_credits: Set[int]) -
     for user_id, credit_sum in user_credits.items():
         if user_id in marked_credits:
             has_mark = 1
-            text = f"{db.get_user(user_id).name} - {credit_sum} {Emoji.TRUE}"
+            text = f"{db.get_user(user_id).name} - {credit_sum} {Strings.TRUE}"
         else:
             has_mark = 0
-            text = f"{db.get_user(user_id).name} - {credit_sum} {Emoji.FALSE}"
+            text = f"{db.get_user(user_id).name} - {credit_sum} {Strings.FALSE}"
         markup.add(InlineKeyboardButton(text, callback_data=credit_choose_data.new(user_id, has_mark)))
     markup.add(return_credit_inline)
     markup.add(cancel_return_credit_inline)
@@ -54,10 +53,10 @@ def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int])
             continue
         if user.user_id in users:
             has_mark = 1
-            text = f"{user.name}{Emoji.TRUE}"
+            text = f"{user.name}{Strings.TRUE}"
         else:
             has_mark = 0
-            text = f"{user.name}{Emoji.FALSE}"
+            text = f"{user.name}{Strings.FALSE}"
 
         markup.add(InlineKeyboardButton(text, callback_data=user_choose_data.new(user.user_id, has_mark)))
     inline_save = InlineKeyboardButton(Strings.SAVE, callback_data=credit_amount_data.new(value))

@@ -2,12 +2,12 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from give_money_bot import dp
-from give_money_bot.config import Emoji
 from give_money_bot.db.models import User
 from give_money_bot.settings import keyboards as kb
 from give_money_bot.settings.states import SettingsStates
 from give_money_bot.tg_bot.bot import send_main_menu
 from give_money_bot.tg_bot.utils import check_user
+from give_money_bot.tg_bot.strings import Strings as tg_strings
 
 from .strings import Strings
 
@@ -33,7 +33,7 @@ async def exit_settings_menu(message: types.Message, state: FSMContext, user: Us
 
 
 def load_module() -> None:
-    dp.register_message_handler(send_settings_menu, check_user, text=Emoji.SETTINGS)
+    dp.register_message_handler(send_settings_menu, check_user, text=tg_strings.menu_settings)
     dp.register_message_handler(
         exit_settings_menu,
         check_user,

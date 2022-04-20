@@ -85,6 +85,9 @@ CREDITOR_CREDITS_GENERATOR_MESSAGE = """
 
 
 class Strings:
+    FALSE = "❌"
+    TRUE = "✅"
+
     INPUT_CREDIT = "Введите сумму(по желанию инфу по долгу через пробел)"
     NEED_NON_ZERO = "Требуется ненулевое значение"
 
