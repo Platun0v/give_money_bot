@@ -1,12 +1,11 @@
-name: Docker container builder
+name: Release
 
 on:
-  push:
-    branches: [ release ]
+  workflow_dispatch:
 
 jobs:
 
-  build_app_image:
+  release:
     runs-on: ubuntu-latest
     steps:
 
