@@ -6,8 +6,8 @@ from give_money_bot.db.models import User
 from give_money_bot.settings import keyboards as kb
 from give_money_bot.settings.states import SettingsStates
 from give_money_bot.tg_bot.bot import send_main_menu
-from give_money_bot.tg_bot.utils import check_user
 from give_money_bot.tg_bot.strings import Strings as tg_strings
+from give_money_bot.tg_bot.utils import check_user
 
 from .strings import Strings
 

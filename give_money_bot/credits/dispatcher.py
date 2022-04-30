@@ -11,8 +11,8 @@ from give_money_bot.credits.utils import get_credits_amount, get_info, parse_exp
 from give_money_bot.db.db_connector import db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
-from give_money_bot.tg_bot.utils import check_admin, check_user
 from give_money_bot.tg_bot.strings import Strings as tg_strings
+from give_money_bot.tg_bot.utils import check_admin, check_user
 from give_money_bot.utils.log import logger
 
 
@@ -40,7 +40,9 @@ async def read_num_from_user(message: types.Message, user: User) -> None:
 
     await message.answer(
         Strings.ask_for_debtors(value, info),
-        reply_markup=kb.get_keyboard_users_for_credit(message.from_user.id, value, set()),
+        reply_markup=kb.get_keyboard_users_for_credit(
+            message.from_user.id, value, set(), db.get_users_with_show_always(User.user_id)
+        ),
     )
     logger.info(f"{user.name=} asked for debtors")
 
@@ -55,7 +57,11 @@ async def prc_callback_choose_users_for_credit(call: types.CallbackQuery, user: 
     else:
         users.add(user_id)
 
-    await call.message.edit_reply_markup(reply_markup=kb.get_keyboard_users_for_credit(call.from_user.id, value, users))
+    await call.message.edit_reply_markup(
+        reply_markup=kb.get_keyboard_users_for_credit(
+            call.from_user.id, value, users, db.get_users_with_show_always(User.user_id)
+        )
+    )
     await call.answer()
 
 

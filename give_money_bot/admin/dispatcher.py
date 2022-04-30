@@ -1,6 +1,6 @@
 from aiogram import types
 
-from give_money_bot import dp
+from give_money_bot import dp, bot
 from give_money_bot.db.db_connector import db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.utils import check_admin
@@ -22,6 +22,17 @@ async def add_show_user(message: types.Message, user: User) -> None:
     await message.answer("Added users for showing")
 
 
+async def send_message_to_users(message: types.Message, user: User) -> None:
+    send_message = message.text[len("/send "):]
+    users = db.get_users()
+    for user_ in users:
+        try:
+            await bot.send_message(user_.user_id, send_message)
+        except Exception as e:
+            logger.error(f"{e=}")
+
+
 def load_module() -> None:
     dp.register_message_handler(add_user, check_admin, commands=["add_user"])
     dp.register_message_handler(add_show_user, check_admin, commands=["add_show_user"])
+    dp.register_message_handler(send_message_to_users, check_admin, commands=["send"])

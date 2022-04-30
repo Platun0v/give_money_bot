@@ -1,11 +1,8 @@
 import datetime
-from typing import List, Set, Union
 
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-
-from give_money_bot import config
 
 Base = declarative_base()
 
@@ -68,24 +65,44 @@ class User(Base):
     user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
-    show_users = sqlalchemy.Column(sqlalchemy.String, nullable=True, default="")
+    # show_users = sqlalchemy.Column(sqlalchemy.String, nullable=True, default="")
     # credits = relationship('Credit', primaryjoin="or_(users.user_id==credits.creditor_id, users.user_id==credits.debtor_id)", lazy='dynamic')
 
-    def get_show_users(self) -> Set[int]:
-        if self.show_users is None or len(self.show_users) == 0:
-            return set()
-        return set(map(int, self.show_users.split(",")))
-
-    def add_show_user(self, user: Union[int, "User"]) -> None:
-        if self.show_users is None:
-            self.show_users = ""
-
-        res = self.get_show_users()
-        if isinstance(user, User):
-            res.add(user.user_id)
-        else:
-            res.add(user)
-        self.show_users = ",".join(map(str, res))
+    # def get_show_users(self) -> Set[int]:
+    #     if self.show_users is None or len(self.show_users) == 0:
+    #         return set()
+    #     return set(map(int, self.show_users.split(",")))
+    #
+    # def add_show_user(self, user: Union[int, "User"]) -> None:
+    #     if self.show_users is None:
+    #         self.show_users = ""
+    #
+    #     res = self.get_show_users()
+    #     if isinstance(user, User):
+    #         res.add(user.user_id)
+    #     else:
+    #         res.add(user)
+    #     self.show_users = ",".join(map(str, res))
 
     def __repr__(self) -> str:
         return f"<User(id='{self.user_id}', name='{self.name}', admin='{self.admin}')>"
+
+
+class UserVision(Base):
+    __tablename__ = "user_vision"
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False)
+    user = relationship("User", foreign_keys="UserVision.user_id")
+
+    show_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False)
+    show_user = relationship("User", foreign_keys="UserVision.show_user_id")
+
+    show_type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<UserVision(user='{self.user}', show_user='{self.show_user}', show_type='{self.show_type}')>"
+
+
+class ShowTypes:
+    ALWAYS = 1
+    ADDITIONAL = 2
+    NEVER = 3

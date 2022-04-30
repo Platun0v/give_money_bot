@@ -2,6 +2,7 @@ from typing import Dict, Optional, Set, Tuple
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.callback_data import CallbackData
+from give_money_bot.db.models import User
 
 from give_money_bot.credits.callback_data import CALLBACK
 from give_money_bot.credits.strings import Strings
@@ -46,12 +47,14 @@ def get_credit_id(data: str) -> int:
     return int(credit_choose_data.parse(data).get("index"))
 
 
-def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int]) -> InlineKeyboardMarkup:
+def get_keyboard_users_for_credit(
+    for_user_id: int, value: int, chosen_users: Set[int], users: Set[User]
+) -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup()
-    for user in db.get_show_user(for_user_id):
+    for user in users:
         if user.user_id == for_user_id:
             continue
-        if user.user_id in users:
+        if user.user_id in chosen_users:
             has_mark = 1
             text = f"{user.name}{Strings.TRUE}"
         else:
