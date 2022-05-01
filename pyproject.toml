@@ -11,7 +11,7 @@ squeeze = "give_money_bot.utils.squeezer:squeeze"
 [tool.poetry.dependencies]
 python = "^3.8"
 python-dotenv = "^0.15.0"
-aiogram = "^2.11.2"
+aiogram = "^3.0.0b3"
 typing-extensions = "^3.7.4"
 aiohttp-socks = "^0.6.0"
 loguru = "^0.6.0"
@@ -26,7 +26,7 @@ black = "^22.3.0"
 isort = "^5.10.1"
 
 [tool.mypy]
-plugins = ["sqlmypy"]
+plugins = ["sqlmypy", "pydantic.mypy"]
 exclude = "/migrate/$"
 python_version = 3.9
 show_error_codes = true
@@ -34,13 +34,13 @@ show_error_context = true
 pretty = true
 ignore_missing_imports = false
 warn_unused_configs = true
-disallow_subclassing_any = false
+disallow_subclassing_any = true
 disallow_any_generics = true
 disallow_untyped_calls = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
-#disallow_untyped_decorators = true
+disallow_untyped_decorators = true
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true

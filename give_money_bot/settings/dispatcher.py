@@ -1,19 +1,19 @@
-from aiogram import types
-from aiogram.dispatcher import FSMContext
+from aiogram import Router, types
+from aiogram.dispatcher.fsm.context import FSMContext
 
 from give_money_bot import dp
 from give_money_bot.db.models import User
 from give_money_bot.settings import keyboards as kb
 from give_money_bot.settings.states import SettingsStates
 from give_money_bot.tg_bot.bot import send_main_menu
-from give_money_bot.tg_bot.utils import check_user
 from give_money_bot.tg_bot.strings import Strings as tg_strings
 
+from ..utils.misc import CheckUser
 from .strings import Strings
 
 
-async def send_settings_menu(message: types.Message, user: User) -> None:
-    await SettingsStates.settings.set()
+async def send_settings_menu(message: types.Message, state: FSMContext, user: User) -> None:
+    await state.set_state(SettingsStates.settings)
     await message.answer(Strings.menu_settings_answer, reply_markup=kb.settings_markup)
 
 
@@ -28,22 +28,22 @@ async def add_new_user(message: types.Message, state: FSMContext, user: User) ->
 
 
 async def exit_settings_menu(message: types.Message, state: FSMContext, user: User) -> None:
-    await state.finish()
+    await state.clear()
     await send_main_menu(message, user)
 
 
-def load_module() -> None:
-    dp.register_message_handler(send_settings_menu, check_user, text=tg_strings.menu_settings)
-    dp.register_message_handler(
-        exit_settings_menu,
-        check_user,
-        state=SettingsStates.settings,
-        text=Strings.menu_exit,
-    )
-    dp.register_message_handler(
-        ask_for_new_user,
-        check_user,
-        state=SettingsStates.settings,
-        text=Strings.menu_add_new_user,
-    )
-    dp.register_message_handler(add_new_user, check_user, state=SettingsStates.new_user)
+router = Router()
+router.message.bind_filter(CheckUser)
+
+router.message.register(send_settings_menu, text=tg_strings.menu_settings)
+router.message.register(
+    exit_settings_menu,
+    SettingsStates.settings,
+    text=Strings.menu_exit,
+)
+router.message.register(
+    ask_for_new_user,
+    SettingsStates.settings,
+    text=Strings.menu_add_new_user,
+)
+router.message.register(add_new_user, state=SettingsStates.new_user)

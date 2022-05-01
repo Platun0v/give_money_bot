@@ -2,12 +2,9 @@ import datetime
 from typing import List, Set, Union
 
 import sqlalchemy
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-from give_money_bot import config
-
-Base = declarative_base()
+from give_money_bot.db.base import Base
 
 
 class Credit(Base):

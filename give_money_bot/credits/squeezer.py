@@ -2,15 +2,18 @@ from dataclasses import dataclass
 from pprint import pformat, pprint
 from typing import Dict, List, Optional
 
-from give_money_bot.db.db_connector import db
+from sqlalchemy.orm import Session
+
+from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import Credit
 
 
 class Edge:
-    def __init__(self, from_id: int, to_id: int) -> None:
+    def __init__(self, session: Session, from_id: int, to_id: int) -> None:
         self.from_id = from_id
         self.to_id = to_id
         self.credits: List[Credit] = []
+        self.session = session
 
     @property
     def exist(self) -> bool:
@@ -28,32 +31,32 @@ class Edge:
         for credit in self.credits:
             credit_amount = credit.get_amount()
             if credit_amount <= discount:
-                db.add_discount(credit, credit_amount)
-                db.return_credits(credit)
+                db.add_discount(self.session, credit, credit_amount)
+                db.return_credits(self.session, credit)
                 discount -= credit_amount
             else:
-                db.add_discount(credit, discount)
+                db.add_discount(self.session, credit, discount)
                 break
 
     def __repr__(self) -> str:
         return (
-            f"<Edge(from_id='{db.get_user(self.from_id).name}', to_id='{db.get_user(self.to_id).name}', amount='{self.amount}')>"
+            f"<Edge(from_id='{db.get_user(self.session, self.from_id).name}', to_id='{db.get_user(self.session, self.to_id).name}', amount='{self.amount}')>"
             if self.exist
             else ""
         )
 
 
 class Graph:
-    def __init__(self, credits: List[Credit]) -> None:
+    def __init__(self, session: Session, credits: List[Credit]) -> None:
         # print(credits)
-        self.user_ids = db.get_user_ids()
+        self.user_ids = db.get_user_ids(session)
         self.graph: Dict[int, Dict[int, Edge]] = {}
         for id1 in self.user_ids:
             self.graph[id1] = {}
             for id2 in self.user_ids:
                 if id1 == id2:
                     continue
-                self.graph[id1][id2] = Edge(id1, id2)
+                self.graph[id1][id2] = Edge(session, id1, id2)
 
         for credit in credits:
             self.graph[credit.from_id][credit.to_id].credits.append(credit)
@@ -103,10 +106,10 @@ class SqueezeReport:
     cycle: List[Edge]
 
 
-def squeeze() -> List[SqueezeReport]:
+def squeeze(session: Session) -> List[SqueezeReport]:
     report: List[SqueezeReport] = []
     while True:
-        g = Graph(db.get_credits())
+        g = Graph(session, db.get_credits(session))
         # pprint(g.graph)
         c = g.find_cycle()
         if c is None:

@@ -1,54 +1,52 @@
 from typing import Dict, Optional, Set, Tuple
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils.callback_data import CallbackData
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from sqlalchemy.orm import Session
 
-from give_money_bot.credits.callback_data import CALLBACK
+from give_money_bot.credits.callback_data import CALLBACK, CreditAmountData, CreditChooseData, UserChooseData
 from give_money_bot.credits.strings import Strings
-from give_money_bot.db.db_connector import db
-
-credit_amount_data = CallbackData(CALLBACK.save_new_credit, "value")
-user_choose_data = CallbackData(CALLBACK.choose_users_for_credit, "id", "has_mark")
-credit_choose_data = CallbackData(CALLBACK.choose_credit_for_return, "index", "has_mark")
-
-cancel_crt_credit_inline = InlineKeyboardButton(Strings.CANCEL, callback_data=CALLBACK.cancel_create_credit)
-return_credit_inline = InlineKeyboardButton("Вернуть выбранные долги", callback_data=CALLBACK.return_credits)
-cancel_return_credit_inline = InlineKeyboardButton(Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits)
+from give_money_bot.db import db_connector as db
 
 
-def get_credits_markup(user_credits: Dict[int, int], marked_credits: Set[int]) -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup()
+def get_credits_markup(
+    user_credits: Dict[int, int], marked_credits: Set[int], session: Session
+) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardBuilder()
     for user_id, credit_sum in user_credits.items():
         if user_id in marked_credits:
             has_mark = 1
-            text = f"{db.get_user(user_id).name} - {credit_sum} {Strings.TRUE}"
+            text = f"{db.get_user(session, user_id).name} - {credit_sum} {Strings.TRUE}"
         else:
             has_mark = 0
-            text = f"{db.get_user(user_id).name} - {credit_sum} {Strings.FALSE}"
-        markup.add(InlineKeyboardButton(text, callback_data=credit_choose_data.new(user_id, has_mark)))
-    markup.add(return_credit_inline)
-    markup.add(cancel_return_credit_inline)
-    return markup
+            text = f"{db.get_user(session, user_id).name} - {credit_sum} {Strings.FALSE}"
+        markup.add(
+            InlineKeyboardButton(
+                text=text,
+                callback_data=CreditChooseData(index=user_id, has_mark=has_mark).pack(),
+            )
+        )
+    markup.add(InlineKeyboardButton(text=Strings.RETURN_CHOSEN_CREDITS, callback_data=CALLBACK.return_credits))
+    markup.add(InlineKeyboardButton(text=Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits))
+    return markup.as_markup()
 
 
 def get_marked_credits(markup: InlineKeyboardMarkup) -> Set[int]:
     marked_credits = set()
-    for _ in markup["inline_keyboard"]:
+    for _ in markup.inline_keyboard:
         for elem in _:
             if CALLBACK.choose_credit_for_return in elem.callback_data:
-                data = credit_choose_data.parse(elem.callback_data)
-                if data.get("has_mark") == "1":
-                    marked_credits.add(int(data.get("index")))
+                data = CreditChooseData.unpack(elem.callback_data)
+                if data.has_mark == 1:
+                    marked_credits.add(data.index)
     return marked_credits
 
 
-def get_credit_id(data: str) -> int:
-    return int(credit_choose_data.parse(data).get("index"))
-
-
-def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int]) -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup()
-    for user in db.get_show_user(for_user_id):
+def get_keyboard_users_for_credit(
+    for_user_id: int, value: int, users: Set[int], session: Session
+) -> InlineKeyboardMarkup:
+    markup = InlineKeyboardBuilder()
+    for user in db.get_show_user(session, for_user_id):
         if user.user_id == for_user_id:
             continue
         if user.user_id in users:
@@ -58,13 +56,17 @@ def get_keyboard_users_for_credit(for_user_id: int, value: int, users: Set[int])
             has_mark = 0
             text = f"{user.name}{Strings.FALSE}"
 
-        markup.add(InlineKeyboardButton(text, callback_data=user_choose_data.new(user.user_id, has_mark)))
-    inline_save = InlineKeyboardButton(Strings.SAVE, callback_data=credit_amount_data.new(value))
+        markup.add(
+            InlineKeyboardButton(
+                text=text,
+                callback_data=UserChooseData(user_id=user.user_id, has_mark=has_mark).pack(),
+            )
+        )
     markup.add(
-        inline_save,
-        cancel_crt_credit_inline,
+        InlineKeyboardButton(text=Strings.SAVE, callback_data=CreditAmountData(value=value).pack()),
+        InlineKeyboardButton(text=Strings.CANCEL, callback_data=CALLBACK.cancel_create_credit),
     )
-    return markup
+    return markup.as_markup()
 
 
 def get_data_from_markup(
@@ -72,24 +74,20 @@ def get_data_from_markup(
 ) -> Tuple[int, Set[int]]:
     users = set()
     value = 0
-    for _ in markup["inline_keyboard"]:
+    for _ in markup.inline_keyboard:
         for elem in _:
             if CALLBACK.save_new_credit in elem.callback_data:
-                value = int(credit_amount_data.parse(elem.callback_data).get("value"))
+                value = CreditAmountData.unpack(elem.callback_data).value
             if CALLBACK.choose_users_for_credit in elem.callback_data:
-                data = user_choose_data.parse(elem.callback_data)
-                if data.get("has_mark") == "1":
-                    users.add(int(data.get("id")))
+                data = UserChooseData.unpack(elem.callback_data)
+                if data.has_mark == 1:
+                    users.add(data.user_id)
     return value, users
 
 
 def get_amount_from_markup(markup: InlineKeyboardMarkup) -> Optional[int]:
-    for _ in markup["inline_keyboard"]:
+    for _ in markup.inline_keyboard:
         for elem in _:
             if CALLBACK.save_new_credit in elem.callback_data:
-                return int(credit_amount_data.parse(elem.callback_data).get("value"))
+                return CreditAmountData.unpack(elem.callback_data).value
     return None
-
-
-def get_user_id(data: str) -> int:
-    return int(user_choose_data.parse(data).get("id"))

@@ -1,17 +1,5 @@
 import hashlib
 
-from aiogram import types
-
-from give_money_bot.db.db_connector import db
-
-
-def check_user(message: types.Message) -> bool:
-    return message.from_user.id in db.get_user_ids()
-
-
-def check_admin(message: types.Message) -> bool:
-    return db.get_user(message.from_user.id).admin
-
 
 class CallbackData:
     def __init__(self) -> None:
