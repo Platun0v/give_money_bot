@@ -1,4 +1,5 @@
 import datetime
+from enum import IntEnum
 
 import sqlalchemy
 from sqlalchemy.orm import relationship
@@ -101,7 +102,7 @@ class UserVision(Base):
         return f"<UserVision(user='{self.user}', show_user='{self.show_user}', show_type='{self.show_type}')>"
 
 
-class ShowTypes:
-    ALWAYS = 1
-    ADDITIONAL = 2
-    NEVER = 3
+class ShowTypes(IntEnum):
+    ALWAYS = 0
+    ADDITIONAL = 1
+    NEVER = 2
