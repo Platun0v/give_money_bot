@@ -4,7 +4,7 @@ tasks:
   mypy:
     desc: "Run mypy on the project"
     cmds:
-      - poetry run mypy give_money_bot
+      - poetry run mypy give_money_bot  --no-strict-optional
 
   build:
     desc: "Install dependencies"

@@ -2,8 +2,9 @@ from subprocess import PIPE, Popen
 from typing import List, Optional, Tuple
 
 from aiogram import types
+from sqlalchemy.orm import Session
 
-from give_money_bot.db.db_connector import db
+from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import Credit
 
 
@@ -12,8 +13,8 @@ def get_info(message: types.Message) -> str:
     return "" if len(msg) == 1 else msg[1]
 
 
-def get_credits_amount(from_user: int, to_user: int) -> Tuple[int, List[Credit]]:
-    user_credits = db.get_credits_to_user_from_user(from_user=from_user, to_user=to_user)
+def get_credits_amount(from_user: int, to_user: int, session: Session) -> Tuple[int, List[Credit]]:
+    user_credits = db.get_credits_to_user_from_user(session, from_user=from_user, to_user=to_user)
     res_sum = 0
     for credit in user_credits:
         res_sum += credit.get_amount()

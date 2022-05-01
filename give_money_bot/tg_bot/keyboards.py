@@ -4,8 +4,13 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardBu
 
 from give_money_bot.tg_bot.strings import Strings
 
-main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True).row(
-    KeyboardButton(Strings.menu_credits),
-    KeyboardButton(Strings.menu_debtors),
-    KeyboardButton(Strings.menu_settings),
+main_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(text=Strings.menu_credits),
+            KeyboardButton(text=Strings.menu_debtors),
+            KeyboardButton(text=Strings.menu_settings),
+        ]
+    ],
+    resize_keyboard=True,
 )

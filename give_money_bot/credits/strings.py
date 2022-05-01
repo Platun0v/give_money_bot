@@ -92,6 +92,7 @@ class Strings:
     NEED_NON_ZERO = "Требуется ненулевое значение"
 
     FORGOT_CHOOSE = "Ты ничего не выбрал"
+    RETURN_CHOSEN_CREDITS = "Вернуть выбранные долги"
     CANCEL = "Отмена"
     SAVE = "Сохранить"
 
