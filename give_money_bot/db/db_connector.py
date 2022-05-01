@@ -104,45 +104,50 @@ def return_credits(session: Session, credit_ids: typing.Union[List[int], int, Cr
 #         credit.return_date = None
 #     session.commit()
 
-    def get_show_user(self, user: int) -> List[User]:
-        recv_user = self.get_user(user)
-        return self.get_users(recv_user.get_show_users())
+# def get_show_user(session, user: int) -> List[User]:
+#     recv_user = get_user(session, user)
+#     return get_users(session, recv_user.get_show_users())
 
-    def get_users_with_show_always(self, user_id: int) -> List[User]:
-        resp: List[UserVision] = (
-            self.session.query(UserVision)
-            .filter(UserVision.user_id == user_id)
-            .filter(UserVision.show_type == ShowTypes.ALWAYS)
-            .all()
-        )
-        res = []
-        for user_vision in resp:
-            res.append(user_vision.show_user)
 
-        return res
+def get_users_with_show_always(session: Session, user_id: int) -> List[User]:
+    resp: List[UserVision] = (
+        session.query(UserVision)
+        .filter(UserVision.user_id == user_id)
+        .filter(UserVision.show_type == ShowTypes.ALWAYS)
+        .all()
+    )
+    res = []
+    for user_vision in resp:
+        res.append(user_vision.show_user)
 
-    def get_user_ids(self) -> List[int]:
-        return [e.user_id for e in self.get_users()]
+    return res
+
+
+def get_user_ids(session: Session) -> List[int]:
+    return [e.user_id for e in get_users(session)]
+
 
 def get_credit(session: Session, credit_id: int) -> Credit:
     return session.query(Credit).filter(Credit.id == credit_id).first()
 
 
-    def add_user(self, user_id: int, name: str) -> User:
-        user = User(user_id=user_id, name=name, admin=False)
-        self.session.add(user)
-        self.session.commit()
-        return user
+def add_user(session: Session, user_id: int, name: str) -> User:
+    user = User(user_id=user_id, name=name, admin=False)
+    session.add(user)
+    session.commit()
+    return user
 
 
 def get_credits(session: Session) -> List[Credit]:
     return session.query(Credit).filter(Credit.returned == False).all()
 
-    def add_show_users(self, user_id: int, user_ids: List[int]) -> None:
-        user = self.get_user(user_id)
-        for e in user_ids:
-            user.add_show_user(e)
-        self.session.commit()
+
+# def add_show_users(session: Session, user_id: int, user_ids: List[int]) -> None:
+#     user = get_user(user_id)
+#     for e in user_ids:
+#         user.add_show_user(e)
+#     session.commit()
+
 
 def add_discount(session: Session, credit: typing.Union[int, Credit], discount: int) -> None:
     if isinstance(credit, int):
@@ -167,28 +172,28 @@ def get_user_ids_with_name(session: Session) -> Dict[int, str]:
     return {user.user_id: user.name for user in session.query(User).all()}
 
 
-def get_show_user(session: Session, user: int) -> List[User]:
-    recv_user = get_user(session, user)
-    return get_users(session, recv_user.get_show_users())
+# def get_show_user(session: Session, user: int) -> List[User]:
+#     recv_user = get_user(session, user)
+#     return get_users(session, recv_user.get_show_users())
 
 
-def get_user_ids(session: Session) -> List[int]:
-    return [e.user_id for e in get_users(session)]
+# def get_user_ids(session: Session) -> List[int]:
+#     return [e.user_id for e in get_users(session)]
 
 
 def get_admin(session: Session) -> User:
     return session.query(User).filter(User.admin == True).first()
 
 
-def add_user(session: Session, user_id: int, name: str) -> User:
-    user = User(user_id=user_id, name=name, admin=False, show_users="")
-    session.add(user)
-    session.commit()
-    return user
+# def add_user(session: Session, user_id: int, name: str) -> User:
+#     user = User(user_id=user_id, name=name, admin=False, show_users="")
+#     session.add(user)
+#     session.commit()
+#     return user
 
 
-def add_show_users(session: Session, user_id: int, user_ids: List[int]) -> None:
-    user = get_user(session, user_id)
-    for e in user_ids:
-        user.add_show_user(e)
-    session.commit()
+# def add_show_users(session: Session, user_id: int, user_ids: List[int]) -> None:
+#     user = get_user(session, user_id)
+#     for e in user_ids:
+#         user.add_show_user(e)
+#     session.commit()

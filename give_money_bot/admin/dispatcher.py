@@ -16,16 +16,17 @@ async def add_user(message: types.Message, user: User, session: Session) -> None
 
 
 async def add_show_user(message: types.Message, user: User, session: Session) -> None:
-    lst = message.text.split()
-    _, user_id, user_ids = lst[0], lst[1], lst[2:]
-    logger.info(f"{user.name=} asked for adding show user {user_id=} {user_ids=}")
-    db.add_show_users(session, int(user_id), list(map(int, user_ids)))
-    await message.answer("Added users for showing")
+    pass
+    # lst = message.text.split()
+    # _, user_id, user_ids = lst[0], lst[1], lst[2:]
+    # logger.info(f"{user.name=} asked for adding show user {user_id=} {user_ids=}")
+    # db.add_show_users(session, int(user_id), list(map(int, user_ids)))
+    # await message.answer("Added users for showing")
 
 
-async def send_message_to_users(message: types.Message, user: User) -> None:
+async def send_message_to_users(message: types.Message, session: Session, user: User) -> None:
     send_message = message.text[len("/send "):]
-    users = db.get_users()
+    users = db.get_users(session)
     for user_ in users:
         try:
             await bot.send_message(user_.user_id, send_message)

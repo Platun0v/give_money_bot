@@ -43,7 +43,7 @@ async def read_num_from_user(message: types.Message, user: User, session: Sessio
     await message.answer(
         Strings.ask_for_debtors(value, info),
         reply_markup=kb.get_keyboard_users_for_credit(
-            message.from_user.id, value, set(), db.get_users_with_show_always(User.user_id), session
+            message.from_user.id, value, set(), db.get_users_with_show_always(session, User.user_id), session
         ),
     )
     logger.info(f"{user.name=} asked for debtors")

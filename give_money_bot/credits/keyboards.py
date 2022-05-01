@@ -1,7 +1,6 @@
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, Optional, Set, Tuple, List
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.utils.callback_data import CallbackData
 from give_money_bot.db.models import User
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.orm import Session
@@ -45,9 +44,9 @@ def get_marked_credits(markup: InlineKeyboardMarkup) -> Set[int]:
 
 
 def get_keyboard_users_for_credit(
-    for_user_id: int, value: int, chosen_users: Set[int], users: Set[User], session: Session
+    for_user_id: int, value: int, chosen_users: Set[int], users: List[User], session: Session
 ) -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup()
+    markup = []
     for user in users:
         if user.user_id == for_user_id:
             continue
