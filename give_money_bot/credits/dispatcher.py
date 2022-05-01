@@ -48,11 +48,11 @@ async def read_num_from_user(message: types.Message, user: User, session: Sessio
 
 
 async def prc_callback_choose_users_for_credit(
-    call: types.CallbackQuery, call_data: UserChooseData, user: User, session: Session
+    call: types.CallbackQuery, callback_data: UserChooseData, user: User, session: Session
 ) -> None:
     value, users = kb.get_data_from_markup(call.message.reply_markup)
     logger.info(f"{user.name=} chosing users for credit {call.data=}")
-    user_id = call_data.user_id
+    user_id = callback_data.user_id
 
     if user_id in users:
         users.remove(user_id)
@@ -216,7 +216,8 @@ router.message.bind_filter(CheckUser)
 
 router.callback_query.register(
     prc_callback_choose_users_for_credit,
-    text_contains=CALLBACK.choose_users_for_credit,
+    UserChooseData.filter(),
+    # text_contains=CALLBACK.choose_users_for_credit,
 )
 router.callback_query.register(prc_callback_save_new_credit, text_contains=CALLBACK.save_new_credit)
 router.callback_query.register(prc_callback_cancel_create_credit, text_contains=CALLBACK.cancel_create_credit)
