@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 from aiogram.dispatcher.fsm.state import State, StatesGroup
 from pydantic import BaseModel, Field, root_validator, validator

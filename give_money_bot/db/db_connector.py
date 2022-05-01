@@ -4,7 +4,7 @@ from typing import Dict, Iterable, List, Optional
 
 from sqlalchemy.orm import Session
 
-from give_money_bot.db.models import Credit, User, ShowTypes, UserVision
+from give_money_bot.db.models import Credit, ShowTypes, User, UserVision
 
 
 def add_entry(
@@ -137,7 +137,7 @@ def get_all_users_without_current_user(session: Session, curr_user: int) -> List
 
 def get_users_with_show_always(session: Session, user_id: int) -> List[User]:
     resp: List[UserVision] = (
-        session.query(UserVision)
+        session.query(UserVision)  # type: ignore
         .filter(UserVision.user_id == user_id)
         .filter(UserVision.show_type == ShowTypes.ALWAYS)
         .join(UserVision.show_user)
@@ -156,7 +156,12 @@ def get_user_visions(session: Session, user_id: int) -> List[UserVision]:
 
 
 def get_vision(session: Session, user_id: int, show_user_id: int) -> UserVision:
-    return session.query(UserVision).filter(UserVision.user_id == user_id).filter(UserVision.show_user_id == show_user_id).first()
+    return (
+        session.query(UserVision)
+        .filter(UserVision.user_id == user_id)
+        .filter(UserVision.show_user_id == show_user_id)
+        .first()
+    )
 
 
 def update_user_vision(session: Session, user_id: int, show_user_id: int, show_type: ShowTypes) -> None:

@@ -32,11 +32,13 @@ async def add_show_user(message: types.Message, user: User, session: Session) ->
 
 
 async def send_message_to_users(message: types.Message, session: Session, state: FSMContext, user: User) -> None:
-    send_message = message.text[len("/send "):]
+    send_message = message.text[len("/send ") :]
     users = db.get_users(session)
     for user_ in users:
         try:
-            await bot.send_message(chat_id=user_.user_id, text=send_message, disable_notification=True, reply_markup=main_keyboard)
+            await bot.send_message(
+                chat_id=user_.user_id, text=send_message, disable_notification=True, reply_markup=main_keyboard
+            )
             st_key = StorageKey(bot_id=bot.id, chat_id=user_.user_id, user_id=user_.user_id)
             state.key = st_key
             await state.set_state(None)

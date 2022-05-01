@@ -1,13 +1,13 @@
-from typing import Dict, Optional, Set, Tuple, List
+from typing import Dict, List, Optional, Set, Tuple
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from give_money_bot.db.models import User
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.orm import Session
 
 from give_money_bot.credits.callback_data import CALLBACK, CreditAmountData, CreditChooseData, UserChooseData
 from give_money_bot.credits.strings import Strings
 from give_money_bot.db import db_connector as db
+from give_money_bot.db.models import User
 
 
 def get_credits_markup(
@@ -21,11 +21,13 @@ def get_credits_markup(
         else:
             has_mark = 0
             text = f"{db.get_user(session, user_id).name} - {credit_sum} {Strings.FALSE}"
-        markup.append([
-            InlineKeyboardButton(
-                text=text,
-                callback_data=CreditChooseData(index=user_id, has_mark=has_mark).pack(),
-            )]
+        markup.append(
+            [
+                InlineKeyboardButton(
+                    text=text,
+                    callback_data=CreditChooseData(index=user_id, has_mark=has_mark).pack(),
+                )
+            ]
         )
     markup.append([InlineKeyboardButton(text=Strings.RETURN_CHOSEN_CREDITS, callback_data=CALLBACK.return_credits)])
     markup.append([InlineKeyboardButton(text=Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits)])
@@ -57,11 +59,13 @@ def get_keyboard_users_for_credit(
             has_mark = 0
             text = f"{user.name}{Strings.FALSE}"
 
-        markup.append([
-            InlineKeyboardButton(
-                text=text,
-                callback_data=UserChooseData(user_id=user.user_id, has_mark=has_mark).pack(),
-            )]
+        markup.append(
+            [
+                InlineKeyboardButton(
+                    text=text,
+                    callback_data=UserChooseData(user_id=user.user_id, has_mark=has_mark).pack(),
+                )
+            ]
         )
     markup.append([InlineKeyboardButton(text=Strings.SAVE, callback_data=CreditAmountData(value=value).pack())])
     markup.append([InlineKeyboardButton(text=Strings.CANCEL, callback_data=CALLBACK.cancel_create_credit)])

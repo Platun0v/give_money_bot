@@ -241,6 +241,5 @@ router.callback_query.register(prc_callback_cancel_return_credit, text_contains=
 router.message.register(prc_user_debtors, text=tg_strings.menu_debtors)
 
 router.message.register(
-    read_num_from_user,
-    state=None
+    read_num_from_user, state=None
 )  # Добавляем последним, чтобы обрабатывать сообщение, как новый долг только, когда не прошло по остальным пунктам

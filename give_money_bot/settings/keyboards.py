@@ -1,9 +1,9 @@
 from enum import Enum
 
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher.filters.callback_data import CallbackData
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
-from give_money_bot.settings.states import EditVisibilityData, PAGE_MAX_USERS
+from give_money_bot.settings.states import PAGE_MAX_USERS, EditVisibilityData
 from give_money_bot.settings.strings import Strings
 
 settings_markup = ReplyKeyboardMarkup(
@@ -36,19 +36,27 @@ def create_edit_visibility_keyboard(data: EditVisibilityData) -> InlineKeyboardM
     page_start = (data.page - 1) * PAGE_MAX_USERS
     page_end = data.page * PAGE_MAX_USERS
     for user in data.users_list[page_start:page_end]:
-        markup.append([
+        markup.append(
+            [
+                InlineKeyboardButton(
+                    text=f"{data.users[user].username} {Strings.vision_emojis[data.users[user].vision]}",
+                    callback_data=EditVisibilityCallback(action=Action.user, user_id=user).pack(),
+                )
+            ]
+        )
+    markup.append(
+        [
             InlineKeyboardButton(
-                text=f"{data.users[user].username} {Strings.vision_emojis[data.users[user].vision]}",
-                callback_data=EditVisibilityCallback(action=Action.user, user_id=user).pack()
-            )
-        ])
-    markup.append([
-        InlineKeyboardButton(text=Strings.left_emoji, callback_data=EditVisibilityCallback(action=Action.left).pack()),
-        InlineKeyboardButton(text=Strings.save, callback_data=EditVisibilityCallback(action=Action.save).pack()),
-        InlineKeyboardButton(text=Strings.right_emoji, callback_data=EditVisibilityCallback(action=Action.right).pack()),
-    ])
-    markup.append([
-        InlineKeyboardButton(text=Strings.cancel, callback_data=EditVisibilityCallback(action=Action.cancel).pack())
-    ])
+                text=Strings.left_emoji, callback_data=EditVisibilityCallback(action=Action.left).pack()
+            ),
+            InlineKeyboardButton(text=Strings.save, callback_data=EditVisibilityCallback(action=Action.save).pack()),
+            InlineKeyboardButton(
+                text=Strings.right_emoji, callback_data=EditVisibilityCallback(action=Action.right).pack()
+            ),
+        ]
+    )
+    markup.append(
+        [InlineKeyboardButton(text=Strings.cancel, callback_data=EditVisibilityCallback(action=Action.cancel).pack())]
+    )
 
     return InlineKeyboardMarkup(inline_keyboard=markup)

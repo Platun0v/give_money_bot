@@ -90,10 +90,14 @@ class User(Base):
 
 class UserVision(Base):
     __tablename__ = "user_vision"
-    user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False)
+    user_id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False
+    )
     user = relationship("User", foreign_keys="UserVision.user_id")
 
-    show_user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False)
+    show_user_id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False
+    )
     show_user = relationship("User", foreign_keys="UserVision.show_user_id")
 
     show_type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
