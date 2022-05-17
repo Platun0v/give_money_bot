@@ -88,7 +88,6 @@ class Strings:
     FALSE = "❌"
     TRUE = "✅"
 
-    INPUT_CREDIT = "Введите сумму(по желанию инфу по долгу через пробел)"
     NEED_NON_ZERO = "Требуется ненулевое значение"
 
     FORGOT_CHOOSE = "Ты ничего не выбрал"

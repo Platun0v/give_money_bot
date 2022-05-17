@@ -11,7 +11,14 @@ from give_money_bot.db.base import Base
 from give_money_bot.utils.log import logger
 from give_money_bot.utils.misc import DbSessionMiddleware, UserMiddlewareCallbackQuery, UserMiddlewareMessage
 
-# def __init__(self, db_path: str = "db.sqlite"):
+
+# import sentry_sdk
+# sentry_sdk.init(
+#     "https://3e62d55707a64ec280d22e4ec1e2d809@o1226305.ingest.sentry.io/6390884",
+#     traces_sample_rate=1.0
+# )
+
+
 engine = sqlalchemy.create_engine(
     f"sqlite:///{config.DB_PATH + 'db.sqlite'}",
     echo=False,
