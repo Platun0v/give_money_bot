@@ -99,7 +99,8 @@ async def prc_callback_save_new_credit(call: types.CallbackQuery, user: User, se
 
 async def prc_callback_cancel_create_credit(call: types.CallbackQuery, user: User) -> None:
     logger.info(f"{user.name=} canceling credit creation")
-    await call.message.edit_text(Strings.CANCEL, reply_markup=main_keyboard)
+    await call.message.edit_text(Strings.CANCEL)
+    await bot.send_message(user.user_id, "Menu", reply_markup=main_keyboard)
 
 
 # ======================================= REMOVE CREDIT =======================================
