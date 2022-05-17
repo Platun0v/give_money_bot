@@ -32,7 +32,7 @@ async def add_show_user(message: types.Message, user: User, session: Session) ->
 
 
 async def send_message_to_users(message: types.Message, session: Session, state: FSMContext, user: User) -> None:
-    send_message = message.text[len("/send ") :]
+    send_message = message.text[len("/send "):]
     users = db.get_users(session)
     for user_ in users:
         try:
