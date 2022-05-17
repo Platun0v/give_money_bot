@@ -11,6 +11,7 @@ settings_markup = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text=Strings.menu_add_new_user)],
         [KeyboardButton(text=Strings.menu_edit_friendly_name)],
+        # [KeyboardButton(text=Strings.menu_edit_number)],
         [KeyboardButton(text=Strings.menu_edit_visible_users)],
         [KeyboardButton(text=Strings.menu_exit)],
     ],
