@@ -34,7 +34,7 @@ async def read_num_from_user(message: types.Message, user: User, session: Sessio
     logger.info(f"{user.name=} trying to add credit {value_str=} {info=}")
     value, err = parse_expression(value_str)
     if value is None:
-        await message.answer(err)
+        await message.answer(err, reply_markup=main_keyboard)
         return
     if value == 0:
         await message.answer(Strings.NEED_NON_ZERO)
@@ -99,7 +99,7 @@ async def prc_callback_save_new_credit(call: types.CallbackQuery, user: User, se
 
 async def prc_callback_cancel_create_credit(call: types.CallbackQuery, user: User) -> None:
     logger.info(f"{user.name=} canceling credit creation")
-    await call.message.edit_text(Strings.CANCEL)
+    await call.message.edit_text(Strings.CANCEL, reply_markup=main_keyboard)
 
 
 # ======================================= REMOVE CREDIT =======================================
