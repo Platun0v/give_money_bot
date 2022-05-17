@@ -117,7 +117,7 @@ async def prc_user_credits(message: types.Message, user: User, session: Session)
         credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
 
     await message.answer(
-        Strings.debtor_credits(user_credits, credits_sum_by_user, credits_sum, db.get_user_ids_with_name(session)),
+        Strings.debtor_credits(user_credits, credits_sum_by_user, credits_sum, db.get_user_ids_with_users(session)),
         reply_markup=kb.get_credits_markup(credits_sum_by_user, set(), session),
     )
 

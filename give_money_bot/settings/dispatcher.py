@@ -26,6 +26,7 @@ async def send_settings_menu(
     message: types.Message, state: FSMContext, user: User
 ) -> None:
     await state.set_state(SettingsStates.settings)
+    await message.answer(Strings.profile_message(user))
     await message.answer(Strings.menu_settings_answer, reply_markup=kb.settings_markup)
 
 
@@ -41,6 +42,23 @@ async def ask_for_new_user(
 async def add_new_user(message: types.Message, state: FSMContext, user: User) -> None:
     await state.set_state(SettingsStates.settings)
     await message.answer(Strings.new_user_added, reply_markup=kb.settings_markup)
+
+
+async def ask_for_new_number(
+    message: types.Message, state: FSMContext, user: User
+) -> None:
+    await state.set_state(SettingsStates.edit_number)
+    await message.answer(
+        Strings.ask_for_new_number, reply_markup=types.ReplyKeyboardRemove()
+    )
+
+
+async def save_new_number(
+    message: types.Message, state: FSMContext, user: User, session: Session
+) -> None:
+    db.change_phone(session, user, message.text)
+    await state.set_state(SettingsStates.settings)
+    await message.answer(Strings.saved, reply_markup=kb.settings_markup)
 
 
 async def exit_settings_menu(
@@ -209,3 +227,7 @@ router.callback_query.register(
     edit_user_visibility_save_click,
     EditVisibilityCallback.filter(F.action == Action.save),
 )
+router.message.register(
+    ask_for_new_number, SettingsStates.settings, text=Strings.menu_edit_number
+)
+router.message.register(save_new_number, SettingsStates.edit_number)

@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from jinja2 import Template
 
-from give_money_bot.db.models import Credit
+from give_money_bot.db.models import Credit, User
 
 ASK_FOR_DEBTORS_MESSAGE = """
 {%- if value < 0 -%}
@@ -55,7 +55,8 @@ DEBTOR_CREDITS_MESSAGE = """
 {% endfor %}
 ====================
 {%- for user, value in user_credits.items() %}
-Ты должен {{ users[user] }} - {{ value }} руб.
+Ты должен {{ users[user].name }} - {{ value }} руб.
+Номер: {{ user.phone_number }}
 {%- endfor %}
 Итого: {{ credits_sum }} руб.
 Ты можешь выбрать долги, которые ты уже вернул:
@@ -161,7 +162,7 @@ class Strings:
         credits: List[Credit],
         user_credits: Dict[int, int],
         credits_sum: int,
-        users: Dict[int, str],
+        users: Dict[int, User],
     ) -> str:
         """
         Создает сообщение, в котором сообщается информация о нынешних задолжностях
@@ -170,7 +171,7 @@ class Strings:
             credits: список с долгами
             user_credits: Dict[user_id: credit_amount] сумма долгов для каждого пользователя
             credits_sum: итоговая сумма долгов
-            users: Dict[user_id: username] сопоставление user_id и имени пользователя
+            users: Dict[user_id: User] сопоставление user_id и имени пользователя
         """
         template = Template(DEBTOR_CREDITS_MESSAGE)
         return template.render(

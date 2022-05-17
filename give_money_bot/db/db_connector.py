@@ -127,6 +127,10 @@ def get_user_ids_with_name(session: Session) -> Dict[int, str]:
     return {user.user_id: user.name for user in session.query(User).all()}
 
 
+def get_user_ids_with_users(session: Session) -> Dict[int, User]:
+    return {user.user_id: user for user in session.query(User).all()}
+
+
 def get_admin(session: Session) -> User:
     return session.query(User).filter(User.admin == True).first()
 
@@ -179,3 +183,8 @@ def add_user(session: Session, user_id: int, name: str) -> User:
     session.add(user)
     session.commit()
     return user
+
+
+def change_phone(session: Session, user: User, phone: str) -> None:
+    user.phone_number = phone
+    session.commit()

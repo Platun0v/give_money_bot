@@ -9,6 +9,7 @@ from give_money_bot.db.models import ShowTypes
 class SettingsStates(StatesGroup):
     settings = State()
     new_user = State()
+    edit_number = State()
     edit_visibility = State()
 
 

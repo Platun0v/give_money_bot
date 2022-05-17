@@ -1,9 +1,15 @@
 from jinja2 import Template
 
+from give_money_bot.db.models import User
 from give_money_bot.settings.states import EditVisibilityData
 
 EDIT_VISIBILITY_MESSAGE = """
 Страница: {{ page }} / {{ page_total }}
+"""
+
+PROFILE_MESSAGE = """
+Пользователь: {{ user.name }}
+Номер: {{ user.phone_number }}
 """
 
 
@@ -19,6 +25,9 @@ class Strings:
 
     menu_edit_friendly_name = "Изменить имя пользователя"
     ask_for_new_friendly_name = "Пришли новое имя пользователя"
+
+    menu_edit_number = "Изменить номер"
+    ask_for_new_number = "Напиши мне номер, на который тебе надо возвращать долг. Так же можешь уточнить банк, на который надо отправлять деньги"
 
     menu_edit_visible_users = "Изменить видимость пользователей"
 
@@ -37,3 +46,7 @@ class Strings:
     @staticmethod
     def edit_visibility_message(data: EditVisibilityData) -> str:
         return Template(EDIT_VISIBILITY_MESSAGE).render(page=data.page, page_total=data.pages_total)
+
+    @staticmethod
+    def profile_message(user: User) -> str:
+        return Template(PROFILE_MESSAGE).render(user=user)
