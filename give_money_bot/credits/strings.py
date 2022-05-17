@@ -16,10 +16,10 @@ ASK_FOR_DEBTORS_MESSAGE = """
 
 SAVE_CREDIT_MESSAGE = """
 {%- if value < 0 -%}
-Ты должен {{ value | abs }} руб. {{ username | join(', ') }}
-{%- else -%}
-Тебе должен {{ value }} руб. {{ username | join(', ') }}
-{%- endif -%}
+Ты должен {{ value | abs }} руб. {{ usernames | join(', ') }}
+{%- else %}
+Тебе должен {{ value }} руб. {{ usernames | join(', ') }}
+{%- endif %}
 {{ info }}
 Сохранено
 """
