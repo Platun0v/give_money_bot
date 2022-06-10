@@ -56,7 +56,7 @@ DEBTOR_CREDITS_MESSAGE = """
 ====================
 {%- for user, value in user_credits.items() %}
 Ты должен {{ users[user].name }} - {{ value }} руб.
-Номер: {{ user.phone_number }}
+Номер: {{ users[user].phone_number }}
 {%- endfor %}
 Итого: {{ credits_sum }} руб.
 Ты можешь выбрать долги, которые ты уже вернул:
