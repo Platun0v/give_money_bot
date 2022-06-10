@@ -24,7 +24,10 @@ async def prc_squeeze_credits(message: Optional[types.Message], session: Session
     for e in sqz_report:
         chain = " -> ".join(map(lambda x: db.get_user(session, x.from_id).name, e.cycle))
         for edge in e.cycle:
-            await bot.send_message(edge.from_id, Strings.removed_credit_chain(e.amount, chain))
+            try:
+                await bot.send_message(edge.from_id, Strings.removed_credit_chain(e.amount, chain))
+            except Exception as e:
+                logger.error(f"Cant send message to {db.get_user(session, edge.from_id).name=}")
 
 
 # ======================================= ADD CREDIT =======================================
