@@ -1,7 +1,7 @@
 ###############################################
 # Haskell Compile Image
 ###############################################
-FROM haskell:9.0.1-buster as haskell-base
+FROM haskell:slim as haskell-base
 
 COPY ./additional_stuff/parser.hs /opt/
 WORKDIR /opt
@@ -16,7 +16,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=off \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100 \
-    POETRY_VERSION=1.1.11 \
+    POETRY_VERSION=1.1.13 \
     POETRY_HOME="/opt/poetry" \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     POETRY_NO_INTERACTION=1 \
