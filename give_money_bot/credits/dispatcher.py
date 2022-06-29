@@ -1,13 +1,19 @@
 from typing import Dict, List, Optional
 
-from aiogram import Router, types
+from aiogram import F, Router, types
+from aiogram.dispatcher.fsm.context import FSMContext
 from sqlalchemy.orm import Session
 
 from give_money_bot import bot, dp
 from give_money_bot.credits import keyboards as kb
-from give_money_bot.credits.callback_data import CALLBACK
-from give_money_bot.credits.keyboards import CreditChooseData, UserChooseData
+from give_money_bot.credits.callback import (
+    AddCreditAction,
+    AddCreditCallback,
+    ReturnCreditsAction,
+    ReturnCreditsCallback,
+)
 from give_money_bot.credits.squeezer import squeeze
+from give_money_bot.credits.states import AddCreditData, ReturnCreditsData
 from give_money_bot.credits.strings import Strings
 from give_money_bot.credits.utils import get_credits_amount, get_info, parse_expression, parse_info_from_message
 from give_money_bot.db import db_connector as db
@@ -31,7 +37,16 @@ async def prc_squeeze_credits(message: Optional[types.Message], session: Session
 
 
 # ======================================= ADD CREDIT =======================================
-async def read_num_from_user(message: types.Message, user: User, session: Session) -> None:
+async def read_num_from_user(message: types.Message, state: FSMContext, user: User, session: Session) -> None:
+    state_data = await state.get_data()
+    add_credit_json: Optional[str] = state_data.get("add_credit")
+
+    if add_credit_json is not None:  # If we already have some data, cancel prev add credit
+        add_credit_data: AddCreditData = AddCreditData.parse_raw(add_credit_json)
+        await bot.edit_message_text(
+            chat_id=message.chat.id, message_id=add_credit_data.message_id, text=Strings.CANCEL, reply_markup=None
+        )
+
     logger.info(f"{message.text=}")
     value_str, info = parse_info_from_message(message.text)
     logger.info(f"{user.name=} trying to add credit {value_str=} {info=}")
@@ -43,76 +58,128 @@ async def read_num_from_user(message: types.Message, user: User, session: Sessio
         await message.answer(Strings.NEED_NON_ZERO)
         return
 
-    await message.answer(
-        Strings.ask_for_debtors(value, info),
-        reply_markup=kb.get_keyboard_users_for_credit(
-            message.from_user.id, value, set(), db.get_users_with_show_always(session, user.user_id), session
-        ),
+    add_credit_data = AddCreditData(
+        amount=value, message=info, users=set(), show_more=False, message_id=message.message_id
     )
+
+    msg = await message.answer(
+        Strings.ask_for_debtors(value, info),
+        reply_markup=kb.get_keyboard_add_credit(message.from_user.id, add_credit_data, session),
+    )
+
+    add_credit_data.message_id = msg.message_id  # We need message_id of sent message
+    await state.update_data(add_credit=add_credit_data.json())
+
     logger.info(f"{user.name=} asked for debtors")
 
 
 async def prc_callback_choose_users_for_credit(
-    call: types.CallbackQuery, callback_data: UserChooseData, user: User, session: Session
+    call: types.CallbackQuery, callback_data: AddCreditCallback, user: User, session: Session, state: FSMContext
 ) -> None:
-    value, users = kb.get_data_from_markup(call.message.reply_markup)
-    logger.info(f"{user.name=} chosing users for credit {call.data=}")
-    user_id = callback_data.user_id
+    state_data = await state.get_data()
+    add_credit_data: AddCreditData = AddCreditData.parse_raw(state_data.get("add_credit"))
+    if add_credit_data.message_id != call.message.message_id:
+        return
 
-    if user_id in users:
-        users.remove(user_id)
+    logger.info(f"{user.name=} chosing users for credit {db.get_user(session, callback_data.user_id).name=}")
+
+    if callback_data.user_id in add_credit_data.users:
+        add_credit_data.users.remove(callback_data.user_id)
     else:
-        users.add(user_id)
+        add_credit_data.users.add(callback_data.user_id)
+
+    await state.update_data(add_credit=add_credit_data.json())
 
     await call.message.edit_reply_markup(
-        reply_markup=kb.get_keyboard_users_for_credit(
-            call.from_user.id, value, users, db.get_users_with_show_always(session, user.user_id), session
-        )
+        reply_markup=kb.get_keyboard_add_credit(call.from_user.id, add_credit_data, session)
     )
     await call.answer()
 
 
-async def prc_callback_save_new_credit(call: types.CallbackQuery, user: User, session: Session) -> None:
-    value, users = kb.get_data_from_markup(call.message.reply_markup)
-    logger.info(f"{user.name=} saving credit {call.data=}")
+async def prc_callback_show_more_users(
+    call: types.CallbackQuery, callback_data: AddCreditCallback, user: User, session: Session, state: FSMContext
+) -> None:
+    state_data = await state.get_data()
+    add_credit_data: AddCreditData = AddCreditData.parse_raw(state_data.get("add_credit"))
+    if add_credit_data.message_id != call.message.message_id:
+        return
+
+    add_credit_data.show_more = not add_credit_data.show_more
+
+    await state.update_data(add_credit=add_credit_data.json())
+
+    await call.message.edit_reply_markup(
+        reply_markup=kb.get_keyboard_add_credit(call.from_user.id, add_credit_data, session)
+    )
+    await call.answer()
+
+
+async def prc_callback_save_new_credit(
+    call: types.CallbackQuery, user: User, session: Session, state: FSMContext
+) -> None:
+    state_data = await state.get_data()
+    add_credit_data: AddCreditData = AddCreditData.parse_raw(state_data.get("add_credit"))
+    if add_credit_data.message_id != call.message.message_id:
+        return
+
+    users = add_credit_data.users
+    if not add_credit_data.show_more:  # If we dont show more users, we need to remove additional users
+        users = users & set(map(lambda x: x.user_id, db.get_users_with_show_always(session, user.user_id)))
+
+    logger.info(f"{user.name=} saving credit {add_credit_data=}")
     if not users:
         await call.answer(text=Strings.FORGOT_CHOOSE)
         return
 
-    info = get_info(call.message)
-    await call.message.edit_text(Strings.credit_saved(value, [e.name for e in db.get_users(session, users)], info))
+    await call.message.edit_text(
+        Strings.credit_saved(
+            add_credit_data.amount, [e.name for e in db.get_users(session, users)], add_credit_data.message
+        )
+    )
 
     user_id = call.from_user.id
-    if value < 0:
-        db.add_entry_2(session, list(users), user_id, abs(value), info)
+    if add_credit_data.amount < 0:
+        db.add_entry_2(session, list(users), user_id, abs(add_credit_data.amount), add_credit_data.message)
     else:
-        db.add_entry(session, user_id, list(users), value, info)
+        db.add_entry(session, user_id, list(users), add_credit_data.amount, add_credit_data.message)
 
     for user_ in users:
         try:  # Fixes not started conv with give_money_bot
             await bot.send_message(
                 user_,
-                Strings.announce_new_credit(value, user.name, info),
+                Strings.announce_new_credit(add_credit_data.amount, user.name, add_credit_data.message),
             )
         except Exception:
             pass
-    logger.info(f"{user.name=} saved credit {value=} {users=}")
+
+    await state.update_data(add_credit=None)
+    logger.info(f"{user.name=} saved credit {add_credit_data.amount=} {users=}")
     await prc_squeeze_credits(session=session, message=None, user=user)
 
 
-async def prc_callback_cancel_create_credit(call: types.CallbackQuery, user: User) -> None:
+async def prc_callback_cancel_create_credit(call: types.CallbackQuery, user: User, state: FSMContext) -> None:
     logger.info(f"{user.name=} canceling credit creation")
+    await state.update_data(add_credit=None)
     await call.message.edit_text(Strings.CANCEL)
     await bot.send_message(user.user_id, "Menu", reply_markup=main_keyboard)
 
 
-# ======================================= REMOVE CREDIT =======================================
-async def prc_user_credits(message: types.Message, user: User, session: Session) -> None:
+# ======================================= RETURN CREDITS =======================================
+async def prc_user_credits(message: types.Message, user: User, session: Session, state: FSMContext) -> None:
     user_credits = db.get_user_credits(session, message.from_user.id)
     logger.info(f"{user.name=} asking for credits")
     if not user_credits:
         await message.answer(Strings.NO_CREDITS_DEBTOR)
         return
+
+    state_data = await state.get_data()
+    return_credits_json: Optional[str] = state_data.get("return_credits")
+
+    if return_credits_json is not None:  # If we already have some data, cancel prev add credit
+        return_credit_data: ReturnCreditsData = ReturnCreditsData.parse_raw(return_credits_json)
+        await bot.edit_message_text(
+            text=Strings.CANCEL, chat_id=message.chat.id, message_id=return_credit_data.message_id, reply_markup=None
+        )
 
     credits_sum = 0
     credits_sum_by_user: Dict[int, int] = {}
@@ -120,44 +187,63 @@ async def prc_user_credits(message: types.Message, user: User, session: Session)
         credits_sum += credit.get_amount()
         credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
 
-    await message.answer(
+    return_credits_data = ReturnCreditsData(users=set(), message_id=0)
+
+    msg = await message.answer(
         Strings.debtor_credits(user_credits, credits_sum_by_user, credits_sum, db.get_user_ids_with_users(session)),
-        reply_markup=kb.get_credits_markup(credits_sum_by_user, set(), session),
+        reply_markup=kb.get_credits_markup(credits_sum_by_user, return_credits_data, session),
     )
+
+    return_credits_data.message_id = msg.message_id
+    await state.update_data(return_credits=return_credits_data.json())
 
 
 async def prc_callback_choose_credit_for_return(
-    call: types.CallbackQuery, callback_data: CreditChooseData, user: User, session: Session
+    call: types.CallbackQuery, callback_data: ReturnCreditsCallback, user: User, session: Session, state: FSMContext
 ) -> None:
-    marked_users = kb.get_marked_credits(call.message.reply_markup)
-    chosen_user_id = callback_data.index
-    logger.info(f"{user.name=} chosing users to return credits {call.data=}")
+    state_data = await state.get_data()
+    return_credits_data: ReturnCreditsData = ReturnCreditsData.parse_raw(state_data.get("return_credits"))
+    if return_credits_data.message_id != call.message.message_id:
+        return
 
-    if chosen_user_id in marked_users:
-        marked_users.remove(chosen_user_id)
+    chosen_user_id = callback_data.user_id
+    logger.info(f"{user.name=} chosing users to return credits {chosen_user_id=}")
+
+    if chosen_user_id in return_credits_data.users:
+        return_credits_data.users.remove(chosen_user_id)
     else:
-        marked_users.add(chosen_user_id)
+        return_credits_data.users.add(chosen_user_id)
+
+    await state.update_data(return_credits=return_credits_data.json())
 
     credits_sum_by_user: Dict[int, int] = {}
     for credit in db.get_user_credits(session, call.from_user.id):
         credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
 
-    await call.message.edit_reply_markup(reply_markup=kb.get_credits_markup(credits_sum_by_user, marked_users, session))
+    await call.message.edit_reply_markup(
+        reply_markup=kb.get_credits_markup(credits_sum_by_user, return_credits_data, session)
+    )
     await call.answer()
 
 
-async def prc_callback_return_credits(call: types.CallbackQuery, user: User, session: Session) -> None:
-    marked_users = kb.get_marked_credits(call.message.reply_markup)
-    logger.info(f"{user.name=} returning credits {call.data=}")
+async def prc_callback_return_credits(
+    call: types.CallbackQuery, user: User, session: Session, state: FSMContext
+) -> None:
+    state_data = await state.get_data()
+    return_credits_data: ReturnCreditsData = ReturnCreditsData.parse_raw(state_data.get("return_credits"))
+    if return_credits_data.message_id != call.message.message_id:
+        return
 
-    if not marked_users:
+    logger.info(f"{user.name=} returning credits {return_credits_data=}")
+
+    if not return_credits_data.users:
         await call.answer(Strings.FORGOT_CHOOSE)
         return
 
     returned_credits: List[int] = []
     returned_credits_sum: Dict[int, int] = {}
 
-    for user_id in marked_users:
+    for user_id in return_credits_data.users:
         amount, credits = get_credits_amount(call.from_user.id, user_id, session)
         for credit in credits:
             returned_credits.append(credit.id)
@@ -167,7 +253,7 @@ async def prc_callback_return_credits(call: types.CallbackQuery, user: User, ses
     await call.message.edit_text(msg)
     await call.answer(text=msg, show_alert=True)
 
-    for user_id in marked_users:
+    for user_id in return_credits_data.users:
         amount, credits = get_credits_amount(call.from_user.id, user_id, session)
         info = []
         for credit in credits:
@@ -185,7 +271,8 @@ async def prc_callback_return_credits(call: types.CallbackQuery, user: User, ses
     logger.info(f"{user.name=} returned credits {returned_credits=}")
 
 
-async def prc_callback_cancel_return_credit(call: types.CallbackQuery, user: User) -> None:
+async def prc_callback_cancel_return_credit(call: types.CallbackQuery, user: User, state: FSMContext) -> None:
+    await state.update_data(return_credits=None)
     logger.info(f"{user.name=} canceling credit return")
     text = "\n".join(call.message.text.split("\n")[:-1])  # Remove last line
     await call.message.edit_text(text)
@@ -222,28 +309,37 @@ router.message.bind_filter(CheckUser)
 
 # router.message.register(prc_squeeze_credits, commands=["sqz"])
 
+# ======================================= ADD CREDIT =======================================
 router.callback_query.register(
     prc_callback_choose_users_for_credit,
-    UserChooseData.filter(),
-    # text_contains=CALLBACK.choose_users_for_credit,
+    AddCreditCallback.filter(F.action == AddCreditAction.choose_user),
 )
-router.callback_query.register(prc_callback_save_new_credit, text_contains=CALLBACK.save_new_credit)
-router.callback_query.register(prc_callback_cancel_create_credit, text_contains=CALLBACK.cancel_create_credit)
+router.callback_query.register(
+    prc_callback_show_more_users, AddCreditCallback.filter(F.action == AddCreditAction.show_more)
+)
+router.callback_query.register(prc_callback_save_new_credit, AddCreditCallback.filter(F.action == AddCreditAction.save))
+router.callback_query.register(
+    prc_callback_cancel_create_credit, AddCreditCallback.filter(F.action == AddCreditAction.cancel)
+)
 
+# ======================================= RETURN CREDITS =======================================
 router.message.register(prc_user_credits, text=tg_strings.menu_credits)
 router.callback_query.register(
     prc_callback_choose_credit_for_return,
-    CreditChooseData.filter(),
-    # text_contains=CALLBACK.choose_credit_for_return,
+    ReturnCreditsCallback.filter(F.action == ReturnCreditsAction.choose_user),
 )
 router.callback_query.register(
     prc_callback_return_credits,
-    text_contains=CALLBACK.return_credits,
+    ReturnCreditsCallback.filter(F.action == ReturnCreditsAction.save),
 )
-router.callback_query.register(prc_callback_cancel_return_credit, text_contains=CALLBACK.cancel_return_credits)
+router.callback_query.register(
+    prc_callback_cancel_return_credit, ReturnCreditsCallback.filter(F.action == ReturnCreditsAction.cancel)
+)
 
+# ======================================= INFO =======================================
 router.message.register(prc_user_debtors, text=tg_strings.menu_debtors)
 
+# ======================================= ADD CREDIT =======================================
 router.message.register(
     read_num_from_user, state=None
 )  # Добавляем последним, чтобы обрабатывать сообщение, как новый долг только, когда не прошло по остальным пунктам

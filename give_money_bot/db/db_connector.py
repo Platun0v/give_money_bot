@@ -155,6 +155,22 @@ def get_users_with_show_always(session: Session, user_id: int) -> List[User]:
     return res
 
 
+def get_users_with_show_more(session: Session, user_id: int) -> List[User]:
+    resp: List[UserVision] = (
+        session.query(UserVision)  # type: ignore
+        .filter(UserVision.user_id == user_id)
+        .filter((UserVision.show_type == ShowTypes.ADDITIONAL) | (UserVision.show_type == ShowTypes.ALWAYS))
+        .join(UserVision.show_user)
+        .order_by(User.name.asc())
+        .all()
+    )
+    res = []
+    for user_vision in resp:
+        res.append(user_vision.show_user)
+
+    return res
+
+
 def get_user_visions(session: Session, user_id: int) -> List[UserVision]:
     return session.query(UserVision).filter(UserVision.user_id == user_id).all()
 

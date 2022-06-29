@@ -94,6 +94,8 @@ class Strings:
     FORGOT_CHOOSE = "Ты ничего не выбрал"
     RETURN_CHOSEN_CREDITS = "Вернуть выбранные долги"
     CANCEL = "Отмена"
+    SHOW_MORE_USERS = "Показать еще"
+    CANCEL_SHOW_MORE_USERS = "Cancel show more"
     SAVE = "Сохранить"
 
     NO_CREDITS_CREDITOR = "Тебе никто не должен. Можешь спать спокойно"

@@ -4,93 +4,106 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.orm import Session
 
-from give_money_bot.credits.callback_data import CALLBACK, CreditAmountData, CreditChooseData, UserChooseData
+from give_money_bot.credits.callback import (
+    AddCreditAction,
+    AddCreditCallback,
+    ReturnCreditsAction,
+    ReturnCreditsCallback,
+)
+from give_money_bot.credits.states import AddCreditData, ReturnCreditsData
 from give_money_bot.credits.strings import Strings
 from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import User
 
 
 def get_credits_markup(
-    user_credits: Dict[int, int], marked_credits: Set[int], session: Session
+    user_credits: Dict[int, int], return_credit_data: ReturnCreditsData, session: Session
 ) -> InlineKeyboardMarkup:
     markup = []
     for user_id, credit_sum in user_credits.items():
-        if user_id in marked_credits:
-            has_mark = 1
+        if user_id in return_credit_data.users:
             text = f"{db.get_user(session, user_id).name} - {credit_sum} {Strings.TRUE}"
         else:
-            has_mark = 0
             text = f"{db.get_user(session, user_id).name} - {credit_sum} {Strings.FALSE}"
+
         markup.append(
             [
                 InlineKeyboardButton(
                     text=text,
-                    callback_data=CreditChooseData(index=user_id, has_mark=has_mark).pack(),
+                    callback_data=ReturnCreditsCallback(action=ReturnCreditsAction.choose_user, user_id=user_id).pack(),
                 )
             ]
         )
-    markup.append([InlineKeyboardButton(text=Strings.RETURN_CHOSEN_CREDITS, callback_data=CALLBACK.return_credits)])
-    markup.append([InlineKeyboardButton(text=Strings.CANCEL, callback_data=CALLBACK.cancel_return_credits)])
+    markup.append(
+        [
+            InlineKeyboardButton(
+                text=Strings.RETURN_CHOSEN_CREDITS,
+                callback_data=ReturnCreditsCallback(action=ReturnCreditsAction.save).pack(),
+            )
+        ]
+    )
+    markup.append(
+        [
+            InlineKeyboardButton(
+                text=Strings.CANCEL, callback_data=ReturnCreditsCallback(action=ReturnCreditsAction.cancel).pack()
+            )
+        ]
+    )
     return InlineKeyboardMarkup(inline_keyboard=markup)
 
 
-def get_marked_credits(markup: InlineKeyboardMarkup) -> Set[int]:
-    marked_credits = set()
-    for _ in markup.inline_keyboard:
-        for elem in _:
-            if CALLBACK.choose_credit_for_return in elem.callback_data:
-                data = CreditChooseData.unpack(elem.callback_data)
-                if data.has_mark == 1:
-                    marked_credits.add(data.index)
-    return marked_credits
-
-
-def get_keyboard_users_for_credit(
-    for_user_id: int, value: int, chosen_users: Set[int], users: List[User], session: Session
-) -> InlineKeyboardMarkup:
+def get_keyboard_add_credit(for_user_id: int, add_credit_data: AddCreditData, session: Session) -> InlineKeyboardMarkup:
     markup = []
+
+    users: List[User]
+    if add_credit_data.show_more:
+        users = db.get_users_with_show_more(session, for_user_id)
+    else:
+        users = db.get_users_with_show_always(session, for_user_id)
+
     for user in users:
         if user.user_id == for_user_id:
             continue
-        if user.user_id in chosen_users:
-            has_mark = 1
+        if user.user_id in add_credit_data.users:
             text = f"{user.name}{Strings.TRUE}"
         else:
-            has_mark = 0
             text = f"{user.name}{Strings.FALSE}"
 
         markup.append(
             [
                 InlineKeyboardButton(
                     text=text,
-                    callback_data=UserChooseData(user_id=user.user_id, has_mark=has_mark).pack(),
+                    callback_data=AddCreditCallback(action=AddCreditAction.choose_user, user_id=user.user_id).pack(),
                 )
             ]
         )
-    markup.append([InlineKeyboardButton(text=Strings.SAVE, callback_data=CreditAmountData(value=value).pack())])
-    markup.append([InlineKeyboardButton(text=Strings.CANCEL, callback_data=CALLBACK.cancel_create_credit)])
+    if add_credit_data.show_more:  # if we DONT need to show more users, add button with show more text
+        markup.append(
+            [
+                InlineKeyboardButton(
+                    text=Strings.CANCEL_SHOW_MORE_USERS,
+                    callback_data=AddCreditCallback(action=AddCreditAction.show_more).pack(),
+                )
+            ]
+        )
+    else:
+        markup.append(
+            [
+                InlineKeyboardButton(
+                    text=Strings.SHOW_MORE_USERS,
+                    callback_data=AddCreditCallback(action=AddCreditAction.show_more).pack(),
+                )
+            ]
+        )
+
+    markup.append(
+        [InlineKeyboardButton(text=Strings.SAVE, callback_data=AddCreditCallback(action=AddCreditAction.save).pack())]
+    )
+    markup.append(
+        [
+            InlineKeyboardButton(
+                text=Strings.CANCEL, callback_data=AddCreditCallback(action=AddCreditAction.cancel).pack()
+            )
+        ]
+    )
     return InlineKeyboardMarkup(inline_keyboard=markup)
-
-
-def get_data_from_markup(
-    markup: InlineKeyboardMarkup,
-) -> Tuple[int, Set[int]]:
-    users = set()
-    value = 0
-    for _ in markup.inline_keyboard:
-        for elem in _:
-            if CALLBACK.save_new_credit in elem.callback_data:
-                value = CreditAmountData.unpack(elem.callback_data).value
-            if CALLBACK.choose_users_for_credit in elem.callback_data:
-                data = UserChooseData.unpack(elem.callback_data)
-                if data.has_mark == 1:
-                    users.add(data.user_id)
-    return value, users
-
-
-def get_amount_from_markup(markup: InlineKeyboardMarkup) -> Optional[int]:
-    for _ in markup.inline_keyboard:
-        for elem in _:
-            if CALLBACK.save_new_credit in elem.callback_data:
-                return CreditAmountData.unpack(elem.callback_data).value
-    return None

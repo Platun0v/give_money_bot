@@ -5,9 +5,8 @@ Revises: e5a51715598b
 Create Date: 2022-05-18 00:22:41.246473
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '475aa5c976a6'
@@ -23,9 +22,11 @@ def upgrade():
         batch_op.add_column(sa.Column('note', sa.String(), nullable=True))
         batch_op.add_column(sa.Column('tg_alias', sa.String(), nullable=True))
         batch_op.add_column(sa.Column('tg_name', sa.String(), nullable=True))
-    op.execute("""
+    op.execute(
+        """
         UPDATE users SET phone_number = '', note = '', tg_alias = '', tg_name = ''
-    """)
+    """
+    )
 
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.alter_column('phone_number', nullable=False)

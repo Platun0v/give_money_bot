@@ -9,7 +9,7 @@ RUN ghc parser.hs -o parser
 ###############################################
 # Base Image
 ###############################################
-FROM python:3.9-slim-buster as python-base
+FROM python:3.10-slim-buster as python-base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

@@ -1,11 +1,11 @@
 from aiogram import Router, types
+from aiogram.dispatcher.fsm.context import FSMContext
 
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot import keyboards as kb
 from give_money_bot.tg_bot.strings import Strings
 from give_money_bot.utils.log import logger
 from give_money_bot.utils.misc import CheckUser
-from aiogram.dispatcher.fsm.context import FSMContext
 
 
 async def prc_start_command(message: types.Message, user: User, state: FSMContext) -> None:
