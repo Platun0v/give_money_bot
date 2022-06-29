@@ -95,7 +95,7 @@ class Strings:
     RETURN_CHOSEN_CREDITS = "Вернуть выбранные долги"
     CANCEL = "Отмена"
     SHOW_MORE_USERS = "Показать еще"
-    CANCEL_SHOW_MORE_USERS = "Cancel show more"
+    CANCEL_SHOW_MORE_USERS = "Скрыть"
     SAVE = "Сохранить"
 
     NO_CREDITS_CREDITOR = "Тебе никто не должен. Можешь спать спокойно"
