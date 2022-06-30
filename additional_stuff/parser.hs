@@ -144,4 +144,4 @@ main = do
   let maybeResult =  evaluate d maybeExpr
   case maybeResult of
     (Just value) -> if value == 1/0 then error "useless line\nДеление на 0" else print value
-    Nothing -> error "Неправильное выражение"
+    Nothing -> error "useless line\nНеправильное выражение"
