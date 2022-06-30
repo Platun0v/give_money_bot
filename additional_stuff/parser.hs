@@ -143,5 +143,5 @@ main = do
   let d = M.empty :: M.Map String a
   let maybeResult =  evaluate d maybeExpr
   case maybeResult of
-    (Just value) -> if value == 1/0 then error "Деление на 0" else print value
+    (Just value) -> if value == 1/0 then error "useless line\nДеление на 0" else print value
     Nothing -> error "Неправильное выражение"
