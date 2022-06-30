@@ -43,6 +43,7 @@ async def read_num_from_user(message: types.Message, state: FSMContext, user: Us
 
     if add_credit_json is not None:  # If we already have some data, cancel prev add credit
         add_credit_data: AddCreditData = AddCreditData.parse_raw(add_credit_json)
+        await state.update_data(add_credit=None)
         await bot.edit_message_text(
             chat_id=message.chat.id, message_id=add_credit_data.message_id, text=Strings.CANCEL, reply_markup=None
         )
@@ -177,6 +178,7 @@ async def prc_user_credits(message: types.Message, user: User, session: Session,
 
     if return_credits_json is not None:  # If we already have some data, cancel prev add credit
         return_credit_data: ReturnCreditsData = ReturnCreditsData.parse_raw(return_credits_json)
+        await state.update_data(return_credits=None)
         await bot.edit_message_text(
             text=Strings.CANCEL, chat_id=message.chat.id, message_id=return_credit_data.message_id, reply_markup=None
         )
