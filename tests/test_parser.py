@@ -15,9 +15,9 @@ def test_test():
     "-(1 * 2)",
     "- (1 * 2)",
     "- (-1 * 2)",
-    "-+123",
+    # "-+123",
     "-5+4",
-    "-(+(-(5)))",
+    # "-(+(-(5)))",
 ])
 def test_parser(expression):
     assert parse_expression(expression)[0] == eval(expression)
