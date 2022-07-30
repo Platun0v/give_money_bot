@@ -25,7 +25,7 @@ def parse_expression(value: str) -> Tuple[Optional[int], Optional[str]]:
     p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate(bytes(value, "utf-8"))
     if err:
-        return None, '\n'.join(err.decode("utf-8").split("\n")[1:2])
+        return None, '\n'.join(err.decode("utf-8").split("\n")[0:1])
     return int(float(out)), None
 
 
