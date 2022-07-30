@@ -3,8 +3,8 @@
 ###############################################
 FROM haskell:slim as haskell-base
 
-COPY ./additional_stuff/parser.hs /opt/
-WORKDIR /opt
+COPY ./additional_stuff/ /opt/parser
+WORKDIR /opt/parser
 RUN ghc parser.hs -o parser
 ###############################################
 # Base Image
@@ -42,14 +42,31 @@ RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poet
 WORKDIR $PYSETUP_PATH
 COPY poetry.lock pyproject.toml ./
 
+FROM builder-base as builder-prod
+
 RUN poetry install --no-dev
+
+FROM builder-base as builder-test
+
+RUN poetry install
+
+FROM python-base as test
+COPY --from=builder-test $PYSETUP_PATH $PYSETUP_PATH
+COPY --from=haskell-base /opt/parser/parser /test/parser
+
+COPY ./give_money_bot /test/give_money_bot/
+COPY ./tests /test/tests/
+
+WORKDIR /test
+
+CMD ["python", "-m", "pytest"]
 
 ###############################################
 # Production Image
 ###############################################
 FROM python-base as production
-COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
-COPY --from=haskell-base /opt/parser /prod/parser
+COPY --from=builder-prod $PYSETUP_PATH $PYSETUP_PATH
+COPY --from=haskell-base /opt/parser/parser /prod/parser
 
 COPY ./give_money_bot /prod/give_money_bot/
 COPY ./docker/docker-entrypoint.sh /prod/docker-entrypoint.sh

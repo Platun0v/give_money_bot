@@ -29,6 +29,7 @@ db_pool = sessionmaker(bind=engine)
 
 
 bot = Bot(token=config.TOKEN)
+
 dp = Dispatcher(storage=MemoryStorage())
 dp.message.outer_middleware(DbSessionMiddleware(db_pool))
 dp.message.middleware(UserMiddlewareMessage())

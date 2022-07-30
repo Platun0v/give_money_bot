@@ -6,12 +6,12 @@ tasks:
     cmds:
       - poetry run mypy give_money_bot  --no-strict-optional
 
-  build:
+  install:
     desc: "Install dependencies"
     cmds:
       - poetry install
 
-  build-release:
+  install-release:
     desc: "Build the release"
     cmds:
       - poetry install --no-dev
@@ -27,15 +27,21 @@ tasks:
       - poetry run isort give_money_bot
       - poetry run black --line-length=120 --target-version=py39 --skip-string-normalization give_money_bot
   
-#  dbuild:
-#    desc: "Build container"
-#    cmds:
-#      - podman build -t give-money-bot .
-#
-#  drun:
-#    desc: "Run container"
-#    cmds:
-#      - podman run --env-file .env -v ./data:/prod/data -it give-money-bot "python -m give_money_bot"
+  build-docker:
+    desc: "Build container"
+    cmds:
+      - docker build -t give-money-bot:latest --target production .
+
+  run-docker:
+    desc: "Run container"
+    cmds:
+      - docker run --env-file .env -v $(pwd)/data:/prod/data -it give-money-bot:latest "python -m give_money_bot"
+
+  test-docker:
+    desc: "Build and run container with pytest"
+    cmds:
+      - docker build -t give-money-bot:test --target test .
+      - docker run -it --rm --name give_money_bot_test give-money-bot:test
 
   migrate-up:
     desc: "Migrate database"
@@ -51,3 +57,9 @@ tasks:
     desc: "Create a new migration"
     cmds:
       - alembic revision --message="" --autogenerate
+
+  test:
+    desc: "Run test"
+    cmds:
+      - task: test-docker
+      - task: mypy

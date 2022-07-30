@@ -39,6 +39,17 @@ jobs:
           source venv/bin/activate
           task mypy
 
+  test-new:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Task
+        uses: arduino/setup-task@v1
+      - name: Test
+        shell: bash
+        run: task test
+
   build_app_image:
     runs-on: ubuntu-latest
     steps:
