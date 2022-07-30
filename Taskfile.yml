@@ -41,7 +41,7 @@ tasks:
     desc: "Build and run container with pytest"
     cmds:
       - docker build -t give-money-bot:test --target test .
-      - docker run -it --rm --name give_money_bot_test give-money-bot:test
+      - docker run -t --rm --name give_money_bot_test give-money-bot:test
 
   migrate-up:
     desc: "Migrate database"
