@@ -76,6 +76,7 @@ jobs:
           platforms: linux/amd64
           context: ./
           file: ./Dockerfile
+          target: production
           push: true
           tags: |
             ghcr.io/platun0v/give-money-bot:latest
