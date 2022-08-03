@@ -1,12 +1,11 @@
 name: Build image
 
 on:
-  push:
-    branches: [master]
-    tags:
-      - 'v*'
   workflow_run:
     workflows: [ "Test" ]
+    branches: [ master ]
+    tags:
+      - 'v*'
     types:
       - completed
 
