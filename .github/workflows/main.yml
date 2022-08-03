@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on: [push, pull_request]
 
@@ -43,43 +43,3 @@ jobs:
       - name: Test
         shell: bash
         run: task test-docker
-
-  build_app_image:
-    runs-on: ubuntu-latest
-    needs: [test-types, test-parser]
-    steps:
-
-      - name: Check Out Repo
-        uses: actions/checkout@v2
-
-      - name: set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-
-      - name: Build and push
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          platforms: linux/amd64
-          context: ./
-          file: ./Dockerfile
-          target: production
-          push: true
-          tags: |
-            ghcr.io/platun0v/give-money-bot:latest
-
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
