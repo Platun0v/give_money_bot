@@ -1,13 +1,9 @@
 name: Build image
 
 on:
-  workflow_run:
-    workflows: [ "Test" ]
+  push:
     branches: [ master ]
-    tags:
-      - 'v*'
-    types:
-      - completed
+    tags: "v*"
 
 jobs:
   build-image:
