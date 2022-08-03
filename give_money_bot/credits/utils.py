@@ -1,6 +1,7 @@
 from subprocess import PIPE, Popen
 from typing import List, Optional, Tuple
 
+import aiogram
 from aiogram import types
 from sqlalchemy.orm import Session
 
@@ -33,8 +34,8 @@ def parse_info_from_message(message: str) -> Tuple[str, str]:
     """
     Divide expression and info
 
-    :param message: str - message from user
-    :return: Tuple[str, str] - expression and info
+    :param message: Message from user
+    :return: Expression and info
     """
     digits = "0123456789()+-*/ "
 
