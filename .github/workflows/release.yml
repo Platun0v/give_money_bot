@@ -2,9 +2,13 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: false
+        default: 'latest'
 
 jobs:
-
   release:
     runs-on: ubuntu-latest
     steps:
@@ -19,4 +23,4 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             cd give_money_bot
-            ./update.sh
+            ./update.sh -v ${{ github.event.inputs.version }}

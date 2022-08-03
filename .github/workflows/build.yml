@@ -25,6 +25,7 @@ jobs:
       - name: available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
       - name: Build and push amd64, arm32v7
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
             DOCKER_IMAGE_URL: ghcr.io/platun0v/give-money-bot
             GITHUB_REF: ${{ github.ref }}
