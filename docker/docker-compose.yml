@@ -1,8 +1,7 @@
 version: '3.7'
 services:
   bot:
-    image: give-money-bot-image
-    build: ./
+    image: ghcr.io/platun0v/give-money-bot:latest
     command: "python -m give_money_bot"
     container_name: give-money-bot-image
     volumes:
