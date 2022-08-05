@@ -12,14 +12,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Pulling new containers
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
-          port: ${{ secrets.PORT }}
-          script: |
-            cd give_money_bot
-            ./update.sh ${{ github.event.inputs.version }}
+      - name: Deploy new version with hook
+        env:
+          UPDATER_KEY: ${{ secrets.UPDATE_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+        run: curl -s "https://platun0v.ru/hooks/give-money-bot?token=${UPDATER_KEY}&version=${VERSION}"
