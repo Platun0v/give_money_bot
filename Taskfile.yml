@@ -63,3 +63,36 @@ tasks:
     cmds:
       - task: test-docker
       - task: mypy
+
+  patch:
+    desc: "Update version with patch"
+    vars:
+      VERSION:
+        sh: "poetry version patch | cut -d' ' -f6"
+    cmds:
+      - git add pyproject.toml
+      - git commit -m "Bump version to {{ .VERSION }}"
+      - git tag -a v{{ .VERSION }} -m "Version {{ .VERSION }}"
+      - git push origin master --tags
+
+  minor:
+    desc: "Update version with patch"
+    vars:
+      VERSION:
+        sh: "poetry version minor | cut -d' ' -f6"
+    cmds:
+      - git add pyproject.toml
+      - git commit -m "Bump version to {{ .VERSION }}"
+      - git tag -a v{{ .VERSION }} -m "Version {{ .VERSION }}"
+      - git push origin master --tags
+
+  major:
+    desc: "Update version with patch"
+    vars:
+      VERSION:
+        sh: "poetry version major | cut -d' ' -f6"
+    cmds:
+      - git add pyproject.toml
+      - git commit -m "Bump version to {{ .VERSION }}"
+      - git tag -a v{{ .VERSION }} -m "Version {{ .VERSION }}"
+      - git push origin master --tags
