@@ -4,6 +4,7 @@ from aiogram import Router, types
 from aiogram.dispatcher.fsm.context import FSMContext
 from aiogram.dispatcher.fsm.storage.base import StorageKey
 from aiogram.exceptions import TelegramBadRequest
+from loguru import logger as log
 from sqlalchemy.orm import Session
 
 from give_money_bot import bot
@@ -11,18 +12,18 @@ from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.bot import send_main_menu
 from give_money_bot.tg_bot.keyboards import main_keyboard
-from give_money_bot.utils.log import logger
 from give_money_bot.utils.misc import CheckAdmin
 
 
 async def add_user(message: types.Message, user: User, session: Session) -> None:
     _, user_id, name = message.text.split()
-    logger.info(f"{user.name=} asked for adding user {user_id=} {name=}")
+    log.info(f"{user.name=} asked for adding user {user_id=} {name=}")
     db.add_user(session, int(user_id), name)
     await message.answer("Added user")
 
 
 async def add_show_user(message: types.Message, user: User, session: Session) -> None:
+    1 / 0
     pass
     # lst = message.text.split()
     # _, user_id, user_ids = lst[0], lst[1], lst[2:]
@@ -44,9 +45,9 @@ async def send_message_to_users(message: types.Message, session: Session, state:
             await state.set_state(None)
             await sleep(0.05)
         except TelegramBadRequest as e:
-            logger.warning(f"Cant send message to {user_.name=}")
+            log.warning(f"Cant send message to {user_.name=}")
         except Exception as e:
-            logger.error(f"{e=}")
+            log.error(f"{e=}")
 
 
 router = Router()

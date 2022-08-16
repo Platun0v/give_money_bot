@@ -3,12 +3,13 @@ from typing import Any
 import sqlalchemy
 from aiogram import Bot, Dispatcher
 from aiogram.dispatcher.fsm.storage.memory import MemoryStorage
+from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
 
+import give_money_bot.utils.log
 from give_money_bot import config
 from give_money_bot.db.base import Base
-from give_money_bot.utils.log import logger
 from give_money_bot.utils.misc import DbSessionMiddleware, UserMiddlewareCallbackQuery, UserMiddlewareMessage
 
 # import sentry_sdk
@@ -26,7 +27,6 @@ engine = sqlalchemy.create_engine(
 )
 Base.metadata.create_all(engine)
 db_pool = sessionmaker(bind=engine)
-
 
 bot = Bot(token=config.TOKEN)
 
@@ -48,16 +48,16 @@ def init_modules() -> None:
     dp.include_router(settings_router)
     dp.include_router(credits_router)
 
-    logger.info("Modules loaded")
+    log.info("Modules loaded")
 
 
 @dp.errors()
 async def on_error(update: Any, exception: Exception) -> None:
-    logger.exception(exception)
-    logger.error(exception)
+    log.exception(exception)
+    log.error(exception)
 
 
 def main() -> None:
     init_modules()
-    logger.info("Starting bot")
+    log.info("Starting bot")
     dp.run_polling(bot)

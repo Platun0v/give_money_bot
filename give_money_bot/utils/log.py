@@ -22,11 +22,25 @@ from give_money_bot.config import LOG_PATH
 #             level, record.getMessage()
 #         )
 
-logger.add(sys.stderr, backtrace=True, level="DEBUG", catch=True)
+# logger.remove(0)  By default write logs to stderr
+# logger.add(
+#     sys.stderr,
+#     backtrace=True,
+#     level="DEBUG",
+#     catch=True,
+# )
 logger.add(
     LOG_PATH + "give_money_bot.log",
     backtrace=True,
     rotation="1 MB",
     level="DEBUG",
+    catch=True,
+    filter=lambda record: record["level"].name != "ERROR",
+)
+logger.add(  # Separate file for errors
+    LOG_PATH + "give_money_bot_error.log",
+    backtrace=True,
+    rotation="1 MB",
+    level="ERROR",
     catch=True,
 )
