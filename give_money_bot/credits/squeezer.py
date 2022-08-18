@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from pprint import pformat, pprint
 from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
@@ -40,7 +39,8 @@ class Edge:
 
     def __repr__(self) -> str:
         return (
-            f"<Edge(from_id='{db.get_user(self.session, self.from_id).name}', to_id='{db.get_user(self.session, self.to_id).name}', amount='{self.amount}')>"
+            f"<Edge(from_id='{db.get_user(self.session, self.from_id).name}', "
+            f"to_id='{db.get_user(self.session, self.to_id).name}', amount='{self.amount}')>"
             if self.exist
             else ""
         )

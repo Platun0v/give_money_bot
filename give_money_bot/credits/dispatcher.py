@@ -5,7 +5,7 @@ from aiogram.dispatcher.fsm.context import FSMContext
 from loguru import logger as log
 from sqlalchemy.orm import Session
 
-from give_money_bot import bot, dp
+from give_money_bot import bot
 from give_money_bot.credits import keyboards as kb
 from give_money_bot.credits.callback import (
     AddCreditAction,
@@ -16,7 +16,7 @@ from give_money_bot.credits.callback import (
 from give_money_bot.credits.squeezer import squeeze
 from give_money_bot.credits.states import AddCreditData, ReturnCreditsData
 from give_money_bot.credits.strings import Strings
-from give_money_bot.credits.utils import get_credits_amount, get_info, parse_expression, parse_info_from_message
+from give_money_bot.credits.utils import get_credits_amount, parse_expression, parse_info_from_message
 from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
@@ -32,7 +32,7 @@ async def prc_squeeze_credits(message: Optional[types.Message], session: Session
         for edge in e.cycle:
             try:
                 await bot.send_message(edge.from_id, Strings.removed_credit_chain(e.amount, chain))
-            except Exception as e:
+            except Exception:
                 log.error(f"Cant send message to {db.get_user(session, edge.from_id).name=}")
 
 
@@ -49,10 +49,13 @@ async def read_num_from_user(message: types.Message, state: FSMContext, user: Us
         )
 
     log.info(f"{message.text=}")
-    value_str, info = parse_info_from_message(message.text)
+    value_str, info = "", ""
+    if message.text is not None:
+        value_str, info = parse_info_from_message(message.text)
+
     log.info(f"{user.name=} trying to add credit {value_str=} {info=}")
     value, err = parse_expression(value_str)
-    if value is None:
+    if err is not None:
         await message.answer(err, reply_markup=main_keyboard)
         return
     if value == 0:

@@ -1,6 +1,4 @@
-from typing import Dict, Optional, Set, Tuple
-
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
 from give_money_bot.tg_bot.strings import Strings
 

@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from give_money_bot import bot
 from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import User
-from give_money_bot.tg_bot.bot import send_main_menu
 from give_money_bot.tg_bot.keyboards import main_keyboard
 from give_money_bot.utils.misc import CheckAdmin
 
@@ -33,7 +32,10 @@ async def add_show_user(message: types.Message, user: User, session: Session) ->
 
 
 async def send_message_to_users(message: types.Message, session: Session, state: FSMContext, user: User) -> None:
-    send_message = message.text[len("/send ") :]
+    send_message = ""
+    if message.text is not None:
+        send_message = message.text[len("/send ") :]
+
     users = db.get_users(session)
     for user_ in users:
         try:
@@ -44,7 +46,7 @@ async def send_message_to_users(message: types.Message, session: Session, state:
             state.key = st_key
             await state.set_state(None)
             await sleep(0.05)
-        except TelegramBadRequest as e:
+        except TelegramBadRequest:
             log.warning(f"Cant send message to {user_.name=}")
         except Exception as e:
             log.error(f"{e=}")

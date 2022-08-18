@@ -1,6 +1,3 @@
-from enum import Enum
-
-from aiogram.dispatcher.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
 from give_money_bot.settings.callback import EditVisibilityAction, EditVisibilityCallback

@@ -47,7 +47,12 @@ async def ask_for_new_number(message: types.Message, state: FSMContext, user: Us
 
 
 async def save_new_number(message: types.Message, state: FSMContext, user: User, session: Session) -> None:
-    db.change_phone(session, user, message.text)
+    if message.text is not None:
+        db.change_phone(session, user, message.text)
+    else:
+        await message.answer(Strings.number_not_found)
+        return
+
     await state.set_state(SettingsStates.settings)
     await message.answer(Strings.saved, reply_markup=kb.settings_markup)
 

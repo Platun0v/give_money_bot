@@ -7,9 +7,9 @@ from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
 
-import give_money_bot.utils.log
 from give_money_bot import config
 from give_money_bot.db.base import Base
+from give_money_bot.utils.log import init_logger
 from give_money_bot.utils.misc import DbSessionMiddleware, UserMiddlewareCallbackQuery, UserMiddlewareMessage
 
 # import sentry_sdk
@@ -18,6 +18,7 @@ from give_money_bot.utils.misc import DbSessionMiddleware, UserMiddlewareCallbac
 #     traces_sample_rate=1.0
 # )
 
+init_logger()
 
 engine = sqlalchemy.create_engine(
     f"sqlite:///{config.DB_PATH + 'db.sqlite'}",

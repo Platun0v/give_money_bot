@@ -1,7 +1,6 @@
 from subprocess import PIPE, Popen
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
-import aiogram
 from aiogram import types
 from sqlalchemy.orm import Session
 
@@ -22,11 +21,11 @@ def get_credits_amount(from_user: int, to_user: int, session: Session) -> Tuple[
     return res_sum, user_credits
 
 
-def parse_expression(value: str) -> Tuple[Optional[int], Optional[str]]:
+def parse_expression(value: str) -> Tuple[int, None] | Tuple[int, str]:
     p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate(bytes(value, "utf-8"))
     if err:
-        return None, '\n'.join(err.decode("utf-8").split("\n")[0:1])
+        return 0, '\n'.join(err.decode("utf-8").split("\n")[0:1])
     return int(float(out)), None
 
 

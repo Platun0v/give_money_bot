@@ -4,7 +4,12 @@ tasks:
   mypy:
     desc: "Run mypy on the project"
     cmds:
-      - poetry run mypy give_money_bot  --no-strict-optional
+      - poetry run mypy give_money_bot --disable-error-code union-attr --no-strict-optional
+
+  lint:
+    desc: "Run flake8 on the project"
+    cmds:
+      - poetry run flake8 give_money_bot
 
   install:
     desc: "Install dependencies"
@@ -62,6 +67,7 @@ tasks:
     desc: "Run test"
     cmds:
       - task: test-docker
+      - task: lint
       - task: mypy
 
   patch:

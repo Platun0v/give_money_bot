@@ -15,7 +15,7 @@ class UserMiddlewareMessage(BaseMiddleware):
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
         data: Dict[str, Any],
-    ) -> None:
+    ) -> Any:
         event = cast(Message, event)
         data["user"] = db.get_user(data["session"], event.from_user.id)
         return await handler(event, data)
@@ -27,7 +27,7 @@ class UserMiddlewareCallbackQuery(BaseMiddleware):
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
         data: Dict[str, Any],
-    ) -> None:
+    ) -> Any:
         event = cast(CallbackQuery, event)
         data["user"] = db.get_user(data["session"], event.from_user.id)
         return await handler(event, data)

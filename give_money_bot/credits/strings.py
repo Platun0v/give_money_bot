@@ -40,7 +40,7 @@ ANNOUNCE_RETURN_CREDIT_MESSAGE = """
 {%- endif -%}
 """
 
-REMOVE_CREDITS_WITH_MESSAGE = """ 
+REMOVE_CREDITS_WITH_MESSAGE = """
 Была уничтожена цепочка долгов на сумму {{ amount }} руб.:
 {{ chain }}
 """

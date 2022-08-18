@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 from give_money_bot.db.models import Credit, ShowTypes, User, UserVision
 
 
+class DbException(Exception):
+    pass
+
+
 def add_entry(
     session: Session,
     to_user: int,
@@ -86,14 +90,19 @@ def return_credits(session: Session, credit_ids: typing.Union[List[int], int, Cr
         credit_ids = [credit_ids.id]
 
     for credit_id in credit_ids:
-        credit: Credit = session.query(Credit).filter(Credit.id == credit_id).first()
+        credit = session.query(Credit).filter(Credit.id == credit_id).first()
+        if credit is None:
+            raise DbException(f"Credit with id {credit_id} not found")
         credit.returned = True
         credit.return_date = datetime.datetime.utcnow()
     session.commit()
 
 
 def get_credit(session: Session, credit_id: int) -> Credit:
-    return session.query(Credit).filter(Credit.id == credit_id).first()
+    credit = session.query(Credit).filter(Credit.id == credit_id).first()
+    if credit is None:
+        raise DbException(f"Credit with id {credit_id} not found")
+    return credit
 
 
 def get_credits(session: Session) -> List[Credit]:
@@ -110,7 +119,10 @@ def add_discount(session: Session, credit: typing.Union[int, Credit], discount: 
 
 
 def get_user(session: Session, user_id: int) -> User:
-    return session.query(User).filter(User.user_id == user_id).first()
+    user = session.query(User).filter(User.user_id == user_id).first()
+    if user is None:
+        raise DbException(f"User with id {user_id} not found")
+    return user
 
 
 def get_users(session: Session, user_ids: Optional[Iterable[int]] = None) -> List[User]:
@@ -132,7 +144,10 @@ def get_user_ids_with_users(session: Session) -> Dict[int, User]:
 
 
 def get_admin(session: Session) -> User:
-    return session.query(User).filter(User.admin == True).first()
+    admin = session.query(User).filter(User.admin == True).first()
+    if admin is None:
+        raise DbException("Admin not found")
+    return admin
 
 
 def get_all_users_without_current_user(session: Session, curr_user: int) -> List[User]:
@@ -176,12 +191,15 @@ def get_user_visions(session: Session, user_id: int) -> List[UserVision]:
 
 
 def get_vision(session: Session, user_id: int, show_user_id: int) -> UserVision:
-    return (
+    vision = (
         session.query(UserVision)
         .filter(UserVision.user_id == user_id)
         .filter(UserVision.show_user_id == show_user_id)
         .first()
     )
+    if vision is None:
+        raise DbException(f"User vision with user_id {user_id} and show_user_id {show_user_id} not found")
+    return vision
 
 
 def update_user_vision(session: Session, user_id: int, show_user_id: int, show_type: ShowTypes) -> None:
