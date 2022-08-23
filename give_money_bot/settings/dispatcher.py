@@ -2,8 +2,9 @@ from math import ceil
 from typing import Dict, List, cast
 
 from aiogram import F, Router, types
-from aiogram.dispatcher.fsm.context import FSMContext
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+from loguru import logger as log
 from sqlalchemy.orm import Session
 
 from give_money_bot.db import db_connector as db
@@ -14,7 +15,7 @@ from give_money_bot.settings.states import PAGE_MAX_USERS, EditVisibilityData, E
 from give_money_bot.settings.strings import Strings
 from give_money_bot.tg_bot.bot import send_main_menu
 from give_money_bot.tg_bot.strings import Strings as tg_strings
-from give_money_bot.utils.misc import CheckUser
+from give_money_bot.utils.misc import CheckUser, get_state_data, update_state_data
 
 
 # ======================================= SETTINGS MENU =======================================
@@ -76,7 +77,7 @@ async def edit_user_visibility(message: types.Message, session: Session, state: 
         users=edit_visibility_users, users_list=users_list, page=1, pages_total=pages
     )
 
-    await state.update_data(edit_visibility=edit_visibility_data.json())
+    await update_state_data(state, SettingsStates.edit_visibility, edit_visibility_data)
     await message.answer(Strings.edit_visibility_description)
     await message.answer(
         text=Strings.edit_visibility_message(edit_visibility_data),
@@ -87,14 +88,16 @@ async def edit_user_visibility(message: types.Message, session: Session, state: 
 async def edit_user_visibility_user_click(
     call: CallbackQuery, state: FSMContext, callback_data: EditVisibilityCallback
 ) -> None:
-    state_data = await state.get_data()
-    edit_visibility_data: EditVisibilityData = EditVisibilityData.parse_raw(state_data.get("edit_visibility"))
+    edit_visibility_data = await get_state_data(state, SettingsStates.edit_visibility, EditVisibilityData)
+    if edit_visibility_data is None:
+        log.error("edit_user_visibility_user_click: edit_visibility_data is None")
+        return
 
     edit_visibility_data.users[callback_data.user_id].vision = cast(
         ShowTypes, (edit_visibility_data.users[callback_data.user_id].vision + 1) % 3
     )
 
-    await state.update_data(edit_visibility=edit_visibility_data.json())
+    await update_state_data(state, SettingsStates.edit_visibility, edit_visibility_data)
     await call.message.edit_text(
         text=Strings.edit_visibility_message(edit_visibility_data),
         reply_markup=kb.create_edit_visibility_keyboard(edit_visibility_data),
@@ -103,14 +106,16 @@ async def edit_user_visibility_user_click(
 
 
 async def edit_user_visibility_left_click(call: CallbackQuery, state: FSMContext) -> None:
-    state_data = await state.get_data()
-    edit_visibility_data: EditVisibilityData = EditVisibilityData.parse_raw(state_data.get("edit_visibility"))
+    edit_visibility_data = await get_state_data(state, SettingsStates.edit_visibility, EditVisibilityData)
+    if edit_visibility_data is None:
+        log.error("edit_user_visibility_left_click: edit_visibility_data is None")
+        return
 
     edit_visibility_data.page = edit_visibility_data.page - 1
     if edit_visibility_data.page == 0:
         edit_visibility_data.page = edit_visibility_data.pages_total
 
-    await state.update_data(edit_visibility=edit_visibility_data.json())
+    await update_state_data(state, SettingsStates.edit_visibility, edit_visibility_data)
     await call.message.edit_text(
         text=Strings.edit_visibility_message(edit_visibility_data),
         reply_markup=kb.create_edit_visibility_keyboard(edit_visibility_data),
@@ -119,14 +124,16 @@ async def edit_user_visibility_left_click(call: CallbackQuery, state: FSMContext
 
 
 async def edit_user_visibility_right_click(call: CallbackQuery, state: FSMContext) -> None:
-    state_data = await state.get_data()
-    edit_visibility_data: EditVisibilityData = EditVisibilityData.parse_raw(state_data.get("edit_visibility"))
+    edit_visibility_data = await get_state_data(state, SettingsStates.edit_visibility, EditVisibilityData)
+    if edit_visibility_data is None:
+        log.error("edit_user_visibility_right_click: edit_visibility_data is None")
+        return
 
     edit_visibility_data.page = edit_visibility_data.page + 1
     if edit_visibility_data.page > edit_visibility_data.pages_total:
         edit_visibility_data.page = 1
 
-    await state.update_data(edit_visibility=edit_visibility_data.json())
+    await update_state_data(state, SettingsStates.edit_visibility, edit_visibility_data)
     await call.message.edit_text(
         text=Strings.edit_visibility_message(edit_visibility_data),
         reply_markup=kb.create_edit_visibility_keyboard(edit_visibility_data),
@@ -136,13 +143,12 @@ async def edit_user_visibility_right_click(call: CallbackQuery, state: FSMContex
 
 async def edit_user_visibility_cancel_click(call: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(SettingsStates.settings)
-    await state.update_data(edit_visibility=None)
+    await update_state_data(state, SettingsStates.edit_visibility, None)
     await call.message.edit_text(text=Strings.cancel)
 
 
 async def edit_user_visibility_save_click(call: CallbackQuery, session: Session, state: FSMContext) -> None:
-    state_data = await state.get_data()
-    edit_visibility_data: EditVisibilityData = EditVisibilityData.parse_raw(state_data.get("edit_visibility"))
+    edit_visibility_data = await get_state_data(state, SettingsStates.edit_visibility, EditVisibilityData)
 
     for user in edit_visibility_data.users_list:
         db.update_user_vision(
@@ -153,7 +159,7 @@ async def edit_user_visibility_save_click(call: CallbackQuery, session: Session,
         )
 
     await state.set_state(SettingsStates.settings)
-    await state.update_data(edit_visibility=None)
+    await update_state_data(state, SettingsStates.edit_visibility, None)
     await call.message.edit_text(text=Strings.saved)
 
 

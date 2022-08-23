@@ -11,7 +11,7 @@ squeeze = "give_money_bot.utils.squeezer:squeeze"
 [tool.poetry.dependencies]
 python = "^3.10"
 python-dotenv = "^0.20.0"
-aiogram = "3.0.0b3"
+aiogram = "3.0.0b4"
 typing-extensions = "^4.2.0"
 aiohttp-socks = "^0.7.1"
 loguru = "^0.6.0"

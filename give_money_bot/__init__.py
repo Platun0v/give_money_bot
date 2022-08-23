@@ -2,7 +2,7 @@ from typing import Any
 
 import sqlalchemy
 from aiogram import Bot, Dispatcher
-from aiogram.dispatcher.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.memory import MemoryStorage
 from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool

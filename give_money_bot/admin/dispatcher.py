@@ -1,9 +1,9 @@
 from asyncio import sleep
 
 from aiogram import Router, types
-from aiogram.dispatcher.fsm.context import FSMContext
-from aiogram.dispatcher.fsm.storage.base import StorageKey
 from aiogram.exceptions import TelegramBadRequest
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.base import StorageKey
 from loguru import logger as log
 from sqlalchemy.orm import Session
 
@@ -22,7 +22,6 @@ async def add_user(message: types.Message, user: User, session: Session) -> None
 
 
 async def add_show_user(message: types.Message, user: User, session: Session) -> None:
-    1 / 0
     pass
     # lst = message.text.split()
     # _, user_id, user_ids = lst[0], lst[1], lst[2:]

@@ -1,5 +1,5 @@
 from aiogram import Router, types
-from aiogram.dispatcher.fsm.context import FSMContext
+from aiogram.fsm.context import FSMContext
 from loguru import logger as log
 
 from give_money_bot.db.models import User

@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from aiogram.dispatcher.fsm.state import State, StatesGroup
+from aiogram.fsm.state import State, StatesGroup
 from pydantic import BaseModel
 
 from give_money_bot.db.models import ShowTypes
@@ -11,6 +11,7 @@ class SettingsStates(StatesGroup):
     new_user = State()
     edit_number = State()
     edit_visibility = State()
+    edit_visibility_data = State()
 
 
 class EditVisibilityUser(BaseModel):
