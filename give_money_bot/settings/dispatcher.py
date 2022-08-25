@@ -168,23 +168,23 @@ router = Router()
 router.message.bind_filter(CheckUser)
 
 # ======================================= SETTINGS MENU =======================================
-router.message.register(send_settings_menu, text=tg_strings.menu_settings)
+router.message.register(send_settings_menu, F.text == tg_strings.menu_settings)
 router.message.register(
     exit_settings_menu,
     SettingsStates.settings,
-    text=Strings.menu_exit,
+    F.text == Strings.menu_exit,
 )
 
 # ======================================= ADD USER =======================================
 router.message.register(
     ask_for_new_user,
     SettingsStates.settings,
-    text=Strings.menu_add_new_user,
+    F.text == Strings.menu_add_new_user,
 )
 router.message.register(add_new_user, SettingsStates.new_user)
 
 # ======================================= EDIT USER VISIBILITY =======================================
-router.message.register(edit_user_visibility, SettingsStates.settings, text=Strings.menu_edit_visible_users)
+router.message.register(edit_user_visibility, SettingsStates.settings, F.text == Strings.menu_edit_visible_users)
 router.callback_query.register(
     edit_user_visibility_user_click,
     EditVisibilityCallback.filter(F.action == EditVisibilityAction.user),
@@ -207,7 +207,7 @@ router.callback_query.register(
 )
 
 # ======================================= EDIT NUMBER =======================================
-router.message.register(ask_for_new_number, SettingsStates.settings, text=Strings.menu_edit_number)
+router.message.register(ask_for_new_number, SettingsStates.settings, F.text == Strings.menu_edit_number)
 router.message.register(save_new_number, SettingsStates.edit_number)
 
 # ======================================= EXIT =======================================

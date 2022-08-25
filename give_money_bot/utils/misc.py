@@ -1,4 +1,4 @@
-from typing import Any, Awaitable, Callable, Dict, Optional, Type, TypeVar, Union, cast
+from typing import Any, Awaitable, Callable, Dict, Optional, Type, TypeVar, Union
 
 from aiogram import BaseMiddleware
 from aiogram.filters import BaseFilter
@@ -13,27 +13,15 @@ from sqlalchemy.orm import Session, sessionmaker
 from give_money_bot.db import db_connector as db
 
 
-class UserMiddlewareMessage(BaseMiddleware):
+class UserMiddleware(BaseMiddleware):
     async def __call__(
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
         data: Dict[str, Any],
     ) -> Any:
-        event = cast(Message, event)
-        data["user"] = db.get_user(data["session"], event.from_user.id)
-        return await handler(event, data)
-
-
-class UserMiddlewareCallbackQuery(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any],
-    ) -> Any:
-        event = cast(CallbackQuery, event)
-        data["user"] = db.get_user(data["session"], event.from_user.id)
+        if isinstance(event, (Message, CallbackQuery)):
+            data["user"] = db.get_user(data["session"], event.from_user.id)
         return await handler(event, data)
 
 

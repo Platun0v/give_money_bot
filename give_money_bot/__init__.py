@@ -8,9 +8,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
 
 from give_money_bot import config
+from give_money_bot.admin.dispatcher import router as admin_router
+from give_money_bot.credits.dispatcher import router as credits_router
 from give_money_bot.db.base import Base
+from give_money_bot.settings.dispatcher import router as settings_router
+from give_money_bot.tg_bot.bot import router as tg_bot_router
 from give_money_bot.utils.log import init_logger
-from give_money_bot.utils.misc import DbSessionMiddleware, UserMiddlewareCallbackQuery, UserMiddlewareMessage
+from give_money_bot.utils.misc import DbSessionMiddleware, UserMiddleware
 
 # import sentry_sdk
 # sentry_sdk.init(
@@ -33,17 +37,12 @@ bot = Bot(token=config.TOKEN)
 
 dp = Dispatcher(storage=MemoryStorage())
 dp.message.outer_middleware(DbSessionMiddleware(db_pool))
-dp.message.middleware(UserMiddlewareMessage())
+dp.message.middleware(UserMiddleware())
 dp.callback_query.outer_middleware(DbSessionMiddleware(db_pool))
-dp.callback_query.middleware(UserMiddlewareCallbackQuery())
+dp.callback_query.middleware(UserMiddleware())
 
 
 def init_modules() -> None:
-    from give_money_bot.admin.dispatcher import router as admin_router
-    from give_money_bot.credits.dispatcher import router as credits_router
-    from give_money_bot.settings.dispatcher import router as settings_router
-    from give_money_bot.tg_bot.bot import router as tg_bot_router
-
     dp.include_router(tg_bot_router)
     dp.include_router(admin_router)
     dp.include_router(settings_router)
@@ -54,6 +53,7 @@ def init_modules() -> None:
 
 @dp.errors()
 async def on_error(update: Any, exception: Exception) -> None:
+    await bot.send_message(chat_id=config.ADMIN_ID, text=f"Error occurred: {exception}")
     log.exception(exception)
     log.error(exception)
 

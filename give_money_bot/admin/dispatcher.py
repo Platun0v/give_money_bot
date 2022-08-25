@@ -1,13 +1,13 @@
 from asyncio import sleep
 
-from aiogram import Router, types
+from aiogram import Bot, Router, types
 from aiogram.exceptions import TelegramBadRequest
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import StorageKey
 from loguru import logger as log
 from sqlalchemy.orm import Session
 
-from give_money_bot import bot
 from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
@@ -30,7 +30,9 @@ async def add_show_user(message: types.Message, user: User, session: Session) ->
     # await message.answer("Added users for showing")
 
 
-async def send_message_to_users(message: types.Message, session: Session, state: FSMContext, user: User) -> None:
+async def send_message_to_users(
+    bot: Bot, message: types.Message, session: Session, state: FSMContext, user: User
+) -> None:
     send_message = ""
     if message.text is not None:
         send_message = message.text[len("/send ") :]
@@ -54,6 +56,6 @@ async def send_message_to_users(message: types.Message, session: Session, state:
 router = Router()
 router.message.bind_filter(CheckAdmin)
 
-router.message.register(add_user, commands=["add_user"])
-router.message.register(add_show_user, commands=["add_show_user"])
-router.message.register(send_message_to_users, commands=["send"])
+router.message.register(add_user, Command(commands="add_user"))
+router.message.register(add_show_user, Command(commands="add_show_user"))
+router.message.register(send_message_to_users, Command(commands="send"))

@@ -1,4 +1,5 @@
 from aiogram import Router, types
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from loguru import logger as log
 
@@ -21,6 +22,7 @@ async def send_main_menu(message: types.Message, user: User) -> None:
 
 
 async def prc_get_id(message: types.Message, user: User) -> None:
+    1/0
     log.info(f"{user.name=} asked for id")
     await message.answer(f"{message.from_user.id}")
 
@@ -33,6 +35,6 @@ async def send_help(message: types.Message, user: User) -> None:
 
 router = Router()
 router.message.bind_filter(CheckUser)
-router.message.register(prc_start_command, commands=["start"])
-router.message.register(prc_get_id, commands=["id"])
-router.message.register(send_help, commands=["help"])
+router.message.register(prc_start_command, Command(commands="start"))
+router.message.register(prc_get_id, Command(commands="id"))
+router.message.register(send_help, Command(commands="help"))
