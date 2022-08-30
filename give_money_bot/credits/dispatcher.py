@@ -23,7 +23,7 @@ from give_money_bot.tg_bot.strings import Strings as tg_strings
 from give_money_bot.utils.misc import CheckUser, get_state_data, update_state_data
 
 
-async def prc_squeeze_credits(bot: Bot, message: Optional[types.Message], session: Session, user: User) -> None:
+async def prc_squeeze_credits(message: Optional[types.Message], bot: Bot, session: Session, user: User) -> None:
     sqz_report = squeeze(session)
     log.info(f"Squeezed {sqz_report=}")
     for e in sqz_report:
@@ -36,7 +36,7 @@ async def prc_squeeze_credits(bot: Bot, message: Optional[types.Message], sessio
 
 
 # ======================================= ADD CREDIT =======================================
-async def read_num_from_user(bot: Bot, message: types.Message, state: FSMContext, user: User, session: Session) -> None:
+async def read_num_from_user(message: types.Message, bot: Bot, state: FSMContext, user: User, session: Session) -> None:
     add_credit_data = await get_state_data(state, CreditStates.add_credit, AddCreditData)
     if add_credit_data is not None:  # If we already have some data, cancel prev add credit
         await update_state_data(state, CreditStates.add_credit, None)
@@ -119,7 +119,7 @@ async def prc_callback_show_more_users(
 
 
 async def prc_callback_save_new_credit(
-    bot: Bot, call: types.CallbackQuery, user: User, session: Session, state: FSMContext
+    call: types.CallbackQuery, bot: Bot, user: User, session: Session, state: FSMContext
 ) -> None:
     add_credit_data = await get_state_data(state, CreditStates.add_credit, AddCreditData)
     if add_credit_data is None:
@@ -163,7 +163,7 @@ async def prc_callback_save_new_credit(
     await prc_squeeze_credits(bot=bot, session=session, message=None, user=user)
 
 
-async def prc_callback_cancel_create_credit(bot: Bot, call: types.CallbackQuery, user: User, state: FSMContext) -> None:
+async def prc_callback_cancel_create_credit(call: types.CallbackQuery, bot: Bot, user: User, state: FSMContext) -> None:
     log.info(f"{user.name=} canceling credit creation")
     await update_state_data(state, CreditStates.add_credit)
     await call.message.edit_text(Strings.CANCEL)
@@ -171,7 +171,7 @@ async def prc_callback_cancel_create_credit(bot: Bot, call: types.CallbackQuery,
 
 
 # ======================================= RETURN CREDITS =======================================
-async def prc_user_credits(bot: Bot, message: types.Message, user: User, session: Session, state: FSMContext) -> None:
+async def prc_user_credits(message: types.Message, bot: Bot, user: User, session: Session, state: FSMContext) -> None:
     user_credits = db.get_user_credits(session, message.from_user.id)
     log.info(f"{user.name=} asking for credits")
     if not user_credits:
@@ -236,7 +236,7 @@ async def prc_callback_choose_credit_for_return(
 
 
 async def prc_callback_return_credits(
-    bot: Bot, call: types.CallbackQuery, user: User, session: Session, state: FSMContext
+    call: types.CallbackQuery, bot: Bot, user: User, session: Session, state: FSMContext
 ) -> None:
     return_credits_data = await get_state_data(state, CreditStates.return_credit, ReturnCreditsData)
     if return_credits_data is None:
