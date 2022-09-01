@@ -65,6 +65,9 @@ class User(Base):
     user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
+
+    substituted_user_id = sqlalchemy.Column(sqlalchemy.Integer, default=None)
+
     phone_number = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
     note = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
     tg_alias = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")

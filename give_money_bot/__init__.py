@@ -14,7 +14,7 @@ from give_money_bot.db.base import Base
 from give_money_bot.settings.dispatcher import router as settings_router
 from give_money_bot.tg_bot.bot import router as tg_bot_router
 from give_money_bot.utils.log import init_logger
-from give_money_bot.utils.misc import DbSessionMiddleware, UserMiddleware
+from give_money_bot.utils.misc import DbSessionMiddleware, SubstituteUserMiddleware, UserMiddleware
 
 # import sentry_sdk
 # sentry_sdk.init(
@@ -36,10 +36,14 @@ db_pool = sessionmaker(bind=engine)
 bot = Bot(token=config.TOKEN)
 
 dp = Dispatcher(storage=MemoryStorage())
+
 dp.message.outer_middleware(DbSessionMiddleware(db_pool))
 dp.message.middleware(UserMiddleware())
+dp.message.middleware(SubstituteUserMiddleware())
+
 dp.callback_query.outer_middleware(DbSessionMiddleware(db_pool))
 dp.callback_query.middleware(UserMiddleware())
+dp.callback_query.middleware(SubstituteUserMiddleware())
 
 
 def init_modules() -> None:

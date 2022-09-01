@@ -11,18 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, sessionmaker
 
 from give_money_bot.db import db_connector as db
-
-
-class UserMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any],
-    ) -> Any:
-        if isinstance(event, (Message, CallbackQuery)):
-            data["user"] = db.get_user(data["session"], event.from_user.id)
-        return await handler(event, data)
+from give_money_bot.db.models import User
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -39,6 +28,34 @@ class DbSessionMiddleware(BaseMiddleware):
         with self.session_pool() as session:
             data["session"] = session
             return await handler(event, data)
+
+
+class UserMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any],
+    ) -> Any:
+        if isinstance(event, (Message, CallbackQuery)):
+            data["user"] = db.get_user(data["session"], event.from_user.id)
+        return await handler(event, data)
+
+
+class SubstituteUserMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: Dict[str, Any],
+    ) -> Any:
+        if isinstance(event, (Message, CallbackQuery)):
+            session: Session = data["session"]
+            user: User = data["user"]
+            if user.substituted_user_id is not None:
+                data["user"] = db.get_user(session, user.substituted_user_id)
+
+        return await handler(event, data)
 
 
 class CheckUser(BaseFilter):

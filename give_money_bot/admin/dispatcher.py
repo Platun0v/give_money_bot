@@ -30,6 +30,24 @@ async def add_show_user(message: types.Message, user: User, session: Session) ->
     # await message.answer("Added users for showing")
 
 
+async def substitute_user(message: types.Message, user: User, session: Session, state: FSMContext) -> None:
+    _, substitute_with_user = message.text.split()
+    substitute_user_id = int(substitute_with_user)
+
+    log.info(f"{user.name=} asked for substitute user {substitute_with_user}")
+
+    await state.clear()
+    db.substitute_user(session, message.from_user.id, substitute_user_id)
+    await message.answer(f"Substituted with {substitute_with_user}")
+
+
+async def clear_substitution(message: types.Message, user: User, session: Session, state: FSMContext) -> None:
+    log.info(f"{user.name=} asked for clearing substitution")
+    await state.clear()
+    db.clear_substitute(session, message.from_user.id)
+    await message.answer("Cleared substitution")
+
+
 async def send_message_to_users(
     bot: Bot, message: types.Message, session: Session, state: FSMContext, user: User
 ) -> None:
@@ -59,3 +77,5 @@ router.message.bind_filter(CheckAdmin)
 router.message.register(add_user, Command(commands="add_user"))
 router.message.register(add_show_user, Command(commands="add_show_user"))
 router.message.register(send_message_to_users, Command(commands="send"))
+router.message.register(substitute_user, Command(commands="substitute"))
+router.message.register(clear_substitution, Command(commands="clear_substitution"))

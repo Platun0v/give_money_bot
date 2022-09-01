@@ -22,7 +22,6 @@ async def send_main_menu(message: types.Message, user: User) -> None:
 
 
 async def prc_get_id(message: types.Message, user: User) -> None:
-    1 / 0
     log.info(f"{user.name=} asked for id")
     await message.answer(f"{message.from_user.id}")
 

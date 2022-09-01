@@ -118,8 +118,12 @@ def add_discount(session: Session, credit: typing.Union[int, Credit], discount: 
     session.commit()
 
 
-def get_user(session: Session, user_id: int) -> User:
-    user = session.query(User).filter(User.user_id == user_id).first()
+def get_user(session: Session, user_id: int | User) -> User:
+    if isinstance(user_id, User):
+        user = session.query(User).filter(User.user_id == user_id.user_id).first()
+    else:
+        user = session.query(User).filter(User.user_id == user_id).first()
+
     if user is None:
         raise DbException(f"User with id {user_id} not found")
     return user
@@ -221,4 +225,24 @@ def add_user(session: Session, user_id: int, name: str) -> User:
 
 def change_phone(session: Session, user: User, phone: str) -> None:
     user.phone_number = phone
+    session.commit()
+
+
+def substitute_user(session: Session, user: int | User, new_user_id: int) -> None:
+    if isinstance(user, int):
+        user = get_user(session, user)
+        user.substituted_user_id = new_user_id
+    if isinstance(user, User):
+        user.substituted_user_id = new_user_id
+
+    session.commit()
+
+
+def clear_substitute(session: Session, user: int | User) -> None:
+    if isinstance(user, int):
+        user = get_user(session, user)
+        user.substituted_user_id = None  # type: ignore
+    if isinstance(user, User):
+        user.substituted_user_id = None  # type: ignore
+
     session.commit()

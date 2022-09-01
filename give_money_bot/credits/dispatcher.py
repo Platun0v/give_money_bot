@@ -64,7 +64,7 @@ async def read_num_from_user(message: types.Message, bot: Bot, state: FSMContext
 
     msg = await message.answer(
         Strings.ask_for_debtors(value, info),
-        reply_markup=kb.get_keyboard_add_credit(message.from_user.id, add_credit_data, session),
+        reply_markup=kb.get_keyboard_add_credit(user.user_id, add_credit_data, session),
     )
 
     add_credit_data.message_id = msg.message_id  # We need message_id of sent message
@@ -93,7 +93,7 @@ async def prc_callback_choose_users_for_credit(
     await update_state_data(state, CreditStates.add_credit, add_credit_data)
 
     await call.message.edit_reply_markup(
-        reply_markup=kb.get_keyboard_add_credit(call.from_user.id, add_credit_data, session)
+        reply_markup=kb.get_keyboard_add_credit(user.user_id, add_credit_data, session)
     )
     await call.answer()
 
@@ -113,7 +113,7 @@ async def prc_callback_show_more_users(
     await update_state_data(state, CreditStates.add_credit, add_credit_data)
 
     await call.message.edit_reply_markup(
-        reply_markup=kb.get_keyboard_add_credit(call.from_user.id, add_credit_data, session)
+        reply_markup=kb.get_keyboard_add_credit(user.user_id, add_credit_data, session)
     )
     await call.answer()
 
@@ -143,11 +143,10 @@ async def prc_callback_save_new_credit(
         )
     )
 
-    user_id = call.from_user.id
     if add_credit_data.amount < 0:
-        db.add_entry_2(session, list(users), user_id, abs(add_credit_data.amount), add_credit_data.message)
+        db.add_entry_2(session, list(users), user.user_id, abs(add_credit_data.amount), add_credit_data.message)
     else:
-        db.add_entry(session, user_id, list(users), add_credit_data.amount, add_credit_data.message)
+        db.add_entry(session, user.user_id, list(users), add_credit_data.amount, add_credit_data.message)
 
     for user_ in users:
         try:  # Fixes not started conv with give_money_bot
@@ -167,12 +166,12 @@ async def prc_callback_cancel_create_credit(call: types.CallbackQuery, bot: Bot,
     log.info(f"{user.name=} canceling credit creation")
     await update_state_data(state, CreditStates.add_credit)
     await call.message.edit_text(Strings.CANCEL)
-    await bot.send_message(user.user_id, "Menu", reply_markup=main_keyboard)
+    await bot.send_message(call.from_user.id, "Menu", reply_markup=main_keyboard)
 
 
 # ======================================= RETURN CREDITS =======================================
 async def prc_user_credits(message: types.Message, bot: Bot, user: User, session: Session, state: FSMContext) -> None:
-    user_credits = db.get_user_credits(session, message.from_user.id)
+    user_credits = db.get_user_credits(session, user.user_id)
     log.info(f"{user.name=} asking for credits")
     if not user_credits:
         await message.answer(Strings.NO_CREDITS_DEBTOR)
@@ -185,7 +184,7 @@ async def prc_user_credits(message: types.Message, bot: Bot, user: User, session
         return_credit_data: ReturnCreditsData = ReturnCreditsData.parse_raw(return_credits_json)
         await update_state_data(state, CreditStates.return_credit)
         await bot.edit_message_text(
-            text=Strings.CANCEL, chat_id=message.chat.id, message_id=return_credit_data.message_id, reply_markup=None
+            text=Strings.CANCEL, chat_id=user.user_id, message_id=return_credit_data.message_id, reply_markup=None
         )
 
     credits_sum = 0
@@ -226,7 +225,7 @@ async def prc_callback_choose_credit_for_return(
     await update_state_data(state, CreditStates.return_credit, return_credits_data)
 
     credits_sum_by_user: Dict[int, int] = {}
-    for credit in db.get_user_credits(session, call.from_user.id):
+    for credit in db.get_user_credits(session, user.user_id):
         credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
 
     await call.message.edit_reply_markup(
@@ -255,7 +254,7 @@ async def prc_callback_return_credits(
     returned_credits_sum: Dict[int, int] = {}
 
     for user_id in return_credits_data.users:
-        amount, credits = get_credits_amount(call.from_user.id, user_id, session)
+        amount, credits = get_credits_amount(user.user_id, user_id, session)
         for credit in credits:
             returned_credits.append(credit.id)
         returned_credits_sum[user_id] = amount
@@ -265,7 +264,7 @@ async def prc_callback_return_credits(
     await call.answer(text=msg, show_alert=True)
 
     for user_id in return_credits_data.users:
-        amount, credits = get_credits_amount(call.from_user.id, user_id, session)
+        amount, credits = get_credits_amount(user.user_id, user_id, session)
         info = []
         for credit in credits:
             info.append(credit.text_info)
@@ -273,7 +272,7 @@ async def prc_callback_return_credits(
         try:
             await bot.send_message(
                 user_id,
-                Strings.announce_returned_credit(amount, db.get_user(session, call.from_user.id).name, "\n".join(info)),
+                Strings.announce_returned_credit(amount, db.get_user(session, user.user_id).name, "\n".join(info)),
                 # reply_markup=markup
             )
         except Exception:
@@ -292,7 +291,7 @@ async def prc_callback_cancel_return_credit(call: types.CallbackQuery, user: Use
 
 # ======================================= INFO =======================================
 async def prc_user_debtors(message: types.Message, user: User, session: Session) -> None:
-    credits_to_user = db.credits_to_user(session, message.from_user.id)
+    credits_to_user = db.credits_to_user(session, user.user_id)
     log.info(f"{user.name=} asking for credits to user")
     if not credits_to_user:
         await message.answer(Strings.NO_CREDITS_CREDITOR, reply_markup=main_keyboard)

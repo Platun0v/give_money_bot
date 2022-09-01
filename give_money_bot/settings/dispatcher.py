@@ -147,15 +147,15 @@ async def edit_user_visibility_cancel_click(call: CallbackQuery, state: FSMConte
     await call.message.edit_text(text=Strings.cancel)
 
 
-async def edit_user_visibility_save_click(call: CallbackQuery, session: Session, state: FSMContext) -> None:
+async def edit_user_visibility_save_click(call: CallbackQuery, user: User, session: Session, state: FSMContext) -> None:
     edit_visibility_data = await get_state_data(state, SettingsStates.edit_visibility, EditVisibilityData)
 
-    for user in edit_visibility_data.users_list:
+    for user_id in edit_visibility_data.users_list:
         db.update_user_vision(
             session,
-            user_id=call.from_user.id,
-            show_user_id=user,
-            show_type=edit_visibility_data.users[user].vision,
+            user_id=user.user_id,
+            show_user_id=user_id,
+            show_type=edit_visibility_data.users[user_id].vision,
         )
 
     await state.set_state(SettingsStates.settings)
