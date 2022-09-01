@@ -2,6 +2,7 @@ import datetime
 import typing
 from typing import Dict, Iterable, List, Optional
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from give_money_bot.db.models import Credit, ShowTypes, User, UserVision
@@ -246,3 +247,19 @@ def clear_substitute(session: Session, user: int | User) -> None:
         user.substituted_user_id = None  # type: ignore
 
     session.commit()
+
+
+def find_user_by_str(session: Session, user_to_find: str) -> Optional[User]:
+    user = session.query(User).filter(func.lower(User.name) == user_to_find).first()
+    if user is not None:
+        return user
+
+    user = session.query(User).filter(User.tg_alias == user_to_find).first()
+    if user is not None:
+        return user
+
+    user = session.query(User).filter(User.tg_name == user_to_find).first()
+    if user is not None:
+        return user
+
+    return None

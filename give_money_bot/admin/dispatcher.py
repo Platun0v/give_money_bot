@@ -9,12 +9,13 @@ from loguru import logger as log
 from sqlalchemy.orm import Session
 
 from give_money_bot.db import db_connector as db
+from give_money_bot.db.db_connector import DbException
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
 from give_money_bot.utils.misc import CheckAdmin
 
 
-async def add_user(message: types.Message, user: User, session: Session) -> None:
+async def add_user(message: types.Message, user: User, session: Session, bot: Bot) -> None:
     _, user_id, name = message.text.split()
     log.info(f"{user.name=} asked for adding user {user_id=} {name=}")
     db.add_user(session, int(user_id), name)
@@ -30,15 +31,31 @@ async def add_show_user(message: types.Message, user: User, session: Session) ->
     # await message.answer("Added users for showing")
 
 
-async def substitute_user(message: types.Message, user: User, session: Session, state: FSMContext) -> None:
-    _, substitute_with_user = message.text.split()
-    substitute_user_id = int(substitute_with_user)
+async def prc_substitute_user(message: types.Message, user: User, session: Session, state: FSMContext) -> None:
+    lst = message.text.split()
+    if len(lst) < 2:
+        await message.answer("Wrong format")
+        return
+
+    substitute_with_user = " ".join(lst[1:])
+    if substitute_with_user.isdigit():
+        substitute_user_id = int(substitute_with_user)
+        try:
+            substitute_user = db.get_user(session, substitute_user_id)
+        except DbException:
+            await message.answer("User not found")
+            return
+    else:
+        substitute_user = db.find_user_by_str(session, substitute_with_user)
+        if substitute_user is None:
+            await message.answer("User not found")
+            return
 
     log.info(f"{user.name=} asked for substitute user {substitute_with_user}")
 
     await state.clear()
-    db.substitute_user(session, message.from_user.id, substitute_user_id)
-    await message.answer(f"Substituted with {substitute_with_user}")
+    db.substitute_user(session, message.from_user.id, substitute_user.user_id)
+    await message.answer(f"Substituted with {substitute_user}")
 
 
 async def clear_substitution(message: types.Message, user: User, session: Session, state: FSMContext) -> None:
@@ -71,11 +88,22 @@ async def send_message_to_users(
             log.error(f"{e=}")
 
 
+async def bot_commands(message: types.Message, user: User, session: Session, state: FSMContext) -> None:
+    await message.answer(
+        "Commands:\n"
+        "/add_user <user_id> <name> - add user to db\n"
+        "/substitute <user_id> - substitute user with user_id\n"
+        "/clear_substitution - clear substitution\n"
+        "/send <message> - send message to all users\n"
+    )
+
+
 router = Router()
 router.message.bind_filter(CheckAdmin)
 
 router.message.register(add_user, Command(commands="add_user"))
 router.message.register(add_show_user, Command(commands="add_show_user"))
 router.message.register(send_message_to_users, Command(commands="send"))
-router.message.register(substitute_user, Command(commands="substitute"))
+router.message.register(prc_substitute_user, Command(commands="substitute"))
 router.message.register(clear_substitution, Command(commands="clear_substitution"))
+router.message.register(bot_commands, Command(commands="cmds"))
