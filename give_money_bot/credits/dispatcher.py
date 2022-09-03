@@ -9,18 +9,20 @@ from give_money_bot.credits import keyboards as kb
 from give_money_bot.credits.callback import (
     AddCreditAction,
     AddCreditCallback,
+    RemoveCreditAction,
+    RemoveCreditCallback,
     ReturnCreditsAction,
     ReturnCreditsCallback,
 )
 from give_money_bot.credits.squeezer import squeeze
-from give_money_bot.credits.states import AddCreditData, CreditStates, ReturnCreditsData
+from give_money_bot.credits.states import AddCreditData, CreditStates, RemoveCreditData, ReturnCreditsData
 from give_money_bot.credits.strings import Strings
 from give_money_bot.credits.utils import get_credits_amount, parse_expression, parse_info_from_message
 from give_money_bot.db import db_connector as db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
 from give_money_bot.tg_bot.strings import Strings as tg_strings
-from give_money_bot.utils.misc import CheckUser, get_state_data, update_state_data
+from give_money_bot.utils.misc import CheckUser, get_state_data, send_message, update_state_data
 
 
 async def prc_squeeze_credits(message: Optional[types.Message], bot: Bot, session: Session, user: User) -> None:
@@ -137,16 +139,28 @@ async def prc_callback_save_new_credit(
         await call.answer(text=Strings.FORGOT_CHOOSE)
         return
 
-    await call.message.edit_text(
-        Strings.credit_saved(
-            add_credit_data.amount, [e.name for e in db.get_users(session, users)], add_credit_data.message
-        )
-    )
-
     if add_credit_data.amount < 0:
-        db.add_entry_2(session, list(users), user.user_id, abs(add_credit_data.amount), add_credit_data.message)
+        credit_ids = db.add_entry_2(
+            session, list(users), user.user_id, abs(add_credit_data.amount), add_credit_data.message
+        )
     else:
-        db.add_entry(session, user.user_id, list(users), add_credit_data.amount, add_credit_data.message)
+        credit_ids = db.add_entry(session, user.user_id, list(users), add_credit_data.amount, add_credit_data.message)
+
+    old_rm_credit_data = await get_state_data(state, CreditStates.remove_credit, RemoveCreditData)
+    if old_rm_credit_data is not None:
+        await bot.edit_message_reply_markup(
+            chat_id=call.message.chat.id, message_id=old_rm_credit_data.message_id, reply_markup=None
+        )
+
+    rm_credit_data = RemoveCreditData(credit_ids=credit_ids, message_id=call.message.message_id)
+    await update_state_data(state, CreditStates.remove_credit, rm_credit_data)
+
+    await call.message.edit_text(
+        text=Strings.credit_saved(
+            add_credit_data.amount, [e.name for e in db.get_users(session, users)], add_credit_data.message
+        ),
+        reply_markup=kb.kb_rm_credit(),
+    )
 
     for user_ in users:
         try:  # Fixes not started conv with give_money_bot
@@ -159,6 +173,42 @@ async def prc_callback_save_new_credit(
 
     await update_state_data(state, CreditStates.add_credit)
     log.info(f"{user.name=} saved credit {add_credit_data.amount=} {users=}")
+    await prc_squeeze_credits(bot=bot, session=session, message=None, user=user)
+
+
+async def prc_callback_remove_credit(
+    call: types.CallbackQuery, bot: Bot, user: User, session: Session, state: FSMContext
+) -> None:
+    rm_credit_data = await get_state_data(state, CreditStates.remove_credit, RemoveCreditData)
+    if rm_credit_data is None:
+        log.error(f"{user.name=} trying to remove credit without data")
+        return
+    if rm_credit_data.message_id != call.message.message_id:
+        return
+
+    log.info(f"{user.name=} removing credit {rm_credit_data=}")
+
+    credits_remove = db.get_credits(session, rm_credit_data.credit_ids)
+
+    for credit in credits_remove:
+        db.add_entry(session, credit.from_id, [credit.to_id], credit.amount, "Cancel credit")
+
+        if call.from_user.id != credit.to_id:
+            await send_message(
+                bot,
+                credit.to_id,
+                Strings.announce_cancel_new_credit(-credit.amount, credit.debtor.name, credit.text_info),
+            )
+        if call.from_user.id != credit.from_id:
+            await send_message(
+                bot,
+                credit.from_id,
+                Strings.announce_cancel_new_credit(credit.amount, credit.creditor.name, credit.text_info),
+            )
+
+    await call.message.edit_text(text=Strings.CANCELED_ADD_CREDIT)
+    await update_state_data(state, CreditStates.remove_credit)
+
     await prc_squeeze_credits(bot=bot, session=session, message=None, user=user)
 
 
@@ -330,6 +380,9 @@ router.callback_query.register(
 router.callback_query.register(prc_callback_save_new_credit, AddCreditCallback.filter(F.action == AddCreditAction.save))
 router.callback_query.register(
     prc_callback_cancel_create_credit, AddCreditCallback.filter(F.action == AddCreditAction.cancel)
+)
+router.callback_query.register(
+    prc_callback_remove_credit, RemoveCreditCallback.filter(F.action == RemoveCreditAction.cancel)
 )
 
 # ======================================= RETURN CREDITS =======================================

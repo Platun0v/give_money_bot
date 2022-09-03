@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from give_money_bot.credits.callback import (
     AddCreditAction,
     AddCreditCallback,
+    RemoveCreditAction,
+    RemoveCreditCallback,
     ReturnCreditsAction,
     ReturnCreditsCallback,
 )
@@ -105,4 +107,15 @@ def get_keyboard_add_credit(for_user_id: int, add_credit_data: AddCreditData, se
             )
         ]
     )
+    return InlineKeyboardMarkup(inline_keyboard=markup)
+
+
+def kb_rm_credit() -> InlineKeyboardMarkup:
+    markup = [
+        [
+            InlineKeyboardButton(
+                text=Strings.CANCEL, callback_data=RemoveCreditCallback(action=RemoveCreditAction.cancel).pack()
+            )
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=markup)

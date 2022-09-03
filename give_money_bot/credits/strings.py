@@ -33,6 +33,16 @@ ANNOUNCE_NEW_CREDIT_MESSAGE = """
 {{ info }}
 """
 
+ANNOUNCE_CANCEL_NEW_CREDIT_MESSAGE = """
+Долг отменен:
+{% if value < 0 -%}
+Тебе должен {{ value | abs }} руб.: {{ username }}
+{%- else -%}
+Ты должен {{ value }} руб. ему: {{ username }}
+{%- endif %}
+{{ info }}
+"""
+
 ANNOUNCE_RETURN_CREDIT_MESSAGE = """
 Тебе {{ username }} вернул {{ value }} руб.
 {%- if info -%}
@@ -97,6 +107,7 @@ class Strings:
     SHOW_MORE_USERS = "Показать еще"
     CANCEL_SHOW_MORE_USERS = "Скрыть"
     SAVE = "Сохранить"
+    CANCELED_ADD_CREDIT = "Добавление долга отменено"
 
     NO_CREDITS_CREDITOR = "Тебе никто не должен. Можешь спать спокойно"
     NO_CREDITS_DEBTOR = "Ты никому не должен. Свободен"
@@ -135,6 +146,18 @@ class Strings:
             info: информация о долге
         """
         return Template(ANNOUNCE_NEW_CREDIT_MESSAGE).render(value=value, username=username, info=info)
+
+    @staticmethod
+    def announce_cancel_new_credit(value: int, username: str, info: str) -> str:
+        """
+        Создает сообщение, которое сообщает пользователю о новом долге для него
+
+        Parameters:
+            value: сумма долга
+            username: имя пользователя
+            info: информация о долге
+        """
+        return Template(ANNOUNCE_CANCEL_NEW_CREDIT_MESSAGE).render(value=value, username=username, info=info)
 
     @staticmethod
     def announce_returned_credit(value: int, username: str, info: str) -> str:

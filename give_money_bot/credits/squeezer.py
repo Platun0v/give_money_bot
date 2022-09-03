@@ -109,7 +109,7 @@ class SqueezeReport:
 def squeeze(session: Session) -> List[SqueezeReport]:
     report: List[SqueezeReport] = []
     while True:
-        g = Graph(session, db.get_credits(session))
+        g = Graph(session, db.get_actual_credits(session))
         # pprint(g.graph)
         c = g.find_cycle()
         if c is None:

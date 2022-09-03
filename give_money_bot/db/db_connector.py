@@ -18,18 +18,20 @@ def add_entry(
     from_users: List[int],
     amount: int,
     additional_info: str = "",
-) -> None:
+) -> List[int]:
+    credits = []
     for from_user in from_users:
-        session.add(
-            Credit(
-                to_id=to_user,
-                from_id=from_user,
-                amount=amount,
-                text_info=additional_info,
-                discount=0,
-            )
+        credit = Credit(
+            to_id=to_user,
+            from_id=from_user,
+            amount=amount,
+            text_info=additional_info,
+            discount=0,
         )
+        session.add(credit)
+        credits.append(credit)
     session.commit()
+    return [x.id for x in credits]
 
 
 def add_entry_2(
@@ -38,18 +40,20 @@ def add_entry_2(
     from_user: int,
     amount: int,
     additional_info: str = "",
-) -> None:
+) -> List[int]:
+    credits = []
     for to_user in to_users:
-        session.add(
-            Credit(
-                to_id=to_user,
-                from_id=from_user,
-                amount=amount,
-                text_info=additional_info,
-                discount=0,
-            )
+        credit = Credit(
+            to_id=to_user,
+            from_id=from_user,
+            amount=amount,
+            text_info=additional_info,
+            discount=0,
         )
+        session.add(credit)
+        credits.append(credit)
     session.commit()
+    return [x.id for x in credits]
 
 
 def get_user_credits(session: Session, user: int) -> List[Credit]:
@@ -106,8 +110,17 @@ def get_credit(session: Session, credit_id: int) -> Credit:
     return credit
 
 
-def get_credits(session: Session) -> List[Credit]:
+def get_actual_credits(session: Session) -> List[Credit]:
     return session.query(Credit).filter(Credit.returned == False).all()
+
+
+def get_credits(session: Session, credit_ids: typing.Union[List[int], int, Credit]) -> List[Credit]:
+    if isinstance(credit_ids, int):
+        credit_ids = [credit_ids]
+    if isinstance(credit_ids, Credit):
+        credit_ids = [credit_ids.id]
+
+    return session.query(Credit).filter(Credit.id.in_(credit_ids)).all()
 
 
 def add_discount(session: Session, credit: typing.Union[int, Credit], discount: int) -> None:

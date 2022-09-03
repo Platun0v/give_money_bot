@@ -15,6 +15,14 @@ class AddCreditCallback(CallbackData, prefix="addcrd"):
     user_id: int = 0
 
 
+class RemoveCreditAction(str, Enum):
+    cancel = "cncl"
+
+
+class RemoveCreditCallback(CallbackData, prefix="rmcrd"):
+    action: RemoveCreditAction
+
+
 class ReturnCreditsAction(str, Enum):
     save = "save"
     cancel = "cncl"
