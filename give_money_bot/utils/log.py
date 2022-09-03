@@ -1,9 +1,6 @@
-import logging
-
 from loguru import logger
 
 from give_money_bot.config import LOG_PATH
-
 
 # class InterceptHandler(logging.Handler):
 #     def emit(self, record):  # type: ignore

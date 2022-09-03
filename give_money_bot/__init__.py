@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Tuple
 
 import sqlalchemy
 from aiogram import Bot, Dispatcher
@@ -38,7 +38,7 @@ def init_db() -> sessionmaker:
     return db_pool
 
 
-def init_bot(db_pool: sessionmaker) -> (Bot, Dispatcher):
+def init_bot(db_pool: sessionmaker) -> Tuple[Bot, Dispatcher]:
     bot = Bot(token=config.TOKEN)
 
     dp = Dispatcher(storage=MemoryStorage())
