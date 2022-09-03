@@ -24,29 +24,39 @@ from give_money_bot.utils.misc import DbSessionMiddleware, SubstituteUserMiddlew
 
 init_logger()
 
-engine = sqlalchemy.create_engine(
-    f"sqlite:///{config.DB_PATH + 'db.sqlite'}",
-    echo=False,
-    connect_args={"check_same_thread": False},
-    poolclass=SingletonThreadPool,
-)
-Base.metadata.create_all(engine)
-db_pool = sessionmaker(bind=engine)
 
-bot = Bot(token=config.TOKEN)
+def init_db() -> sessionmaker:
+    engine = sqlalchemy.create_engine(
+        f"sqlite:///{config.DB_PATH + 'db.sqlite'}",
+        echo=False,
+        # connect_args={"check_same_thread": False},
+        poolclass=SingletonThreadPool,
+    )
 
-dp = Dispatcher(storage=MemoryStorage())
-
-dp.message.outer_middleware(DbSessionMiddleware(db_pool))
-dp.message.middleware(UserMiddleware())
-dp.message.middleware(SubstituteUserMiddleware())
-
-dp.callback_query.outer_middleware(DbSessionMiddleware(db_pool))
-dp.callback_query.middleware(UserMiddleware())
-dp.callback_query.middleware(SubstituteUserMiddleware())
+    Base.metadata.create_all(engine)
+    db_pool = sessionmaker(bind=engine, future=True)
+    return db_pool
 
 
-def init_modules() -> None:
+def init_bot(db_pool: sessionmaker) -> (Bot, Dispatcher):
+    bot = Bot(token=config.TOKEN)
+
+    dp = Dispatcher(storage=MemoryStorage())
+
+    dp.message.outer_middleware(DbSessionMiddleware(db_pool))
+    dp.message.middleware(UserMiddleware())
+    dp.message.middleware(SubstituteUserMiddleware())
+
+    dp.callback_query.outer_middleware(DbSessionMiddleware(db_pool))
+    dp.callback_query.middleware(UserMiddleware())
+    dp.callback_query.middleware(SubstituteUserMiddleware())
+
+    init_modules(dp)
+
+    return bot, dp
+
+
+def init_modules(dp: Dispatcher) -> None:
     dp.include_router(tg_bot_router)
     dp.include_router(admin_router)
     dp.include_router(settings_router)
@@ -55,14 +65,16 @@ def init_modules() -> None:
     log.info("Modules loaded")
 
 
-@dp.errors()
-async def on_error(update: Any, exception: Exception) -> None:
+async def on_error(update: Any, exception: Exception, bot: Bot) -> None:
     await bot.send_message(chat_id=config.ADMIN_ID, text=f"Error occurred: {exception}")
     log.exception(exception)
     log.error(exception)
 
 
 def main() -> None:
-    init_modules()
+    db_pool = init_db()
+    bot, dp = init_bot(db_pool)
+    dp.errors.register(on_error)
+
     log.info("Starting bot")
     dp.run_polling(bot)

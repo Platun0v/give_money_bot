@@ -1,3 +1,4 @@
+import time
 from asyncio import sleep
 
 from aiogram import Bot, Router, types
@@ -46,10 +47,11 @@ async def prc_substitute_user(message: types.Message, user: User, session: Sessi
             await message.answer("User not found")
             return
     else:
-        substitute_user = db.find_user_by_str(session, substitute_with_user)
-        if substitute_user is None:
+        substitute_user_none = db.find_user_by_str(session, substitute_with_user)
+        if substitute_user_none is None:
             await message.answer("User not found")
             return
+        substitute_user = substitute_user_none
 
     log.info(f"{user.name=} asked for substitute user {substitute_with_user}")
 
