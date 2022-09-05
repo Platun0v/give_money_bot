@@ -93,7 +93,7 @@ def main() -> None:
 
     loop = asyncio.get_event_loop()
     loop.create_task(dp.start_polling(bot))
-    loop.create_task(_run_app(app))
+    loop.create_task(_run_app(app, port=config.PROMETHEUS_PORT))
 
     log.info("Starting bot")
     loop.run_forever()
