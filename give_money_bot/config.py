@@ -16,3 +16,5 @@ if TOKEN == DEFAULT_TOKEN:
     log.warning("Using default token. Bot wont work!")
 
 PROXY = "socks5://127.0.0.1:9050"
+
+PROMETHEUS_PORT = os.environ.get("PROMETHEUS_PORT", 9121)
