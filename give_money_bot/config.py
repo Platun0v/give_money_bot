@@ -17,4 +17,4 @@ if TOKEN == DEFAULT_TOKEN:
 
 PROXY = "socks5://127.0.0.1:9050"
 
-PROMETHEUS_PORT = os.environ.get("PROMETHEUS_PORT", 9121)
+PROMETHEUS_PORT = int(os.environ.get("PROMETHEUS_PORT", 9121))
