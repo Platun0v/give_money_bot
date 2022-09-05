@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "give_money_bot"
-version = "1.2.0"
+version = "1.2.1"
 description = ""
 authors = ["Platun0v <me@platun0v.ru>"]
 
