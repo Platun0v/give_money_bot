@@ -33,12 +33,12 @@ def init_db() -> sessionmaker:
     engine = sqlalchemy.create_engine(
         f"sqlite:///{config.DB_PATH + 'db.sqlite'}",
         echo=False,
-        # connect_args={"check_same_thread": False},
+        connect_args={"check_same_thread": False},
         poolclass=SingletonThreadPool,
     )
 
     Base.metadata.create_all(engine)
-    db_pool = sessionmaker(bind=engine, future=True)
+    db_pool = sessionmaker(bind=engine)
     return db_pool
 
 
