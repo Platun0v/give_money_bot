@@ -1,6 +1,6 @@
 from loguru import logger
 
-from give_money_bot.config import LOG_PATH
+from give_money_bot.config import settings
 
 # class InterceptHandler(logging.Handler):
 #     def emit(self, record):  # type: ignore
@@ -29,7 +29,7 @@ def init_logger() -> None:
     #     catch=True,
     # )
     logger.add(
-        LOG_PATH + "give_money_bot.log",
+        settings.log_path + "give_money_bot.log",  # TODO: use union of paths
         backtrace=True,
         rotation="1 MB",
         level="DEBUG",
@@ -37,7 +37,7 @@ def init_logger() -> None:
         filter=lambda record: record["level"].name != "ERROR",
     )
     logger.add(  # Separate file for errors
-        LOG_PATH + "give_money_bot_error.log",
+        settings.log_path + "give_money_bot_error.log",
         backtrace=True,
         rotation="1 MB",
         level="ERROR",

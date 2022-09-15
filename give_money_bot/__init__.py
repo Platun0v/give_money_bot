@@ -10,10 +10,10 @@ from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
 
-from give_money_bot import config
+from give_money_bot.config import settings
 from give_money_bot.admin.dispatcher import router as admin_router
 from give_money_bot.credits.dispatcher import router as credits_router
-from give_money_bot.db.base import Base
+# from give_money_bot.db.base import Base
 from give_money_bot.settings.dispatcher import router as settings_router
 from give_money_bot.tg_bot.bot import router as tg_bot_router
 from give_money_bot.utils.log import init_logger
@@ -31,19 +31,18 @@ init_logger()
 
 def init_db() -> sessionmaker:
     engine = sqlalchemy.create_engine(
-        f"sqlite:///{config.DB_PATH + 'db.sqlite'}",
+        f"sqlite:///{settings.db_path + 'db.sqlite'}",
         echo=False,
         connect_args={"check_same_thread": False},
         poolclass=SingletonThreadPool,
     )
 
-    Base.metadata.create_all(engine)
     db_pool = sessionmaker(bind=engine)
     return db_pool
 
 
 def init_bot(db_pool: sessionmaker) -> Tuple[Bot, Dispatcher]:
-    bot = Bot(token=config.TOKEN)
+    bot = Bot(token=settings.telegram_token)
 
     dp = Dispatcher(storage=MemoryStorage())
 
@@ -72,7 +71,7 @@ def init_modules(dp: Dispatcher) -> None:
 
 
 async def on_error(update: Any, exception: Exception, bot: Bot) -> None:
-    await bot.send_message(chat_id=config.ADMIN_ID, text=f"Error occurred: {exception}")
+    await bot.send_message(chat_id=settings.admin_id, text=f"Error occurred: {exception}")
     log.exception(exception)
     log.error(exception)
 
@@ -93,7 +92,7 @@ def main() -> None:
 
     loop = asyncio.get_event_loop()
     loop.create_task(dp.start_polling(bot))
-    loop.create_task(_run_app(app, port=config.PROMETHEUS_PORT))
+    loop.create_task(_run_app(app, port=settings.prometheus_port))
 
     log.info("Starting bot")
     loop.run_forever()
