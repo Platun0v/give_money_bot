@@ -1,6 +1,7 @@
 from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.methods import SendMessage
 from loguru import logger as log
 
 from give_money_bot.db.models import User
@@ -9,16 +10,17 @@ from give_money_bot.tg_bot.strings import Strings
 from give_money_bot.utils.misc import CheckUser
 
 
-async def prc_start_command(message: types.Message, user: User, state: FSMContext) -> None:
+async def prc_start_command(message: types.Message, user: User, state: FSMContext) -> SendMessage:
     log.info(f"{user.name=} started")
     await state.clear()
     await message.answer(Strings.HELLO_MESSAGE)
     await send_help(message, user)
-    await send_main_menu(message, user)
+    return await send_main_menu(message, user)
 
 
-async def send_main_menu(message: types.Message, user: User) -> None:
-    await message.answer(Strings.MAIN_MENU, reply_markup=kb.main_keyboard)
+async def send_main_menu(message: types.Message, user: User) -> SendMessage:
+    return SendMessage(chat_id=message.chat.id, text=Strings.MAIN_MENU, reply_markup=kb.main_keyboard)
+    # await message.answer(Strings.MAIN_MENU, reply_markup=kb.main_keyboard)
 
 
 async def prc_get_id(message: types.Message, user: User) -> None:

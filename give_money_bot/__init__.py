@@ -4,15 +4,11 @@ import sentry_sdk
 import sqlalchemy
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
-from aiogram.webhook.aiohttp_server import (
-    SimpleRequestHandler,
-    setup_application,
-
-)
 
 from give_money_bot.admin.dispatcher import router as admin_router
 from give_money_bot.config import cfg
@@ -79,15 +75,21 @@ async def on_error(update: Any, exception: Exception, bot: Bot) -> None:
     log.error(exception)
 
 
-def init_web_server() -> web.Application:
+def init_web_server(bot: Bot, dp: Dispatcher) -> web.Application:
     app = web.Application()
     app.add_routes([web.get('/metrics', metrics)])
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=cfg.bot_url_path)
 
     return app
 
 
-async def on_startup(dispatcher: Dispatcher, bot: Bot):
-    await bot.set_webhook(f"{cfg.bot_url}{cfg.bot_url_path}")
+# async def on_startup(dispatcher: Dispatcher, bot: Bot) -> None:
+#     await bot.set_webhook(f"{cfg.bot_url}{cfg.bot_url_path}")
+
+
+async def on_startup(dispatcher: Dispatcher, bot: Bot) -> None:
+    await bot.delete_webhook()
+    print(await bot.get_webhook_info())
 
 
 def main() -> None:
@@ -97,18 +99,16 @@ def main() -> None:
     db_pool = init_db()
     bot, dp = init_bot(db_pool)
     dp.errors.register(on_error)
-    dp.startup.register(on_startup)
-
-    app = init_web_server()
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=cfg.bot_url_path)
-
-    setup_application(app, dp, bot=bot)
-
-    # loop = asyncio.get_event_loop()
-    # loop.create_task(dp.start_polling(bot))
-    # loop.create_task(_run_app(app, port=cfg.prometheus_port))
 
     log.info("Starting bot")
-    # loop.run_forever()
-    web.run_app(app, host=cfg.web_server_host, port=cfg.web_server_port)
+    if cfg.environment == "prod":
+        dp.startup.register(on_startup)
+        app = init_web_server(bot, dp)
+        setup_application(app, dp, bot=bot)
+        web.run_app(app, host=cfg.web_server_host, port=cfg.web_server_port)
+    elif cfg.environment == "dev":
+        dp.run_polling(bot)
+    else:
+        raise ValueError("Unknown environment")
+
     log.info("Bot stopped")

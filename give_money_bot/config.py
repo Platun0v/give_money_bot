@@ -22,14 +22,18 @@ class Settings(BaseSettings, env_file=".env"):
     db_path: str = "./"
     admin_id: str = "447411595"  # @platun0v
     proxy: str = "socks5://127.0.0.1:9050"
-    prometheus_port: int = 9121
+
     environment: str = "dev"
+
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 1.0
+
     web_server_port: int = 9121
     web_server_host: str = "0.0.0.0"
     bot_url: str = "https://platun0v.ru"
     bot_url_path: str = "/give_money_bot"
+
+    prometheus_port: int = web_server_port
 
 
 cfg = Settings()

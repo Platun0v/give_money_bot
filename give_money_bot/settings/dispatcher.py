@@ -3,6 +3,7 @@ from typing import Dict, List, cast
 
 from aiogram import F, Router, types
 from aiogram.fsm.context import FSMContext
+from aiogram.methods import SendMessage
 from aiogram.types import CallbackQuery
 from loguru import logger as log
 from sqlalchemy.orm import Session
@@ -25,9 +26,9 @@ async def send_settings_menu(message: types.Message, state: FSMContext, user: Us
     await message.answer(Strings.menu_settings_answer, reply_markup=kb.settings_markup)
 
 
-async def exit_settings_menu(message: types.Message, state: FSMContext, user: User) -> None:
+async def exit_settings_menu(message: types.Message, state: FSMContext, user: User) -> SendMessage:
     await state.clear()
-    await send_main_menu(message, user)
+    return await send_main_menu(message, user)
 
 
 # ======================================= ADD USER =======================================
