@@ -3,13 +3,13 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from give_money_bot.config import settings
+from give_money_bot.config import cfg
 from give_money_bot.db import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", f"sqlite:///{settings.db_path}/db.sqlite")
+config.set_main_option("sqlalchemy.url", f"sqlite:///{cfg.db_path}/db.sqlite")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

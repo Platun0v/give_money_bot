@@ -1,11 +1,5 @@
-# import os
-
-# from dotenv import load_dotenv
 from loguru import logger as log
 from pydantic import BaseSettings
-# from pydantic import FilePath
-
-# load_dotenv()
 
 DEFAULT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 
@@ -29,9 +23,12 @@ class Settings(BaseSettings, env_file=".env"):
     admin_id: str = "447411595"  # @platun0v
     proxy: str = "socks5://127.0.0.1:9050"
     prometheus_port: int = 9121
+    environment: str = "dev"
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 1.0
 
 
-settings = Settings()
+cfg = Settings()
 
-if settings.telegram_token == DEFAULT_TOKEN:
+if cfg.telegram_token == DEFAULT_TOKEN:
     log.warning("Using default token. Bot wont work!")
