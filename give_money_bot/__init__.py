@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any, Tuple
 
 import sentry_sdk
@@ -6,10 +5,14 @@ import sqlalchemy
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiohttp import web
-from aiohttp.web import _run_app
 from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
+from aiogram.webhook.aiohttp_server import (
+    SimpleRequestHandler,
+    setup_application,
+
+)
 
 from give_money_bot.admin.dispatcher import router as admin_router
 from give_money_bot.config import cfg
@@ -83,6 +86,10 @@ def init_web_server() -> web.Application:
     return app
 
 
+async def on_startup(dispatcher: Dispatcher, bot: Bot):
+    await bot.set_webhook(f"{cfg.bot_url}{cfg.bot_url_path}")
+
+
 def main() -> None:
     init_sentry()
     init_logger()
@@ -90,13 +97,18 @@ def main() -> None:
     db_pool = init_db()
     bot, dp = init_bot(db_pool)
     dp.errors.register(on_error)
+    dp.startup.register(on_startup)
 
     app = init_web_server()
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=cfg.bot_url_path)
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(dp.start_polling(bot))
-    loop.create_task(_run_app(app, port=cfg.prometheus_port))
+    setup_application(app, dp, bot=bot)
+
+    # loop = asyncio.get_event_loop()
+    # loop.create_task(dp.start_polling(bot))
+    # loop.create_task(_run_app(app, port=cfg.prometheus_port))
 
     log.info("Starting bot")
-    loop.run_forever()
+    # loop.run_forever()
+    web.run_app(app, host=cfg.web_server_host, port=cfg.web_server_port)
     log.info("Bot stopped")

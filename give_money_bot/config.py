@@ -26,6 +26,10 @@ class Settings(BaseSettings, env_file=".env"):
     environment: str = "dev"
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 1.0
+    web_server_port: int = 9121
+    web_server_host: str = "0.0.0.0"
+    bot_url: str = "https://platun0v.ru"
+    bot_url_path: str = "/give_money_bot"
 
 
 cfg = Settings()
