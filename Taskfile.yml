@@ -70,35 +70,55 @@ tasks:
       - task: lint
       - task: mypy
 
+  update-version:
+    desc: "Update version"
+    vars:
+      OLD_VERSION: '{{ .OLD_VERSION }}'
+      VERSION: '{{ .VERSION }}'
+    cmds:
+      - echo "Old version {{ .OLD_VERSION }}"
+      - echo "New version {{ .VERSION }}"
+      - sed -i "s/{{ .OLD_VERSION }}/{{ .VERSION }}/g" give_money_bot/__init__.py
+      - git add pyproject.toml give_money_bot/__init__.py
+      - git commit -m "Bump version to {{ .VERSION }}"
+      - git tag -a v{{ .VERSION }} -m "Version {{ .VERSION }}"
+      - git push origin master --tags
+
   patch:
     desc: "Update version with patch"
     vars:
+      OLD_VERSION:
+        sh: "poetry version | cut -d' ' -f2"
       VERSION:
         sh: "poetry version patch | cut -d' ' -f6"
     cmds:
-      - git add pyproject.toml
-      - git commit -m "Bump version to {{ .VERSION }}"
-      - git tag -a v{{ .VERSION }} -m "Version {{ .VERSION }}"
-      - git push origin master --tags
+      - task: update-version
+        vars:
+          VERSION: "{{.VERSION}}"
+          OLD_VERSION: "{{.OLD_VERSION}}"
 
   minor:
-    desc: "Update version with patch"
+    desc: "Update version with minor"
     vars:
+      OLD_VERSION:
+        sh: "poetry version | cut -d' ' -f2"
       VERSION:
         sh: "poetry version minor | cut -d' ' -f6"
     cmds:
-      - git add pyproject.toml
-      - git commit -m "Bump version to {{ .VERSION }}"
-      - git tag -a v{{ .VERSION }} -m "Version {{ .VERSION }}"
-      - git push origin master --tags
+      - task: update-version
+        vars:
+          VERSION: "{{.VERSION}}"
+          OLD_VERSION: "{{.OLD_VERSION}}"
 
   major:
-    desc: "Update version with patch"
+    desc: "Update version with major"
     vars:
+      OLD_VERSION:
+        sh: "poetry version | cut -d' ' -f2"
       VERSION:
         sh: "poetry version major | cut -d' ' -f6"
     cmds:
-      - git add pyproject.toml
-      - git commit -m "Bump version to {{ .VERSION }}"
-      - git tag -a v{{ .VERSION }} -m "Version {{ .VERSION }}"
-      - git push origin master --tags
+      - task: update-version
+        vars:
+          VERSION: "{{.VERSION}}"
+          OLD_VERSION: "{{.OLD_VERSION}}"

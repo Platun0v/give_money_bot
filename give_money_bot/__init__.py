@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Tuple
 
 import sentry_sdk
@@ -6,6 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
+from aiohttp.web import _run_app
 from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
@@ -18,6 +20,8 @@ from give_money_bot.tg_bot.bot import router as tg_bot_router
 from give_money_bot.utils.log import init_logger
 from give_money_bot.utils.misc import DbSessionMiddleware, SubstituteUserMiddleware, UserMiddleware
 from give_money_bot.utils.prometheus_middleware import PrometheusMiddleware, metrics
+
+__version__ = "1.3.0"
 
 
 def init_sentry() -> None:
@@ -75,24 +79,33 @@ async def on_error(update: Any, exception: Exception, bot: Bot) -> None:
     log.error(exception)
 
 
-def init_web_server(bot: Bot, dp: Dispatcher) -> web.Application:
+async def version(request: web.Request) -> web.Response:
+    return web.json_response({"version": __version__})
+
+
+async def health(request: web.Request) -> web.Response:
+    return web.json_response({"status": "ok"})
+
+
+def init_web_server() -> web.Application:
     app = web.Application()
-    app.add_routes([web.get('/metrics', metrics)])
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=cfg.bot_url_path)
+    app.add_routes(
+        [
+            web.get('/metrics', metrics),
+            web.get(f"{cfg.bot_url_path}/version", version),
+            web.get(f"{cfg.bot_url_path}/health", health),
+        ]
+    )
 
     return app
 
 
-# async def on_startup(dispatcher: Dispatcher, bot: Bot) -> None:
-#     await bot.set_webhook(f"{cfg.bot_url}{cfg.bot_url_path}")
-
-
 async def on_startup(dispatcher: Dispatcher, bot: Bot) -> None:
-    await bot.delete_webhook()
-    print(await bot.get_webhook_info())
+    await bot.set_webhook(f"{cfg.bot_url}{cfg.bot_url_path}")
 
 
 def main() -> None:
+
     init_sentry()
     init_logger()
 
@@ -100,14 +113,19 @@ def main() -> None:
     bot, dp = init_bot(db_pool)
     dp.errors.register(on_error)
 
+    app = init_web_server()
+
     log.info("Starting bot")
     if cfg.environment == "prod":
         dp.startup.register(on_startup)
-        app = init_web_server(bot, dp)
+        SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=cfg.bot_url_path)
         setup_application(app, dp, bot=bot)
         web.run_app(app, host=cfg.web_server_host, port=cfg.web_server_port)
     elif cfg.environment == "dev":
-        dp.run_polling(bot)
+        loop = asyncio.get_event_loop()
+        loop.create_task(dp.start_polling(bot))
+        loop.create_task(_run_app(app, host=cfg.web_server_host, port=cfg.web_server_port))
+        loop.run_forever()
     else:
         raise ValueError("Unknown environment")
 
