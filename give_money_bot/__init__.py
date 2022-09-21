@@ -21,7 +21,7 @@ from give_money_bot.utils.log import init_logger
 from give_money_bot.utils.misc import DbSessionMiddleware, SubstituteUserMiddleware, UserMiddleware
 from give_money_bot.utils.prometheus_middleware import PrometheusMiddleware, metrics
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 
 
 def init_sentry() -> None:
