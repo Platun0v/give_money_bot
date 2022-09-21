@@ -16,25 +16,29 @@ class Credit(Base):
         unique=True,
         primary_key=True,
         autoincrement=True,
+        index=True,
     )
     to_id = sqlalchemy.Column(
         sqlalchemy.Integer,
         sqlalchemy.ForeignKey("users.user_id", name="fk_creditor_id"),
         nullable=False,
+        index=True,
     )  # Кому должны
     creditor = relationship("User", foreign_keys="Credit.to_id")
     from_id = sqlalchemy.Column(
         sqlalchemy.Integer,
         sqlalchemy.ForeignKey("users.user_id", name="fk_debtor_id"),
         nullable=False,
+        index=True,
     )  # Кто должен
     debtor = relationship("User", foreign_keys="Credit.from_id")
+
     amount = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     discount = sqlalchemy.Column(sqlalchemy.Integer, default=0)
 
     date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.utcnow)
     text_info = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
-    returned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
+    returned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False, index=True)
     return_date = sqlalchemy.Column(sqlalchemy.DateTime)
 
     # def get_date_str(self) -> str:
@@ -62,7 +66,7 @@ class Credit(Base):
 
 class User(Base):
     __tablename__ = "users"
-    user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True)
+    user_id = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, unique=True, primary_key=True, index=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False, default=False)
 
@@ -70,7 +74,7 @@ class User(Base):
 
     phone_number = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
     note = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
-    tg_alias = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
+    tg_alias = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="", index=True)
     tg_name = sqlalchemy.Column(sqlalchemy.String, nullable=False, default="")
 
     def __repr__(self) -> str:
@@ -80,16 +84,18 @@ class User(Base):
 class UserVision(Base):
     __tablename__ = "user_vision"
     user_id = sqlalchemy.Column(
-        sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False, index=True
     )
     user = relationship("User", foreign_keys="UserVision.user_id")
 
     show_user_id = sqlalchemy.Column(
-        sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("users.user_id"), primary_key=True, nullable=False, index=True
     )
     show_user = relationship("User", foreign_keys="UserVision.show_user_id")
 
-    show_type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
+    show_type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False, default=2, index=True)
+
+    user_pair_idx = sqlalchemy.Index("user_pair_idx", user_id, show_user_id, unique=True)
 
     def __repr__(self) -> str:
         return f"<UserVision(user='{self.user}', show_user='{self.show_user}', show_type='{self.show_type}')>"
