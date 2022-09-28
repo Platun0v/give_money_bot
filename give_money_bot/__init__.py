@@ -10,6 +10,7 @@ from aiohttp import web
 from aiohttp.web import _run_app
 from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import SingletonThreadPool
 
 from give_money_bot.admin.dispatcher import router as admin_router
@@ -33,14 +34,15 @@ def init_sentry() -> None:
 
 
 def init_db() -> sessionmaker:
-    engine = sqlalchemy.create_engine(
-        f"sqlite:///{cfg.db_path + 'db.sqlite'}",
+    engine = create_async_engine(
+        f"sqlite+aiosqlite:///{cfg.db_path + 'db.sqlite'}",
         echo=False,
         connect_args={"check_same_thread": False},
         poolclass=SingletonThreadPool,
+        future=True,
     )
 
-    db_pool = sessionmaker(bind=engine)
+    db_pool = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
     return db_pool
 
 

@@ -18,6 +18,7 @@ from aiogram.types import (
 from aiogram.types.base import TelegramObject
 from loguru import logger as log
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, sessionmaker
 
 from give_money_bot.db import db_connector as db
@@ -35,7 +36,7 @@ class DbSessionMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any],
     ) -> Any:
-        with self.session_pool() as session:
+        async with self.session_pool() as session:
             data["session"] = session
             return await handler(event, data)
 
@@ -69,8 +70,8 @@ class SubstituteUserMiddleware(BaseMiddleware):
 
 
 class CheckUser(BaseFilter):
-    async def __call__(self, message: Message, session: Session) -> Union[bool, Dict[str, Any]]:
-        return message.from_user.id in db.get_user_ids(session)
+    async def __call__(self, message: Message, session: AsyncSession) -> Union[bool, Dict[str, Any]]:
+        return message.from_user.id in await db.get_user_ids(session)
 
 
 class CheckAdmin(BaseFilter):

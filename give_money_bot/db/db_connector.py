@@ -3,7 +3,9 @@ import typing
 from typing import Dict, Iterable, List, Optional
 
 from sqlalchemy import func
+from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from give_money_bot.db.models import Credit, ShowTypes, User, UserVision
 
@@ -143,14 +145,16 @@ def get_user(session: Session, user_id: int | User) -> User:
     return user
 
 
-def get_users(session: Session, user_ids: Optional[Iterable[int]] = None) -> List[User]:
+async def get_users(session: AsyncSession, user_ids: Optional[Iterable[int]] = None) -> List[User]:
     if user_ids is None:
-        return session.query(User).order_by(User.name.asc()).all()
-    return session.query(User).filter(User.user_id.in_(user_ids)).all()
+        result = await session.execute(select(User).order_by(User.name.asc()))
+        return result.scalars().all()
+    result = await session.execute(select(User).filter(User.user_id.in_(user_ids)).all())
+    return result.scalars().all()
 
 
-def get_user_ids(session: Session) -> List[int]:
-    return [e.user_id for e in get_users(session)]
+async def get_user_ids(session: AsyncSession) -> List[int]:
+    return [e.user_id for e in await get_users(session)]
 
 
 def get_user_ids_with_name(session: Session) -> Dict[int, str]:
