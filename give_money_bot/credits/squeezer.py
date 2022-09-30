@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from give_money_bot.db import db_connector as db
+from give_money_bot.db import crud as db
 from give_money_bot.db.models import Credit
 
 

@@ -1,3 +1,3 @@
-from give_money_bot import main
+from give_money_bot.bot import main
 
 main()

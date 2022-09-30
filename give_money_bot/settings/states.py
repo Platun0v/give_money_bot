@@ -11,7 +11,6 @@ class SettingsStates(StatesGroup):
     new_user = State()
     edit_number = State()
     edit_visibility = State()
-    edit_visibility_data = State()
 
 
 class EditVisibilityUser(BaseModel):

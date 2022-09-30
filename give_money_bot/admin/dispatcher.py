@@ -8,8 +8,8 @@ from aiogram.fsm.storage.base import StorageKey
 from loguru import logger as log
 from sqlalchemy.orm import Session
 
-from give_money_bot.db import db_connector as db
-from give_money_bot.db.db_connector import DbException
+from give_money_bot.db import crud as db
+from give_money_bot.db.crud import DbException
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
 from give_money_bot.utils.misc import CheckAdmin

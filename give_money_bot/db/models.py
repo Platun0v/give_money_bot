@@ -24,7 +24,10 @@ class Credit(Base):
         nullable=False,
         index=True,
     )  # Кому должны
-    creditor = relationship("User", foreign_keys="Credit.to_id")
+    creditor = relationship(
+        "User",
+        foreign_keys="Credit.to_id",
+    )
     from_id = sqlalchemy.Column(
         sqlalchemy.Integer,
         sqlalchemy.ForeignKey("users.user_id", name="fk_debtor_id"),

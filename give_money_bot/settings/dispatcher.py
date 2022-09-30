@@ -8,9 +8,10 @@ from aiogram.types import CallbackQuery
 from loguru import logger as log
 from sqlalchemy.orm import Session
 
-from give_money_bot.db import db_connector as db
+from give_money_bot.db import crud as db
 from give_money_bot.db.models import ShowTypes, User
 from give_money_bot.settings import keyboards as kb
+from give_money_bot.settings.callback import UserEditVisibilityCallback
 from give_money_bot.settings.keyboards import EditVisibilityAction, EditVisibilityCallback
 from give_money_bot.settings.states import PAGE_MAX_USERS, EditVisibilityData, EditVisibilityUser, SettingsStates
 from give_money_bot.settings.strings import Strings
@@ -87,7 +88,7 @@ async def edit_user_visibility(message: types.Message, session: Session, state: 
 
 
 async def edit_user_visibility_user_click(
-    call: CallbackQuery, state: FSMContext, callback_data: EditVisibilityCallback
+    call: CallbackQuery, state: FSMContext, callback_data: UserEditVisibilityCallback
 ) -> None:
     edit_visibility_data = await get_state_data(state, SettingsStates.edit_visibility, EditVisibilityData)
     if edit_visibility_data is None:
@@ -188,7 +189,7 @@ router.message.register(add_new_user, SettingsStates.new_user)
 router.message.register(edit_user_visibility, SettingsStates.settings, F.text == Strings.menu_edit_visible_users)
 router.callback_query.register(
     edit_user_visibility_user_click,
-    EditVisibilityCallback.filter(F.action == EditVisibilityAction.user),
+    UserEditVisibilityCallback.filter(F.action == EditVisibilityAction.user),
 )
 router.callback_query.register(
     edit_user_visibility_right_click,
@@ -213,3 +214,4 @@ router.message.register(save_new_number, SettingsStates.edit_number)
 
 # ======================================= EXIT =======================================
 router.message.register(exit_settings_menu, SettingsStates.settings)  # If user sends random message, go back to menu
+# router.callback_query.register(sink)  # If user clicks on menu button, do nothing

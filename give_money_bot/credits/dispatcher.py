@@ -9,6 +9,8 @@ from give_money_bot.credits import keyboards as kb
 from give_money_bot.credits.callback import (
     AddCreditAction,
     AddCreditCallback,
+    ChooseUserAddCreditCallback,
+    ChooseUserReturnCreditsCallback,
     RemoveCreditAction,
     RemoveCreditCallback,
     ReturnCreditsAction,
@@ -18,7 +20,7 @@ from give_money_bot.credits.squeezer import squeeze
 from give_money_bot.credits.states import AddCreditData, CreditStates, RemoveCreditData, ReturnCreditsData
 from give_money_bot.credits.strings import Strings
 from give_money_bot.credits.utils import get_credits_amount, parse_expression, parse_info_from_message
-from give_money_bot.db import db_connector as db
+from give_money_bot.db import crud as db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
 from give_money_bot.tg_bot.strings import Strings as tg_strings
@@ -76,7 +78,11 @@ async def read_num_from_user(message: types.Message, bot: Bot, state: FSMContext
 
 
 async def prc_callback_choose_users_for_credit(
-    call: types.CallbackQuery, callback_data: AddCreditCallback, user: User, session: Session, state: FSMContext
+    call: types.CallbackQuery,
+    callback_data: ChooseUserAddCreditCallback,
+    user: User,
+    session: Session,
+    state: FSMContext,
 ) -> None:
     add_credit_data = await get_state_data(state, CreditStates.add_credit, AddCreditData)
     if add_credit_data is None:
@@ -255,7 +261,11 @@ async def prc_user_credits(message: types.Message, bot: Bot, user: User, session
 
 
 async def prc_callback_choose_credit_for_return(
-    call: types.CallbackQuery, callback_data: ReturnCreditsCallback, user: User, session: Session, state: FSMContext
+    call: types.CallbackQuery,
+    callback_data: ChooseUserReturnCreditsCallback,
+    user: User,
+    session: Session,
+    state: FSMContext,
 ) -> None:
     return_credits_data = await get_state_data(state, CreditStates.return_credit, ReturnCreditsData)
     if return_credits_data is None:
@@ -372,7 +382,7 @@ router.message.bind_filter(CheckUser)
 # ======================================= ADD CREDIT =======================================
 router.callback_query.register(
     prc_callback_choose_users_for_credit,
-    AddCreditCallback.filter(F.action == AddCreditAction.choose_user),
+    ChooseUserAddCreditCallback.filter(F.action == AddCreditAction.choose_user),
 )
 router.callback_query.register(
     prc_callback_show_more_users, AddCreditCallback.filter(F.action == AddCreditAction.show_more)
@@ -389,7 +399,7 @@ router.callback_query.register(
 router.message.register(prc_user_credits, F.text == tg_strings.menu_credits)
 router.callback_query.register(
     prc_callback_choose_credit_for_return,
-    ReturnCreditsCallback.filter(F.action == ReturnCreditsAction.choose_user),
+    ChooseUserReturnCreditsCallback.filter(F.action == ReturnCreditsAction.choose_user),
 )
 router.callback_query.register(
     prc_callback_return_credits,

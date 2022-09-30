@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
-from give_money_bot.settings.callback import EditVisibilityAction, EditVisibilityCallback
+from give_money_bot.settings.callback import EditVisibilityAction, EditVisibilityCallback, UserEditVisibilityCallback
 from give_money_bot.settings.states import PAGE_MAX_USERS, EditVisibilityData
 from give_money_bot.settings.strings import Strings
 
@@ -26,7 +26,7 @@ def create_edit_visibility_keyboard(data: EditVisibilityData) -> InlineKeyboardM
             [
                 InlineKeyboardButton(
                     text=f"{data.users[user].username} {Strings.vision_emojis[data.users[user].vision]}",
-                    callback_data=EditVisibilityCallback(action=EditVisibilityAction.user, user_id=user).pack(),
+                    callback_data=UserEditVisibilityCallback(user_id=user).pack(),
                 )
             ]
         )

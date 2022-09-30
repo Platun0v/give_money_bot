@@ -1,13 +1,12 @@
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
-from aiogram import BaseMiddleware, Bot
+from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import BaseFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State
 from aiogram.types import (
     UNSET,
-    CallbackQuery,
     ForceReply,
     InlineKeyboardMarkup,
     Message,
@@ -15,57 +14,11 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
 )
-from aiogram.types.base import TelegramObject
 from loguru import logger as log
 from pydantic import BaseModel
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from give_money_bot.db import db_connector as db
-from give_money_bot.db.models import User
-
-
-class DbSessionMiddleware(BaseMiddleware):
-    def __init__(self, session_pool: sessionmaker):
-        super().__init__()
-        self.session_pool = session_pool
-
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any],
-    ) -> Any:
-        with self.session_pool() as session:
-            data["session"] = session
-            return await handler(event, data)
-
-
-class UserMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any],
-    ) -> Any:
-        if isinstance(event, (Message, CallbackQuery)):
-            data["user"] = db.get_user(data["session"], event.from_user.id)
-        return await handler(event, data)
-
-
-class SubstituteUserMiddleware(BaseMiddleware):
-    async def __call__(
-        self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: Dict[str, Any],
-    ) -> Any:
-        if isinstance(event, (Message, CallbackQuery)):
-            session: Session = data["session"]
-            user: User = data["user"]
-            if user.substituted_user_id is not None:
-                data["user"] = db.get_user(session, user.substituted_user_id)
-
-        return await handler(event, data)
+from give_money_bot.db import crud as db
 
 
 class CheckUser(BaseFilter):

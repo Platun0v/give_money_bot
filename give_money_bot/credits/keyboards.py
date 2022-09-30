@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from give_money_bot.credits.callback import (
     AddCreditAction,
     AddCreditCallback,
+    ChooseUserAddCreditCallback,
+    ChooseUserReturnCreditsCallback,
     RemoveCreditAction,
     RemoveCreditCallback,
     ReturnCreditsAction,
@@ -13,7 +15,7 @@ from give_money_bot.credits.callback import (
 )
 from give_money_bot.credits.states import AddCreditData, ReturnCreditsData
 from give_money_bot.credits.strings import Strings
-from give_money_bot.db import db_connector as db
+from give_money_bot.db import crud as db
 from give_money_bot.db.models import User
 
 
@@ -31,7 +33,7 @@ def get_credits_markup(
             [
                 InlineKeyboardButton(
                     text=text,
-                    callback_data=ReturnCreditsCallback(action=ReturnCreditsAction.choose_user, user_id=user_id).pack(),
+                    callback_data=ChooseUserReturnCreditsCallback(user_id=user_id).pack(),
                 )
             ]
         )
@@ -74,7 +76,7 @@ def get_keyboard_add_credit(for_user_id: int, add_credit_data: AddCreditData, se
             [
                 InlineKeyboardButton(
                     text=text,
-                    callback_data=AddCreditCallback(action=AddCreditAction.choose_user, user_id=user.user_id).pack(),
+                    callback_data=ChooseUserAddCreditCallback(user_id=user.user_id).pack(),
                 )
             ]
         )
