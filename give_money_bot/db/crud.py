@@ -221,7 +221,11 @@ def get_vision(session: Session, user_id: int, show_user_id: int) -> UserVision:
 
 
 def update_user_vision(session: Session, user_id: int, show_user_id: int, show_type: ShowTypes) -> None:
-    vision = get_vision(session, user_id, show_user_id)
+    try:
+        vision = get_vision(session, user_id, show_user_id)
+    except DbException:
+        vision = None
+
     if vision is None:
         new_vision = UserVision(user_id=user_id, show_user_id=show_user_id, show_type=show_type)
         session.add(new_vision)
