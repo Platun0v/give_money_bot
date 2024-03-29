@@ -126,6 +126,27 @@ async def prc_callback_show_more_users(
     await call.answer()
 
 
+async def prc_callback_reverse_credit(
+        call: types.CallbackQuery, callback_data: AddCreditCallback, user: User, session: Session, state: FSMContext
+) -> None:
+    add_credit_data = await get_state_data(state, CreditStates.add_credit, AddCreditData)
+    if add_credit_data is None:
+        log.error(f"{user.name=} trying to add credit without data")
+        return
+    if add_credit_data.message_id != call.message.message_id:
+        return
+
+    add_credit_data.amount = -add_credit_data.amount
+
+    await update_state_data(state, CreditStates.add_credit, add_credit_data)
+
+    await call.message.edit_text(
+        text=Strings.ask_for_debtors(add_credit_data.amount, add_credit_data.message),
+        reply_markup=kb.get_keyboard_add_credit(user.user_id, add_credit_data, session)
+    )
+    await call.answer()
+
+
 async def prc_callback_save_new_credit(
     call: types.CallbackQuery, bot: Bot, user: User, session: Session, state: FSMContext
 ) -> None:
@@ -388,6 +409,7 @@ router.callback_query.register(
     prc_callback_show_more_users, AddCreditCallback.filter(F.action == AddCreditAction.show_more)
 )
 router.callback_query.register(prc_callback_save_new_credit, AddCreditCallback.filter(F.action == AddCreditAction.save))
+router.callback_query.register(prc_callback_reverse_credit, AddCreditCallback.filter(F.action == AddCreditAction.reverse))
 router.callback_query.register(
     prc_callback_cancel_create_credit, AddCreditCallback.filter(F.action == AddCreditAction.cancel)
 )

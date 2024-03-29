@@ -105,6 +105,9 @@ def get_keyboard_add_credit(for_user_id: int, add_credit_data: AddCreditData, se
     markup.append(
         [
             InlineKeyboardButton(
+                text=Strings.REVERSE, callback_data=AddCreditCallback(action=AddCreditAction.reverse).pack()
+            ),
+            InlineKeyboardButton(
                 text=Strings.CANCEL, callback_data=AddCreditCallback(action=AddCreditAction.cancel).pack()
             )
         ]

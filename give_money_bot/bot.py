@@ -74,6 +74,7 @@ def init_modules(dp: Dispatcher) -> None:
 
 async def on_error(update: Any, exception: Exception, bot: Bot) -> None:
     await bot.send_message(chat_id=cfg.admin_id, text=f"Error occurred: {exception}")
+
     log.exception(exception)
     log.error(exception)
 
@@ -83,7 +84,7 @@ async def on_startup(dispatcher: Dispatcher, bot: Bot) -> None:
 
 
 def main() -> None:
-    init_sentry()
+    # init_sentry()
     init_logger()
 
     db_pool = init_db()

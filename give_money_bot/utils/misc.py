@@ -28,6 +28,8 @@ class CheckUser(BaseFilter):
 
 class CheckAdmin(BaseFilter):
     async def __call__(self, message: Message, session: Session) -> Union[bool, Dict[str, Any]]:
+        if not db.check_user_exists(session, message.from_user.id):
+            return False
         return db.get_user(session, message.from_user.id).admin
 
 

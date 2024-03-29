@@ -107,6 +107,7 @@ class Strings:
     SHOW_MORE_USERS = "Показать еще"
     CANCEL_SHOW_MORE_USERS = "Скрыть"
     SAVE = "Сохранить"
+    REVERSE = "Инвертировать"
     CANCELED_ADD_CREDIT = "Добавление долга отменено"
 
     NO_CREDITS_CREDITOR = "Тебе никто не должен. Можешь спать спокойно"

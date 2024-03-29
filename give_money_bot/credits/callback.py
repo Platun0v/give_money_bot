@@ -9,6 +9,7 @@ class AddCreditAction(str, Enum):
     cancel = "cncl"
     show_more = "shwm"
     choose_user = "chse"
+    reverse = "rvrs"
 
 
 class AddCreditCallback(CallbackData, prefix="addcrd"):

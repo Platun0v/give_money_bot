@@ -33,7 +33,10 @@ class UserMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
         if isinstance(event, (Message, CallbackQuery)):
-            data["user"] = db.get_user(data["session"], event.from_user.id)
+            if db.check_user_exists(data["session"], event.from_user.id):
+                data["user"] = db.get_user(data["session"], event.from_user.id)
+            else:
+                return None
         return await handler(event, data)
 
 

@@ -132,6 +132,15 @@ def add_discount(session: Session, credit: typing.Union[int, Credit], discount: 
     session.commit()
 
 
+def check_user_exists(session: Session, user_id: int | User) -> bool:
+    if isinstance(user_id, User):
+        user = session.query(User).filter(User.user_id == user_id.user_id).first()
+    else:
+        user = session.query(User).filter(User.user_id == user_id).first()
+
+    return user is not None
+
+
 def get_user(session: Session, user_id: int | User) -> User:
     if isinstance(user_id, User):
         user = session.query(User).filter(User.user_id == user_id.user_id).first()
