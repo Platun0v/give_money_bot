@@ -6,8 +6,10 @@ import sqlalchemy
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiohttp import web
 from aiohttp.web import _run_app
+
 from loguru import logger as log
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
@@ -44,7 +46,8 @@ def init_db() -> sessionmaker:
 
 
 def init_bot(db_pool: sessionmaker) -> Tuple[Bot, Dispatcher]:
-    bot = Bot(token=cfg.telegram_token)
+    session = AiohttpSession(proxy=cfg.proxy)
+    bot = Bot(token=cfg.telegram_token, session=session)
 
     dp = Dispatcher(storage=MemoryStorage())
 
