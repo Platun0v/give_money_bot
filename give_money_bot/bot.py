@@ -6,7 +6,6 @@ import sqlalchemy
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiogram.client.session.aiohttp import AiohttpSession
 from aiohttp import web
 from aiohttp.web import _run_app
 
@@ -22,6 +21,7 @@ from give_money_bot.tg_bot.bot import router as tg_bot_router
 from give_money_bot.utils.log import init_logger
 from give_money_bot.utils.middlewares import DbSessionMiddleware, SubstituteUserMiddleware, UserMiddleware
 from give_money_bot.utils.prometheus_middleware import PrometheusMiddleware
+from give_money_bot.utils.session import ResilientAiohttpSession
 from give_money_bot.web.route import init_web_server
 
 
@@ -46,7 +46,7 @@ def init_db() -> sessionmaker:
 
 
 def init_bot(db_pool: sessionmaker) -> Tuple[Bot, Dispatcher]:
-    session = AiohttpSession(proxy=cfg.proxy)
+    session = ResilientAiohttpSession(proxy=cfg.proxy)
     bot = Bot(token=cfg.telegram_token, session=session)
 
     dp = Dispatcher(storage=MemoryStorage())
@@ -86,6 +86,37 @@ async def on_startup(dispatcher: Dispatcher, bot: Bot) -> None:
     await bot.set_webhook(f"{cfg.bot_url}{cfg.bot_url_path}")
 
 
+async def run_polling_supervised(dp: Dispatcher, bot: Bot) -> None:
+    """Run long-polling, restarting it on any unexpected error with capped backoff.
+
+    aiogram retries network errors internally (and `ResilientAiohttpSession` now feeds
+    proxy/SOCKS errors into that path), but this supervisor is the safety net: if any
+    other exception ever escapes `start_polling`, the bot reconnects instead of dying
+    silently. Backoff resets once polling has stayed up for a while.
+    """
+    backoff = 1.0
+    while True:
+        started = asyncio.get_event_loop().time()
+        try:
+            await dp.start_polling(bot)
+            return  # graceful shutdown
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            if asyncio.get_event_loop().time() - started > 120:
+                backoff = 1.0
+            log.exception("Polling crashed, restarting in {:.0f}s: {}", backoff, e)
+            await asyncio.sleep(backoff)
+            backoff = min(backoff * 2, 60.0)
+
+
+async def run_dev(dp: Dispatcher, bot: Bot, app: web.Application) -> None:
+    await asyncio.gather(
+        run_polling_supervised(dp, bot),
+        _run_app(app, host=cfg.web_server_host, port=cfg.web_server_port),
+    )
+
+
 def main() -> None:
     # init_sentry()
     init_logger()
@@ -103,10 +134,7 @@ def main() -> None:
         setup_application(app, dp, bot=bot)
         web.run_app(app, host=cfg.web_server_host, port=cfg.web_server_port)
     elif cfg.environment == "dev":
-        loop = asyncio.get_event_loop()
-        loop.create_task(dp.start_polling(bot))
-        loop.create_task(_run_app(app, host=cfg.web_server_host, port=cfg.web_server_port))
-        loop.run_forever()
+        asyncio.run(run_dev(dp, bot, app))
     else:
         raise ValueError("Unknown environment")
 
