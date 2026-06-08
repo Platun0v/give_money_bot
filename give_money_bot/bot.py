@@ -1,16 +1,15 @@
 import asyncio
-from typing import Any, Tuple
+from typing import Tuple
 
-import sentry_sdk
 import sqlalchemy
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import ErrorEvent
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 from aiohttp.web import _run_app
-
 from loguru import logger as log
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import SingletonThreadPool
 
 from give_money_bot.admin.dispatcher import router as admin_router
@@ -19,21 +18,17 @@ from give_money_bot.credits.dispatcher import router as credits_router
 from give_money_bot.settings.dispatcher import router as settings_router
 from give_money_bot.tg_bot.bot import router as tg_bot_router
 from give_money_bot.utils.log import init_logger
-from give_money_bot.utils.middlewares import DbSessionMiddleware, SubstituteUserMiddleware, UserMiddleware
+from give_money_bot.utils.middlewares import (
+    DbSessionMiddleware,
+    SubstituteUserMiddleware,
+    UserMiddleware,
+)
 from give_money_bot.utils.prometheus_middleware import PrometheusMiddleware
 from give_money_bot.utils.session import ResilientAiohttpSession
 from give_money_bot.web.route import init_web_server
 
 
-def init_sentry() -> None:
-    sentry_sdk.init(
-        dsn=cfg.sentry_dsn,
-        traces_sample_rate=cfg.sentry_traces_sample_rate,
-        environment=cfg.environment,
-    )
-
-
-def init_db() -> sessionmaker:
+def init_db() -> sessionmaker[Session]:
     engine = sqlalchemy.create_engine(
         f"sqlite:///{cfg.db_path + 'db.sqlite'}",
         echo=False,
@@ -45,7 +40,7 @@ def init_db() -> sessionmaker:
     return db_pool
 
 
-def init_bot(db_pool: sessionmaker) -> Tuple[Bot, Dispatcher]:
+def init_bot(db_pool: sessionmaker[Session]) -> Tuple[Bot, Dispatcher]:
     session = ResilientAiohttpSession(proxy=cfg.proxy)
     bot = Bot(token=cfg.telegram_token, session=session)
 
@@ -75,11 +70,11 @@ def init_modules(dp: Dispatcher) -> None:
     log.info("Modules loaded")
 
 
-async def on_error(update: Any, exception: Exception, bot: Bot) -> None:
-    await bot.send_message(chat_id=cfg.admin_id, text=f"Error occurred: {exception}")
+async def on_error(event: ErrorEvent, bot: Bot) -> None:
+    await bot.send_message(chat_id=cfg.admin_id, text=f"Error occurred: {event.exception}")
 
-    log.exception(exception)
-    log.error(exception)
+    log.exception(event.exception)
+    log.error(event.exception)
 
 
 async def on_startup(dispatcher: Dispatcher, bot: Bot) -> None:

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "give_money_bot"
-version = "1.4.4"
+version = "1.4.5"
 description = ""
 authors = ["Platun0v <me@platun0v.ru>"]
 
@@ -9,31 +9,30 @@ bot = "give_money_bot:main"
 squeeze = "give_money_bot.utils.squeezer:squeeze"
 
 [tool.poetry.dependencies]
-python = "^3.10"
-python-dotenv = "^0.20.0"
-aiogram = "3.0.0b4"
+python = "^3.11"
+aiogram = "^3.0.0"
 typing-extensions = "^4.2.0"
-aiohttp-socks = "^0.7.1"
+aiohttp-socks = "^0.10.1"
 loguru = "^0.6.0"
-SQLAlchemy = "^1.3.23"
+SQLAlchemy = { version = "^2.0.0", extras = ["asyncio", "mypy"] }
 alembic = "^1.7.7"
 Jinja2 = "^3.1.1"
-pydantic = "^1.9.0"
-sentry-sdk = "^1.5.11"
+pydantic = { version = "^2.0.0", extras = ["dotenv"] }
 pytest = "^7.1.2"
-prometheus-client = "^0.14.1"
+prometheus-client = "^0.14.0"
+sympy = "^1.13.3"
+pydantic-settings = "^2.5.2"
 
-[tool.poetry.dev-dependencies]
-mypy = "^0.971"
-sqlalchemy-stubs = "^0.4"
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.11.2"
 black = "^22.6.0"
 isort = "^5.10.1"
-flake8 = "^5.0.4"
+ruff = "^0.6.8"
 
 [tool.mypy]
-plugins = ["sqlmypy", "pydantic.mypy"]
+plugins = ["sqlalchemy.ext.mypy.plugin", "pydantic.mypy"]
 exclude = "/migrate/$"
-python_version = "3.10"
+python_version = "3.11"
 show_error_codes = true
 show_error_context = true
 pretty = true
@@ -55,9 +54,35 @@ namespace_packages = true
 show_absolute_path = true
 #show_traceback = true
 
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
 [[tool.mypy.overrides]]
-module = 'aiogram.*'
+module = [
+    "sympy"
+]
 ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long
+    "B008",  # do not perform calls in argument defaults
+    "C417", # Unnecessary list comprehension - rewrite as a set comprehension  TODO: Remove later
+    "C901",  # function is too complex
+    "E712",  # comparison to False should be 'if cond is False:' or 'if not cond:'
+]
+
 
 [tool.isort]
 balanced_wrapping = true
@@ -66,6 +91,11 @@ include_trailing_comma = true
 known_first_party = ['give_money_bot']
 line_length = 120
 multi_line_output = 3
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+pythonpath = "."
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

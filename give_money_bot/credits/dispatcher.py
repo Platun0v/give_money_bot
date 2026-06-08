@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 
 from aiogram import Bot, F, Router, types
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from loguru import logger as log
 from sqlalchemy.orm import Session
@@ -17,14 +18,28 @@ from give_money_bot.credits.callback import (
     ReturnCreditsCallback,
 )
 from give_money_bot.credits.squeezer import squeeze
-from give_money_bot.credits.states import AddCreditData, CreditStates, RemoveCreditData, ReturnCreditsData
+from give_money_bot.credits.states import (
+    AddCreditData,
+    CreditStates,
+    RemoveCreditData,
+    ReturnCreditsData,
+)
 from give_money_bot.credits.strings import Strings
-from give_money_bot.credits.utils import get_credits_amount, parse_expression, parse_info_from_message
+from give_money_bot.credits.utils import (
+    get_credits_amount,
+    parse_expression,
+    parse_info_from_message,
+)
 from give_money_bot.db import crud as db
 from give_money_bot.db.models import User
 from give_money_bot.tg_bot.keyboards import main_keyboard
 from give_money_bot.tg_bot.strings import Strings as tg_strings
-from give_money_bot.utils.misc import CheckUser, get_state_data, send_message, update_state_data
+from give_money_bot.utils.misc import (
+    CheckUser,
+    get_state_data,
+    send_message,
+    update_state_data,
+)
 
 
 async def prc_squeeze_credits(message: Optional[types.Message], bot: Bot, session: Session, user: User) -> None:
@@ -258,7 +273,7 @@ async def prc_user_credits(message: types.Message, bot: Bot, user: User, session
     return_credits_json: Optional[str] = state_data.get("return_credits")
 
     if return_credits_json is not None:  # If we already have some data, cancel prev add credit
-        return_credit_data: ReturnCreditsData = ReturnCreditsData.parse_raw(return_credits_json)
+        return_credit_data: ReturnCreditsData = ReturnCreditsData.model_validate_json(return_credits_json)
         await update_state_data(state, CreditStates.return_credit)
         await bot.edit_message_text(
             text=Strings.CANCEL, chat_id=user.user_id, message_id=return_credit_data.message_id, reply_markup=None
@@ -266,7 +281,7 @@ async def prc_user_credits(message: types.Message, bot: Bot, user: User, session
 
     credits_sum = 0
     credits_sum_by_user: Dict[int, int] = {}
-    for i, credit in enumerate(user_credits, 1):
+    for _, credit in enumerate(user_credits, 1):
         credits_sum += credit.get_amount()
         credits_sum_by_user[credit.to_id] = credits_sum_by_user.get(credit.to_id, 0) + credit.get_amount()
 
@@ -380,7 +395,7 @@ async def prc_user_debtors(message: types.Message, user: User, session: Session)
 
     credits_sum = 0
     credits_sum_by_user: Dict[int, int] = {}
-    for i, credit in enumerate(credits_to_user, 1):
+    for _, credit in enumerate(credits_to_user, 1):
         credits_sum += credit.get_amount()
         credits_sum_by_user[credit.from_id] = credits_sum_by_user.get(credit.from_id, 0) + credit.get_amount()
 
@@ -396,7 +411,7 @@ async def prc_user_debtors(message: types.Message, user: User, session: Session)
 
 
 router = Router()
-router.message.bind_filter(CheckUser)
+router.message.filter(CheckUser())
 
 # router.message.register(prc_squeeze_credits, commands=["sqz"])
 
@@ -436,5 +451,5 @@ router.message.register(prc_user_debtors, F.text == tg_strings.menu_debtors)
 
 # ======================================= ADD CREDIT =======================================
 router.message.register(
-    read_num_from_user, state=None
+    read_num_from_user, StateFilter(None)
 )  # Добавляем последним, чтобы обрабатывать сообщение, как новый долг только, когда не прошло по остальным пунктам

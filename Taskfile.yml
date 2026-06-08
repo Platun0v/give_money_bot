@@ -9,7 +9,7 @@ tasks:
   lint:
     desc: "Run flake8 on the project"
     cmds:
-      - poetry run flake8 give_money_bot
+      - poetry run ruff check give_money_bot
 
   install:
     desc: "Install dependencies"
@@ -42,11 +42,10 @@ tasks:
     cmds:
       - docker run --env-file .env -v $(pwd)/data:/prod/data -it give-money-bot:latest "python -m give_money_bot"
 
-  test-docker:
-    desc: "Build and run container with pytest"
+  pytest:
+    desc: "Run pytest"
     cmds:
-      - docker build -t give-money-bot:test --target test .
-      - docker run -t --rm --name give_money_bot_test give-money-bot:test
+      - poetry run pytest
 
   migrate-up:
     desc: "Migrate database"
@@ -64,9 +63,9 @@ tasks:
       - alembic revision --message="" --autogenerate
 
   test:
-    desc: "Run test"
+    desc: "Run testings"
     cmds:
-      - task: test-docker
+      - task: pytest
       - task: lint
       - task: mypy
 

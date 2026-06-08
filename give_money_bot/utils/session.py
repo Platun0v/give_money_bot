@@ -7,14 +7,14 @@ from aiogram.methods import TelegramMethod
 from aiogram.methods.base import TelegramType
 
 try:
-    from python_socks import ProxyError, ProxyConnectionError, ProxyTimeoutError
+    from python_socks import ProxyConnectionError, ProxyError, ProxyTimeoutError
 
     _PROXY_ERRORS: Tuple[Type[BaseException], ...] = (
         ProxyError,
         ProxyConnectionError,
         ProxyTimeoutError,
     )
-except ImportError:  # pragma: no cover - python_socks is always installed via aiohttp-socks
+except ImportError:  # pragma: no cover - python_socks ships with aiohttp-socks
     _PROXY_ERRORS = ()
 
 
@@ -27,12 +27,10 @@ class ResilientAiohttpSession(AiohttpSession):
     ``Exception`` subclasses, so they escape both that conversion and aiogram's polling
     backoff loop — which only retries ``TelegramNetworkError``/``TelegramServerError``.
 
-    The result was that a single proxy hiccup raised an unhandled exception inside the
-    fire-and-forget ``start_polling`` task, killing it silently while the process (and the
-    Docker container) kept running, so the bot never reconnected.
-
-    Re-raising proxy errors as ``TelegramNetworkError`` lets aiogram's built-in
-    retry/backoff handle them just like any other transient network failure.
+    Without this, a single proxy hiccup raised an unhandled exception inside
+    ``start_polling`` and silently killed it while the process kept running, so the bot
+    never reconnected. Re-raising proxy errors as ``TelegramNetworkError`` lets aiogram's
+    built-in retry/backoff handle them like any other transient network failure.
     """
 
     async def make_request(

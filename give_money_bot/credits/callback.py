@@ -20,7 +20,7 @@ class AddCreditCallback(CallbackData, prefix="addcrd"):
 
 
 class ChooseUserAddCreditCallback(AddCreditCallback):
-    action = AddCreditAction.choose_user
+    action: AddCreditAction = AddCreditAction.choose_user
     user_id: int = 0
 
 
@@ -46,5 +46,5 @@ class ReturnCreditsCallback(CallbackData, prefix="retcrd"):
 
 
 class ChooseUserReturnCreditsCallback(ReturnCreditsCallback):
-    action = ReturnCreditsAction.choose_user
+    action: ReturnCreditsAction = ReturnCreditsAction.choose_user
     user_id: int = 0

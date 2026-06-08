@@ -1,6 +1,6 @@
-from subprocess import PIPE, Popen
 from typing import List, Tuple
 
+import sympy
 from aiogram import types
 from sqlalchemy.orm import Session
 
@@ -22,11 +22,11 @@ def get_credits_amount(from_user: int, to_user: int, session: Session) -> Tuple[
 
 
 def parse_expression(value: str) -> Tuple[int, None] | Tuple[int, str]:
-    p = Popen("./parser", stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    out, err = p.communicate(bytes(value, "utf-8"))
-    if err:
-        return 0, '\n'.join(err.decode("utf-8").split("\n")[0:1])
-    return int(float(out)), None
+    # Parse using sympy
+    try:
+        return int(sympy.sympify(value)), None
+    except Exception as e:
+        return 0, str(e)
 
 
 def parse_info_from_message(message: str) -> Tuple[str, str]:
@@ -36,7 +36,7 @@ def parse_info_from_message(message: str) -> Tuple[str, str]:
     :param message: Message from user
     :return: Expression and info
     """
-    digits = "0123456789()+-*/ "
+    digits = "0123456789()+-*/ .%"
 
     for i, char in enumerate(message):
         if char not in digits:

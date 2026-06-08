@@ -1,5 +1,5 @@
 from loguru import logger as log
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 
@@ -16,6 +16,15 @@ DEFAULT_TOKEN = "123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 # PROMETHEUS_PORT = int(os.environ.get("PROMETHEUS_PORT", 9121))
 
 
+class BaseSettingsConfig:
+    model_config = SettingsConfigDict(
+        env_file_encoding="utf-8",
+        env_file=".env",
+        env_prefix="",
+        extra="ignore",
+    )
+
+
 class Settings(BaseSettings, env_file=".env"):
     telegram_token: str = DEFAULT_TOKEN
     log_path: str = "./"
@@ -24,9 +33,6 @@ class Settings(BaseSettings, env_file=".env"):
     proxy: str = "socks5://127.0.0.1:9050"
 
     environment: str = "dev"
-
-    sentry_dsn: str = ""
-    sentry_traces_sample_rate: float = 1.0
 
     web_server_port: int = 9121
     web_server_host: str = "0.0.0.0"

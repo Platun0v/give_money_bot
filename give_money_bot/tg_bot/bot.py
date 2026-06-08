@@ -35,7 +35,7 @@ async def send_help(message: types.Message, user: User) -> None:
 
 
 router = Router()
-router.message.bind_filter(CheckUser)
+router.message.filter(CheckUser())
 router.message.register(prc_start_command, Command(commands="start"))
 router.message.register(prc_get_id, Command(commands="id"))
 router.message.register(send_help, Command(commands="help"))

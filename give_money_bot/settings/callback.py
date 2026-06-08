@@ -20,5 +20,5 @@ class EditVisibilityCallback(CallbackData, prefix="editvis"):
 
 
 class UserEditVisibilityCallback(EditVisibilityCallback):
-    action = EditVisibilityAction.user
+    action: EditVisibilityAction = EditVisibilityAction.user
     user_id: int = 0

@@ -12,8 +12,16 @@ from give_money_bot.db import crud as db
 from give_money_bot.db.models import ShowTypes, User
 from give_money_bot.settings import keyboards as kb
 from give_money_bot.settings.callback import UserEditVisibilityCallback
-from give_money_bot.settings.keyboards import EditVisibilityAction, EditVisibilityCallback
-from give_money_bot.settings.states import PAGE_MAX_USERS, EditVisibilityData, EditVisibilityUser, SettingsStates
+from give_money_bot.settings.keyboards import (
+    EditVisibilityAction,
+    EditVisibilityCallback,
+)
+from give_money_bot.settings.states import (
+    PAGE_MAX_USERS,
+    EditVisibilityData,
+    EditVisibilityUser,
+    SettingsStates,
+)
 from give_money_bot.settings.strings import Strings
 from give_money_bot.tg_bot.bot import send_main_menu
 from give_money_bot.tg_bot.strings import Strings as tg_strings
@@ -72,7 +80,7 @@ async def edit_user_visibility(message: types.Message, session: Session, state: 
         edit_visibility_users[user_e.user_id] = EditVisibilityUser(username=user_e.name, vision=ShowTypes.NEVER)
         users_list.append(user_e.user_id)
     for user_vision in user_visions:
-        edit_visibility_users[user_vision.show_user_id].vision = cast(ShowTypes, user_vision.show_type)
+        edit_visibility_users[user_vision.show_user_id].vision = user_vision.show_type
 
     pages = ceil(len(edit_visibility_users) / PAGE_MAX_USERS)
     edit_visibility_data = EditVisibilityData(
@@ -167,7 +175,7 @@ async def edit_user_visibility_save_click(call: CallbackQuery, user: User, sessi
 
 # ======================================= ROUTER =======================================
 router = Router()
-router.message.bind_filter(CheckUser)
+router.message.filter(CheckUser())
 
 # ======================================= SETTINGS MENU =======================================
 router.message.register(send_settings_menu, F.text == tg_strings.menu_settings)

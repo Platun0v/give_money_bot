@@ -6,7 +6,7 @@ from aiogram.filters import BaseFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State
 from aiogram.types import (
-    UNSET,
+    UNSET_PARSE_MODE,
     ForceReply,
     InlineKeyboardMarkup,
     Message,
@@ -46,7 +46,7 @@ async def get_state_data(ctx: FSMContext, state: State, model: Type[T]) -> Optio
         log.debug(f"State {state.state} is not found")
         return None
 
-    return model.parse_raw(data)
+    return model.model_validate_json(data)
 
 
 async def update_state_data(ctx: FSMContext, state: State, data: Optional[T] = None) -> None:
@@ -55,14 +55,14 @@ async def update_state_data(ctx: FSMContext, state: State, data: Optional[T] = N
     if data is None:
         await ctx.update_data({state.state: None})
     else:
-        await ctx.update_data({state.state: data.json()})
+        await ctx.update_data({state.state: data.model_dump_json()})
 
 
 async def send_message(
     bot: Bot,
     chat_id: Union[int, str],
     text: str,
-    parse_mode: Optional[str] = UNSET,
+    parse_mode: Optional[str] = UNSET_PARSE_MODE,
     entities: Optional[List[MessageEntity]] = None,
     disable_web_page_preview: Optional[bool] = None,
     disable_notification: Optional[bool] = None,

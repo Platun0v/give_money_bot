@@ -100,7 +100,7 @@ async def bot_commands(message: types.Message, user: User, session: Session, sta
 
 
 router = Router()
-router.message.bind_filter(CheckAdmin)
+router.message.filter(CheckAdmin())
 
 router.message.register(add_user, Command(commands="add_user"))
 router.message.register(add_show_user, Command(commands="add_show_user"))

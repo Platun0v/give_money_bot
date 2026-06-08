@@ -183,7 +183,7 @@ def get_all_users_without_current_user(session: Session, curr_user: int) -> List
 
 def get_users_with_show_always(session: Session, user_id: int) -> List[User]:
     resp: List[UserVision] = (
-        session.query(UserVision)  # type: ignore
+        session.query(UserVision)
         .filter(UserVision.user_id == user_id)
         .filter(UserVision.show_type == ShowTypes.ALWAYS)
         .join(UserVision.show_user)
@@ -199,7 +199,7 @@ def get_users_with_show_always(session: Session, user_id: int) -> List[User]:
 
 def get_users_with_show_more(session: Session, user_id: int) -> List[User]:
     resp: List[UserVision] = (
-        session.query(UserVision)  # type: ignore
+        session.query(UserVision)
         .filter(UserVision.user_id == user_id)
         .filter((UserVision.show_type == ShowTypes.ADDITIONAL) | (UserVision.show_type == ShowTypes.ALWAYS))
         .join(UserVision.show_user)
@@ -268,9 +268,9 @@ def substitute_user(session: Session, user: int | User, new_user_id: int) -> Non
 def clear_substitute(session: Session, user: int | User) -> None:
     if isinstance(user, int):
         user = get_user(session, user)
-        user.substituted_user_id = None  # type: ignore
+        user.substituted_user_id = None
     if isinstance(user, User):
-        user.substituted_user_id = None  # type: ignore
+        user.substituted_user_id = None
 
     session.commit()
 

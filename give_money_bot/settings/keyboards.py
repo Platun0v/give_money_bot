@@ -1,6 +1,15 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 
-from give_money_bot.settings.callback import EditVisibilityAction, EditVisibilityCallback, UserEditVisibilityCallback
+from give_money_bot.settings.callback import (
+    EditVisibilityAction,
+    EditVisibilityCallback,
+    UserEditVisibilityCallback,
+)
 from give_money_bot.settings.states import PAGE_MAX_USERS, EditVisibilityData
 from give_money_bot.settings.strings import Strings
 

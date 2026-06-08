@@ -10,7 +10,7 @@ from give_money_bot.db.models import User
 
 
 class DbSessionMiddleware(BaseMiddleware):
-    def __init__(self, session_pool: sessionmaker):
+    def __init__(self, session_pool: sessionmaker[Session]):
         super().__init__()
         self.session_pool = session_pool
 
